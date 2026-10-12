@@ -1,0 +1,64 @@
+import type { ImageMetadata } from 'astro';
+
+import agenticShot from '../assets/projects/agentic-ai.png';
+import governanceShot from '../assets/projects/ai-governance.png';
+import telehealthShot from '../assets/projects/telehealth.png';
+
+export interface Project {
+  slug: string;
+  eyebrow: string;
+  /** "bright" is the design's middle row: lighter eyebrow, brighter copy, filled CTA. */
+  tone: 'standard' | 'bright';
+  title: string;
+  summary: string;
+  bullets: string[];
+  image: ImageMetadata;
+  imageAlt: string;
+}
+
+export const projectsSection = {
+  heading: { lead: 'Systems I’ve Helped', accent: 'Bring to Life' },
+  intro:
+    'A selection of platforms that show how I approach system design, AI integration, delivery and scale across regulated domains.',
+  viewAll: 'VIEW ALL',
+  caseStudy: 'VIEW CASE STUDY',
+};
+
+export const projects: Project[] = [
+  {
+    slug: 'multi-agent-ai-platform',
+    eyebrow: 'AGENTIC AI',
+    tone: 'standard',
+    title: 'Multi-Agent AI Platform',
+    summary:
+      'Autonomous, tool-using agents built with Google ADK, MCP and the Agent2Agent protocol, integrating securely with live enterprise infrastructure.',
+    bullets: ['Autonomous, tool-using agents', 'Secure MCP integrations', 'Agent-to-agent collaboration (A2A)'],
+    image: agenticShot,
+    imageAlt:
+      'Illustration of a laptop on a dark perforated wall, its screen showing an orange agent graph: a central orchestrator node connected to several tool nodes.',
+  },
+  {
+    slug: 'enterprise-telehealth-platform',
+    eyebrow: 'TELEHEALTH',
+    tone: 'bright',
+    title: 'Enterprise Telehealth Platform',
+    summary:
+      'A multi-stakeholder platform for patients, providers, pharmacies and labs, with e-prescriptions, payments and real-time secure communication.',
+    bullets: ['e-Prescriptions via DoseSpot', 'Payments with 1Merchant', 'Real-time chat with TalkJS & Twilio'],
+    image: telehealthShot,
+    imageAlt:
+      'Illustration of a laptop on a light studio set showing a Telehealth Operations dashboard with appointment, e-prescription, lab order and payment tiles, a visit analytics chart and a live care-team gauge.',
+  },
+  {
+    slug: 'responsible-ai-governance',
+    eyebrow: 'AI GOVERNANCE',
+    tone: 'standard',
+    title: 'Responsible AI Governance',
+    summary:
+      'HIPAA, SOC 2 and GDPR-aligned policy control frameworks that let regulated organisations adopt generative AI responsibly and at scale.',
+    bullets: ['HIPAA · SOC 2 · GDPR controls', 'RAG pipelines on Vertex AI', 'Production-ready by design'],
+    image: governanceShot,
+    imageAlt:
+      'Illustration of a phone resting on grey stone, showing a governance app with a Policy checks passing status and enabled HIPAA, SOC 2 and GDPR toggles.',
+  },
+];
