@@ -1,0 +1,152 @@
+/*
+ * Design tokens. Every value is read from the design export (*.dc.html inline styles).
+ * Components must use these properties rather than raw colours, sizes or timings.
+ */
+
+:root {
+  color-scheme: dark;
+
+  /* ---------- Surfaces ---------- */
+  --color-bg: #05060b;
+  --color-bg-hero: #04050a;
+  --color-bg-reviews: #06070d;
+  --color-panel-top: #080b15;
+  --color-panel-bottom: #070910;
+  --color-pill-fill: #090c16;
+  --color-pill-fill-alt: #0a0c16;
+  --color-chip-fill: rgb(8 12 22 / 92%);
+  --color-portrait-bg: #0b0e17;
+  --color-hairline: rgb(255 255 255 / 14%);
+  --color-hairline-soft: rgb(255 255 255 / 6%);
+  --color-card-border: rgb(255 255 255 / 5%);
+  --color-panel-border: rgb(255 255 255 / 8%);
+
+  /* ---------- Text ---------- */
+  --color-text: #e6e9f0;
+  --color-heading: #f2f4f8;
+  --color-white: #fff;
+  --color-text-muted: rgb(230 233 240 / 85%);
+  --color-text-soft: rgb(230 233 240 / 80%);
+  --color-text-strong: rgb(230 233 240 / 90%);
+  --color-text-footer: rgb(230 233 240 / 88%);
+  --color-hero-text: #e3e6ee;
+  --color-hero-headline: #f6f7fa;
+  --color-hero-headline-dim: #8b8e97;
+  --color-hero-body: #b9beca;
+  --color-hero-nav: rgb(225 229 238 / 80%);
+  --color-hero-trust: #d6dae3;
+  --color-hero-cta: #dde1ea;
+  --color-orb-caption: rgb(225 232 245 / 58%);
+  --color-orb-label-rag: #ffc2ca;
+  --color-chip-text: #eaf0ff;
+
+  /* ---------- Accents ---------- */
+  --color-blue-600: #2f6bff;
+  --color-blue-500: #3a7fd6;
+  --color-blue-450: #3b8cff;
+  --color-blue-400: #6fa8ff;
+  --color-blue-200: #9fd0ff;
+  --color-red-500: #ff3b4e;
+  --color-red-450: #e0566c;
+  --color-red-400: #f07a8a;
+  --color-red-350: #ff5a6b;
+  --color-ring-text: #d4566c;
+  --color-violet-500: #6a5bd8;
+  --color-focus: var(--color-blue-200);
+  --color-eyebrow-blue: var(--color-blue-500);
+
+  /* ---------- Gradients ---------- */
+  --gradient-signature: linear-gradient(90deg, #2f6bff 0%, #6a5bd8 50%, #ff3b4e 100%);
+  --gradient-signature-nav: linear-gradient(90deg, #2f6bff 0%, #5a5fd8 50%, #ff3b4e 100%);
+  --gradient-signature-cta: linear-gradient(90deg, #2f6bff 0%, #4f63e0 45%, #ff3b4e 100%);
+  --gradient-pill-filled: linear-gradient(90deg, #c04a6e 0%, #9a5a9a 55%, #6a6ac8 100%);
+  --gradient-text-red: linear-gradient(90deg, #ff7383, #ff3d58);
+  --gradient-text-blue: linear-gradient(90deg, #5e9bff, #9ad2ff);
+  --gradient-card: linear-gradient(180deg, #1a1f2b 0%, #12151e 100%);
+  --gradient-card-feature-border: linear-gradient(
+    160deg,
+    #3d78c8 0%,
+    rgb(61 120 200 / 20%) 40%,
+    rgb(214 58 84 / 25%) 70%,
+    #d63a54 100%
+  );
+  --gradient-stat-accent: linear-gradient(180deg, #b83a4c 0%, #93496a 48%, #3f89a6 100%);
+  --gradient-stat-ghost: linear-gradient(180deg, rgb(255 255 255 / 3.5%), rgb(255 255 255 / 1.2%));
+  --gradient-date-pill: linear-gradient(90deg, #3a7fd6, #e0566c);
+  --gradient-divider: linear-gradient(
+    90deg,
+    rgb(255 255 255 / 2%),
+    rgb(255 255 255 / 14%) 20%,
+    rgb(255 255 255 / 14%) 80%,
+    rgb(255 255 255 / 2%)
+  );
+  --gradient-divider-fade: linear-gradient(90deg, rgb(255 255 255 / 12%), rgb(255 255 255 / 4%));
+  --gradient-panel: linear-gradient(180deg, var(--color-panel-top) 0%, var(--color-panel-bottom) 100%);
+
+  /* ---------- Shadows / glows ---------- */
+  --glow-pill-nav: -6px 0 18px rgb(47 107 255 / 25%), 6px 0 18px rgb(255 59 78 / 30%);
+  --glow-pill-cta: -8px 0 24px rgb(47 107 255 / 35%), 8px 0 24px rgb(255 59 78 / 40%);
+  --glow-pill-hero-hover: -10px 0 30px rgb(47 120 255 / 50%), 10px 0 30px rgb(255 59 78 / 50%);
+  --glow-pill-hover: -8px 0 22px rgb(47 120 255 / 45%), 8px 0 22px rgb(255 59 78 / 45%);
+  --glow-pill-filled: 0 6px 20px rgb(192 74 110 / 35%);
+  --shadow-card-hover: 0 20px 44px rgb(0 0 0 / 50%);
+  --shadow-cell-hover: 0 18px 40px rgb(0 0 0 / 45%);
+  --shadow-panel: 0 50px 120px rgb(0 0 0 / 70%), inset 0 1px 0 rgb(255 255 255 / 6%);
+  --glow-dot-red: 0 0 8px rgb(255 59 78 / 80%);
+  --glow-dot-blue: 0 0 8px rgb(58 127 214 / 60%);
+
+  /* ---------- Typography ---------- */
+  --font-hero: 'Manrope', 'manrope-fallback', system-ui, sans-serif;
+  --font-body: 'Hanken Grotesk', 'hanken-grotesk-fallback', system-ui, sans-serif;
+  --font-display: 'League Gothic', 'league-gothic-fallback', 'Arial Narrow', sans-serif;
+  --font-serif: 'Instrument Serif', 'instrument-serif-fallback', Georgia, serif;
+  --font-mono: 'JetBrains Mono', 'jetbrains-mono-fallback', ui-monospace, monospace;
+
+  /*
+   * Fluid sizes interpolate linearly between a 360px and a 1440px viewport and
+   * hit the design value exactly at >= 1440px: clamp(min, A + Bvw, max).
+   */
+  --fs-h2: clamp(1.75rem, 1.5417rem + 0.9259vw, 2.375rem); /* 28 -> 38 */
+  --fs-h2-contact: clamp(1.75rem, 1.625rem + 0.5556vw, 2.125rem); /* 28 -> 34 */
+  --fs-h2-expertise: clamp(1.75rem, 1.5833rem + 0.7407vw, 2.25rem); /* 28 -> 36 */
+  --fs-h3-project: clamp(1.625rem, 1.375rem + 1.1111vw, 2.375rem); /* 26 -> 38 */
+  --fs-h3-card: clamp(1.25rem, 1.1667rem + 0.3704vw, 1.5rem); /* 20 -> 24 */
+  --fs-h3-role: clamp(1.1875rem, 1.125rem + 0.2778vw, 1.375rem); /* 19 -> 22 */
+  --fs-stat: clamp(3.5rem, 3.1667rem + 1.4815vw, 4.5rem); /* 56 -> 72 */
+  --fs-expertise-title: clamp(2.25rem, 2.0417rem + 0.9259vw, 2.875rem); /* 36 -> 46 */
+  --fs-footer-name: clamp(2.75rem, 2.375rem + 1.6667vw, 3.875rem); /* 44 -> 62 */
+  --fs-quote: clamp(1.375rem, 1.2917rem + 0.3704vw, 1.625rem); /* 22 -> 26 */
+  --fs-lead: clamp(1.0625rem, 1.0208rem + 0.1852vw, 1.1875rem); /* 17 -> 19 */
+  --fs-body: 0.90625rem; /* 14.5 */
+  --fs-body-sm: 0.875rem; /* 14 */
+  --fs-body-xs: 0.84375rem; /* 13.5 */
+  --fs-eyebrow: 0.75rem; /* 12 */
+  --fs-pill: 0.78125rem; /* 12.5 */
+  --fs-caption: 0.6875rem; /* 11 */
+  --fs-date: 0.59375rem; /* 9.5 */
+
+  --lh-h2: 1.158; /* 44 / 38 */
+  --lh-body: 1.4483; /* 21 / 14.5 */
+  --lh-body-loose: 1.5172; /* 22 / 14.5 */
+  --tracking-h2: -0.015em;
+  --tracking-eyebrow: 0.3em;
+  --tracking-pill: 0.03em;
+
+  /* ---------- Layout ---------- */
+  --container: 1200px;
+  --gutter-min: clamp(16px, 4vw, 48px);
+  --gutter: max(var(--gutter-min), calc((100% - var(--container)) / 2));
+  --header-height: 64px;
+  --radius-pill: 999px;
+  --radius-panel: 30px;
+  --touch-target: 44px;
+
+  /* ---------- Motion ---------- */
+  --ease-out-expo: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --dur-card: 0.4s;
+  --dur-pill: 0.3s;
+  --dur-link: 0.25s;
+  --dur-carousel: 0.6s;
+  --lift-card: translateY(-4px);
+  --lift-pill: translateY(-1px);
+}
