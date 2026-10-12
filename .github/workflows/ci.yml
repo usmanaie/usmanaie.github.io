@@ -1,0 +1,189 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      update_baselines:
+        description: Regenerate Linux visual-regression baselines (uploaded as an artifact)
+        type: boolean
+        default: false
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Canonical origin baked into canonical URLs, sitemap and OG tags (repository variable).
+  SITE_URL: ${{ vars.SITE_URL || 'http://localhost:4321' }}
+
+jobs:
+  quality:
+    name: Lint, types, unit, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm audit --audit-level high --prod
+      - name: Build (production)
+        run: pnpm build
+      - name: Build (test-only reviews fixture)
+        run: pnpm build:fixture
+      - uses: actions/upload-artifact@v4
+        with:
+          name: builds
+          path: |
+            dist
+            dist-fixture
+          retention-days: 7
+
+  e2e:
+    name: E2E + axe (${{ matrix.browser }})
+    needs: quality
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          name: builds
+      - run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
+      - run: pnpm exec playwright test --project=e2e-${{ matrix.browser }} --project=fixture-${{ matrix.browser }}
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report-${{ matrix.browser }}
+          path: playwright-report
+          retention-days: 7
+
+  visual:
+    name: Visual regression
+    needs: quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          name: builds
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Compare against approved baselines
+        if: ${{ !inputs.update_baselines }}
+        run: pnpm exec playwright test --project=visual
+      - name: Regenerate baselines
+        if: ${{ inputs.update_baselines }}
+        run: pnpm exec playwright test --project=visual --update-snapshots
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() }}
+        with:
+          name: visual-results
+          path: |
+            playwright-report
+            tests/visual/__screenshots__/linux
+          retention-days: 7
+
+  lighthouse:
+    name: Lighthouse CI budgets
+    needs: quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          name: builds
+      - run: pnpm lhci
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() }}
+        with:
+          name: lighthouse
+          path: .lighthouseci
+          retention-days: 7
+
+  deploy-preview:
+    name: Deploy preview channel
+    if: github.event_name == 'pull_request' && vars.FIREBASE_PROJECT_ID != '' && github.event.pull_request.head.repo.full_name == github.repository
+    needs: [e2e, visual, lighthouse]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: builds
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+          create_credentials_file: true
+      - name: Deploy to preview channel
+        id: deploy
+        run: |
+          npx --yes firebase-tools@14 hosting:channel:deploy "pr-${{ github.event.pull_request.number }}" \
+            --project "${{ vars.FIREBASE_PROJECT_ID }}" --expires 7d --json > deploy.json
+          echo "url=$(node -e "const r=require('./deploy.json').result;console.log(Object.values(r)[0].url)")" >> "$GITHUB_OUTPUT"
+      - name: Comment preview URL
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr comment "${{ github.event.pull_request.number }}" --edit-last --create-if-none             --body "Preview: ${{ steps.deploy.outputs.url }}"
+
+  deploy-production:
+    name: Deploy production
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.FIREBASE_PROJECT_ID != ''
+    needs: [e2e, visual, lighthouse]
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require the production origin
+        run: test -n "${{ vars.SITE_URL }}" || (echo "Set the SITE_URL repository variable" && exit 1)
+      - uses: actions/download-artifact@v4
+        with:
+          name: builds
+      - name: Never deploy the reviews fixture
+        run: '! grep -rq "\[Name\]" dist'
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+          create_credentials_file: true
+      - run: npx --yes firebase-tools@14 deploy --only hosting --project "${{ vars.FIREBASE_PROJECT_ID }}" --non-interactive
