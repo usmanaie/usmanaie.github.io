@@ -1,0 +1,9 @@
+/* Loaded only when JavaScript is disabled (via <noscript> in <head>). */
+.site-header[data-mode='home'] {
+  visibility: visible;
+  transform: none;
+}
+
+.site-header__toggle {
+  display: none;
+}
