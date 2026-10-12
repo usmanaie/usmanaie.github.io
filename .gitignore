@@ -5,6 +5,8 @@ node_modules/
 
 # Build output
 dist/
+dist-fixture/
+.astro/
 build/
 out/
 .next/
@@ -13,6 +15,12 @@ out/
 .netlify/
 .firebase/
 coverage/
+
+# Test output
+test-results/
+playwright-report/
+blob-report/
+.lighthouseci/
 
 # Environment / secrets
 .env
@@ -46,3 +54,4 @@ desktop.ini
 # Claude Code: skills are reinstalled per machine via the uipro CLI (see README)
 .claude/skills/
 .claude/settings.local.json
+portfolio-build-prompt.md.pdf

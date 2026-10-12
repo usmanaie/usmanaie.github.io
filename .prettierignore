@@ -1,0 +1,10 @@
+dist
+dist-fixture
+.astro
+pnpm-lock.yaml
+playwright-report
+test-results
+.lighthouseci
+src/styles/fonts.css
+tests/visual/**/*.png
+.claude

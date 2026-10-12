@@ -1,0 +1,35 @@
+{
+  "extends": ["stylelint-config-standard", "stylelint-config-html/astro"],
+  "rules": {
+    "selector-class-pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*(?:__[a-z0-9]+(?:-[a-z0-9]+)*)?(?:--[a-z0-9]+(?:-[a-z0-9]+)*)?$",
+    "keyframes-name-pattern": "^[a-z][a-z0-9-]*$",
+    "custom-property-pattern": null,
+    "declaration-no-important": true,
+    "color-no-hex": null,
+    "value-keyword-case": [
+      "lower",
+      {
+        "ignoreProperties": ["font-family", "/^--font/"]
+      }
+    ],
+    "font-family-name-quotes": null,
+    "selector-pseudo-class-no-unknown": [
+      true,
+      {
+        "ignorePseudoClasses": ["global"]
+      }
+    ],
+    "no-descending-specificity": null,
+    "declaration-property-value-no-unknown": null,
+    "import-notation": "string",
+    "number-max-precision": 5,
+    "custom-property-empty-line-before": null,
+    "property-no-vendor-prefix": [
+      true,
+      {
+        "ignoreProperties": ["/text-size-adjust$/"]
+      }
+    ]
+  },
+  "ignoreFiles": ["dist/**", "dist-fixture/**", ".claude/**", "src/styles/fonts.css"]
+}
