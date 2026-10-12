@@ -1,0 +1,52 @@
+---
+import PageIntro from '../components/layout/PageIntro.astro';
+import Pill from '../components/ui/Pill.astro';
+import { site } from '../content/site';
+import SubPageLayout from '../layouts/SubPageLayout.astro';
+---
+
+<SubPageLayout
+  title={`Page not found · ${site.name}`}
+  description="The page you were looking for does not exist."
+  path="/404"
+  noindex
+>
+  <div class="not-found">
+    <p class="not-found__code" aria-hidden="true">
+      404
+    </p>
+    <PageIntro
+      title="This page took a wrong turn"
+      intro="The link may be broken, or the page may have moved. Everything worth seeing is one click away."
+    />
+    <div class="not-found__actions">
+      <Pill href="/">BACK TO HOME</Pill>
+      <Pill href="/projects" variant="outline-alt">
+        VIEW PROJECTS
+      </Pill>
+    </div>
+  </div>
+</SubPageLayout>
+
+<style>
+  .not-found {
+    display: grid;
+    gap: 24px;
+    justify-items: start;
+  }
+
+  .not-found__code {
+    font-family: var(--font-display);
+    font-stretch: 81%;
+    font-size: clamp(7rem, 30vw, 14rem);
+    line-height: 0.85;
+    color: var(--color-hero-headline-dim);
+  }
+
+  .not-found__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-block-start: 12px;
+  }
+</style>

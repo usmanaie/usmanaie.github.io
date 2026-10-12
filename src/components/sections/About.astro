@@ -1,0 +1,302 @@
+---
+import { about } from '../../content/site';
+import { stats } from '../../content/stats';
+import AgentPortrait from '../ui/AgentPortrait.astro';
+import RotatingRingLink from '../ui/RotatingRingLink.astro';
+import SectionHeading from '../ui/SectionHeading.astro';
+
+/** Checkerboard placement of the five stat cells, as in the design (column, row). */
+const PLACEMENT = [
+  [1, 1],
+  [2, 2],
+  [1, 3],
+  [3, 3],
+  [2, 4],
+] as const;
+---
+
+<section id="about" class="about" aria-labelledby="about-title">
+  <div class="about__inner container">
+    <div class="about__copy">
+      <SectionHeading
+        id="about-title"
+        lead={about.heading.lead}
+        accent={about.heading.accent}
+        breakBeforeAccent
+        class="about__title"
+      />
+      {about.paragraphs.map((p) => (
+        <p class="about__text">{p}</p>
+      ))}
+      <p class="about__emphasis">{about.emphasis}</p>
+      <p class="about__text">{about.closing}</p>
+      <div class="about__aside">
+        <RotatingRingLink
+          href="#education"
+          label={about.scrollLabel}
+          text="SCROLL DOWN • SCROLL DOWN • "
+          size={120}
+          radius={46}
+          variant="scroll"
+          class="about__ring"
+        />
+        <div class="about__portrait" aria-hidden="true">
+          <AgentPortrait variant="about" width={206} height={247} class="about__portrait-svg" />
+        </div>
+      </div>
+    </div>
+
+    <ul role="list" class="about__stats" aria-label="At a glance">
+      {stats.map((stat, i) => (
+        <li
+          class:list={[
+            'stat',
+            { 'stat--accent': stat.accent },
+            `stat--pos-${PLACEMENT[i]?.[0] ?? 1}-${PLACEMENT[i]?.[1] ?? i + 1}`,
+          ]}
+        >
+          <span class="stat__value">{stat.value}</span>
+          <span class="stat__label">{stat.label}</span>
+        </li>
+      ))}
+      <li class="cross cross--a" aria-hidden="true"></li>
+      <li class="cross cross--b" aria-hidden="true"></li>
+      <li class="cross cross--c" aria-hidden="true"></li>
+      <li class="cross cross--d" aria-hidden="true"></li>
+    </ul>
+  </div>
+</section>
+
+<style>
+  .about {
+    position: relative;
+    padding-block: 64px;
+    background:
+      radial-gradient(560px 440px at calc(50% - min(29.17%, 420px)) 48%, rgb(150 26 48 / 50%), transparent 72%),
+      radial-gradient(560px 420px at calc(50% + min(42.36%, 610px)) 70%, rgb(36 64 190 / 36%), transparent 72%),
+      radial-gradient(800px 300px at 50% 0, rgb(20 24 40 / 60%), transparent 70%), var(--color-bg);
+  }
+
+  .about__inner {
+    display: grid;
+    gap: 48px;
+  }
+
+  .about :global(.about__title) {
+    line-height: 1.1316;
+  }
+
+  .about__text {
+    max-width: 480px;
+    margin-block-start: 8px;
+    color: var(--color-text-soft);
+    line-height: var(--lh-body-loose);
+  }
+
+  .about :global(.about__title) + .about__text {
+    margin-block-start: 16px;
+  }
+
+  .about__emphasis {
+    max-width: 520px;
+    margin-block: 22px 14px;
+    font-size: var(--fs-lead);
+    font-weight: 600;
+    line-height: 1.3684;
+    color: var(--color-white);
+  }
+
+  .about__emphasis + .about__text {
+    margin-block-start: 0;
+  }
+
+  .about__aside {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    margin-block-start: 25px;
+  }
+
+  .about__aside :global(.about__ring) {
+    margin-inline-start: -7px;
+  }
+
+  .about__portrait {
+    position: relative;
+    flex: none;
+    width: 206px;
+    height: 250px;
+    margin-block-start: 45px;
+    overflow: hidden;
+    background:
+      radial-gradient(120px 140px at 30% 40%, rgb(40 110 255 / 25%), transparent 70%),
+      radial-gradient(120px 140px at 80% 50%, rgb(255 50 80 / 18%), transparent 70%), var(--color-portrait-bg);
+  }
+
+  .about__portrait :global(.about__portrait-svg) {
+    position: absolute;
+    left: 0;
+    top: 6px;
+  }
+
+  /* ---------- Stats grid ---------- */
+
+  .about__stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin: 0;
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 12px;
+    aspect-ratio: 1;
+    padding: 18px 16px 22px;
+    border: 1px solid var(--color-hairline-soft);
+    background: var(--gradient-stat-ghost);
+    transition:
+      transform var(--dur-card) ease,
+      box-shadow var(--dur-card) ease;
+  }
+
+  .stat--accent {
+    border-color: transparent;
+    background: var(--gradient-stat-accent);
+  }
+
+  .stat:hover {
+    transform: var(--lift-card);
+    box-shadow: var(--shadow-cell-hover);
+  }
+
+  .stat__value {
+    font-family: var(--font-display);
+    font-size: var(--fs-stat);
+    line-height: 0.9;
+    color: var(--color-white);
+  }
+
+  .stat__label {
+    font-size: var(--fs-body);
+    line-height: 1.2;
+    color: var(--color-text-muted);
+  }
+
+  .stat--accent .stat__label {
+    color: rgb(255 255 255 / 92%);
+  }
+
+  .cross {
+    display: none;
+  }
+
+  @media (width < 21rem) {
+    .about__stats {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .stat {
+      aspect-ratio: auto;
+      min-height: 140px;
+    }
+  }
+
+  @media (width < 40rem) {
+    .about__portrait {
+      display: none;
+    }
+  }
+
+  /* ---------- Desktop: design composition ---------- */
+
+  @media (width >= 64rem) {
+    .about {
+      padding-block: 71px 55px;
+    }
+
+    .about__inner {
+      grid-template-columns: 589fr 99fr 512fr;
+      gap: 0;
+      align-items: start;
+    }
+
+    .about__copy {
+      grid-column: 3;
+      grid-row: 1;
+      margin-block-start: 21px;
+    }
+
+    .about :global(.about__title) {
+      margin-inline-end: -8px;
+    }
+
+    .about__stats {
+      grid-column: 1;
+      grid-row: 1;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .stat--pos-1-1 {
+      grid-area: 1 / 1;
+    }
+
+    .stat--pos-2-2 {
+      grid-area: 2 / 2;
+    }
+
+    .stat--pos-1-3 {
+      grid-area: 3 / 1;
+    }
+
+    .stat--pos-3-3 {
+      grid-area: 3 / 3;
+    }
+
+    .stat--pos-2-4 {
+      grid-area: 4 / 2;
+    }
+
+    .cross {
+      position: relative;
+      z-index: 1;
+      display: block;
+      width: 12px;
+      height: 12px;
+      margin: -6px 0 0 -6px;
+      place-self: start;
+      pointer-events: none;
+      background:
+        linear-gradient(rgb(255 255 255 / 45%), rgb(255 255 255 / 45%)) center / 1px 100% no-repeat,
+        linear-gradient(rgb(255 255 255 / 45%), rgb(255 255 255 / 45%)) center / 100% 1px no-repeat;
+    }
+
+    .cross--a {
+      grid-area: 2 / 2;
+    }
+
+    .cross--b {
+      grid-area: 3 / 2;
+    }
+
+    .cross--c {
+      grid-area: 3 / 3;
+    }
+
+    .cross--d {
+      grid-area: 4 / 2;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .stat {
+      transition: none;
+    }
+
+    .stat:hover {
+      transform: none;
+    }
+  }
+</style>

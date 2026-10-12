@@ -1,0 +1,126 @@
+---
+import { Picture } from 'astro:assets';
+
+import PageIntro from '../../components/layout/PageIntro.astro';
+import Pill from '../../components/ui/Pill.astro';
+import { type Project, projects } from '../../content/projects';
+import { site } from '../../content/site';
+import SubPageLayout from '../../layouts/SubPageLayout.astro';
+
+/**
+ * Case study page built only from content already in the design (summary + highlights),
+ * so the "View case study" buttons never lead nowhere. Longer write-ups can be added to
+ * content/projects.ts later without changing this template.
+ */
+export function getStaticPaths() {
+  return projects.map((project) => ({ params: { slug: project.slug }, props: { project } }));
+}
+
+interface Props {
+  project: Project;
+}
+
+const { project } = Astro.props;
+---
+
+<SubPageLayout
+  title={`${project.title} · ${site.name}`}
+  description={project.summary}
+  path={`/projects/${project.slug}`}
+>
+  <article class="case" aria-labelledby="case-title">
+    <PageIntro
+      id="case-title"
+      title={project.title}
+      eyebrow={project.eyebrow}
+      intro={project.summary}
+      back={{ href: '/projects', label: 'All projects' }}
+    />
+    <figure class="case__media">
+      <Picture
+        src={project.image}
+        alt={project.imageAlt}
+        formats={['avif', 'webp']}
+        widths={[603, 1206]}
+        quality={80}
+        sizes="(width >= 64rem) 760px, 100vw"
+        loading="eager"
+        decoding="async"
+      />
+    </figure>
+    <section class="case__section" aria-labelledby="case-highlights">
+      <h2 id="case-highlights" class="case__heading">
+        Highlights
+      </h2>
+      <ul role="list" class="case__bullets">
+        {project.bullets.map((bullet) => (
+          <li class="case__bullet">{bullet}</li>
+        ))}
+      </ul>
+    </section>
+    <section class="case__section" aria-labelledby="case-next">
+      <h2 id="case-next" class="case__heading">
+        Want the full story?
+      </h2>
+      <p class="case__text">
+        Detailed write-ups are shared on request, so client specifics stay confidential. Get in touch to talk through
+        the architecture, delivery and results.
+      </p>
+      <Pill href="/#contact" class="case__cta">
+        GET IN TOUCH
+      </Pill>
+    </section>
+  </article>
+</SubPageLayout>
+
+<style>
+  .case {
+    display: grid;
+    gap: 48px;
+    max-width: 760px;
+  }
+
+  .case__media {
+    overflow: hidden;
+  }
+
+  .case__media :global(img) {
+    width: 100%;
+  }
+
+  .case__heading {
+    font-weight: 300;
+    font-size: var(--fs-h3-card);
+    line-height: 1.2;
+    color: var(--color-heading);
+  }
+
+  .case__bullets {
+    display: grid;
+    gap: 10px;
+    margin: 18px 0 0;
+    font-weight: 600;
+    color: var(--color-heading);
+  }
+
+  .case__bullet {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .case__bullet::before {
+    content: '';
+    flex: none;
+    width: 7px;
+    height: 7px;
+    background: var(--color-red-450);
+    transform: rotate(45deg);
+  }
+
+  .case__text {
+    max-width: 560px;
+    margin-block: 14px 24px;
+    color: var(--color-text-muted);
+  }
+</style>

@@ -1,0 +1,28 @@
+---
+import PageIntro from '../../components/layout/PageIntro.astro';
+import ProjectRow from '../../components/projects/ProjectRow.astro';
+import { projects, projectsSection } from '../../content/projects';
+import { site } from '../../content/site';
+import SubPageLayout from '../../layouts/SubPageLayout.astro';
+---
+
+<SubPageLayout title={`Projects · ${site.name}`} description={projectsSection.intro} path="/projects">
+  <PageIntro
+    title={`${projectsSection.heading.lead} ${projectsSection.heading.accent}`}
+    intro={projectsSection.intro}
+    back={{ href: '/', label: 'Back to home' }}
+  />
+  <div class="projects-page">
+    {projects.map((project, i) => (
+      <ProjectRow project={project} reverse={i % 2 === 1} headingLevel="h2" />
+    ))}
+  </div>
+</SubPageLayout>
+
+<style>
+  .projects-page {
+    display: grid;
+    gap: 72px;
+    margin-block-start: 56px;
+  }
+</style>

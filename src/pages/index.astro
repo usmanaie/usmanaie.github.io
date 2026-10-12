@@ -1,0 +1,37 @@
+---
+import { getImage } from 'astro:assets';
+
+import About from '../components/sections/About.astro';
+import Contact from '../components/sections/Contact.astro';
+import Education from '../components/sections/Education.astro';
+import Experience from '../components/sections/Experience.astro';
+import Expertise from '../components/sections/Expertise.astro';
+import Hero from '../components/sections/Hero.astro';
+import Projects from '../components/sections/Projects.astro';
+import Reviews from '../components/sections/Reviews.astro';
+import { reviewsContent, reviewsEnabled } from '../content/reviews-source';
+import { site } from '../content/site';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { heroImage } from '../lib/hero-image';
+import { homeStructuredData } from '../lib/structured-data';
+
+const lcp = await getImage({ ...heroImage, format: 'avif' });
+---
+
+<BaseLayout
+  title={`${site.name} · ${site.jobTitle}`}
+  path="/"
+  onHome
+  noindex={import.meta.env['PUBLIC_REVIEWS_FIXTURE'] === 'true'}
+  preloadImage={{ href: lcp.src, type: 'image/avif' }}
+  structuredData={homeStructuredData(Astro.site)}
+>
+  <Hero />
+  <About />
+  <Education />
+  <Expertise />
+  <Projects />
+  <Experience />
+  {reviewsEnabled && <Reviews content={reviewsContent} />}
+  <Contact />
+</BaseLayout>

@@ -1,0 +1,176 @@
+---
+import { Picture } from 'astro:assets';
+
+import { type Project, projectsSection } from '../../content/projects';
+import Eyebrow from '../ui/Eyebrow.astro';
+import Pill from '../ui/Pill.astro';
+
+interface Props {
+  project: Project;
+  reverse: boolean;
+  /** h3 inside the home page's Projects section, h2 on the /projects page. */
+  headingLevel?: 'h2' | 'h3';
+}
+
+const { project, reverse, headingLevel: Heading = 'h3' } = Astro.props;
+const bright = project.tone === 'bright';
+const titleId = `project-${project.slug}-title`;
+---
+
+<article class:list={['project', { 'project--reverse': reverse, 'project--bright': bright }]} aria-labelledby={titleId}>
+  <figure class="project__media">
+    <Picture
+      src={project.image}
+      alt={project.imageAlt}
+      formats={['avif', 'webp']}
+      widths={[603, 1206]}
+      quality={80}
+      sizes="(width >= 64rem) min(603px, 42vw), 100vw"
+      loading="lazy"
+      decoding="async"
+      class="project__img"
+    />
+  </figure>
+  <div class="project__text">
+    <Eyebrow tone={bright ? 'blue-light' : 'blue'}>{project.eyebrow}</Eyebrow>
+    <Heading id={titleId} class="project__title">
+      {project.title}
+    </Heading>
+    <p class="project__summary">{project.summary}</p>
+    <ul role="list" class="project__bullets">
+      {project.bullets.map((bullet) => (
+        <li class="project__bullet">{bullet}</li>
+      ))}
+    </ul>
+    <Pill
+      href={`/projects/${project.slug}`}
+      variant={bright ? 'filled' : 'outline-alt'}
+      srSuffix={`: ${project.title}`}
+      class="project__cta"
+    >
+      {projectsSection.caseStudy}
+    </Pill>
+  </div>
+</article>
+
+<style>
+  .project {
+    display: grid;
+    gap: 28px;
+  }
+
+  .project__media {
+    overflow: hidden;
+  }
+
+  .project__media :global(.project__img) {
+    width: 100%;
+    transition: transform 0.6s var(--ease-out-expo);
+  }
+
+  .project__media:hover :global(.project__img) {
+    transform: scale(1.015);
+  }
+
+  .project__text {
+    align-self: center;
+  }
+
+  .project__title {
+    font-weight: 300;
+    font-size: var(--fs-h3-project);
+    line-height: var(--lh-h2);
+    letter-spacing: var(--tracking-h2);
+    color: var(--color-heading);
+    text-wrap: balance;
+  }
+
+  .project__summary {
+    max-width: 500px;
+    margin-block-start: 14px;
+    color: var(--color-text-muted);
+  }
+
+  .project--bright .project__summary {
+    color: rgb(240 242 248 / 90%);
+  }
+
+  .project__bullets {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 18px 0 0;
+    font-weight: 600;
+    line-height: var(--lh-body-loose);
+    color: var(--color-heading);
+  }
+
+  .project--bright .project__bullets {
+    color: var(--color-white);
+  }
+
+  .project__bullet {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .project__bullet::before {
+    content: '';
+    flex: none;
+    width: 7px;
+    height: 7px;
+    background: var(--color-red-450);
+    transform: rotate(45deg);
+  }
+
+  .project--bright .project__bullet::before {
+    background: var(--color-red-400);
+  }
+
+  .project__text :global(.project__cta) {
+    margin-block-start: 20px;
+  }
+
+  @media (width >= 64rem) {
+    .project {
+      grid-template-columns: minmax(0, 600fr) minmax(0, 66fr) minmax(0, 534fr);
+      gap: 0;
+      align-items: center;
+    }
+
+    .project__media {
+      grid-column: 1;
+      grid-row: 1;
+      margin-inline-start: -3px;
+    }
+
+    .project__text {
+      grid-column: 3;
+      grid-row: 1;
+    }
+
+    .project--reverse {
+      grid-template-columns: minmax(0, 535fr) minmax(0, 66fr) minmax(0, 599fr);
+    }
+
+    .project--reverse .project__media {
+      grid-column: 3;
+      margin-inline: 0 -3px;
+    }
+
+    .project--reverse .project__text {
+      grid-column: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .project__media :global(.project__img) {
+      transition: none;
+    }
+
+    .project__media:hover :global(.project__img) {
+      transform: none;
+    }
+  }
+</style>

@@ -1,0 +1,316 @@
+---
+import { Image } from 'astro:assets';
+
+import ringGlow from '../../assets/expertise/ring-glow.png';
+import ringRings from '../../assets/expertise/ring-rings.png';
+import ticks from '../../assets/expertise/ticks.svg?url';
+import { expertise } from '../../content/expertise';
+import Pill from '../ui/Pill.astro';
+import SectionHeading from '../ui/SectionHeading.astro';
+
+/**
+ * Areas of Expertise. The neon ring's blurred glows (SVG blur filters with stdDeviation
+ * 40/14/5 in the design) are pre-rendered to images; only the tick marks rotate, as a
+ * transformed <img>, and the glow layer "breathes" via opacity. See DECISIONS.md.
+ */
+---
+
+<section id="expertise" class="expertise" aria-labelledby="expertise-title" data-animated-region>
+  <div class="expertise__layout">
+    <div class="expertise__ring" aria-hidden="true">
+      <Image
+        src={ringGlow}
+        alt=""
+        widths={[640, 960, 1920]}
+        sizes="(width >= 64rem) min(960px, 66.7vw), 120vw"
+        class="expertise__layer expertise__layer--glow"
+      />
+      <Image
+        src={ringRings}
+        alt=""
+        widths={[640, 960, 1920]}
+        sizes="(width >= 64rem) min(960px, 66.7vw), 120vw"
+        class="expertise__layer"
+      />
+      <img src={ticks} alt="" width="800" height="800" loading="lazy" decoding="async" class="expertise__ticks" />
+    </div>
+
+    <div class="expertise__center">
+      <SectionHeading
+        id="expertise-title"
+        lead={expertise.heading.lead}
+        accent={expertise.heading.accent}
+        class="expertise__title"
+      />
+      <p class="expertise__intro">{expertise.intro}</p>
+      <Pill href="#projects" class="expertise__cta">
+        {expertise.cta}
+      </Pill>
+    </div>
+
+    <ul role="list" class="expertise__cards">
+      {expertise.items.map((item, i) => (
+        <li class:list={['xcard', i % 2 === 1 ? 'xcard--end' : 'xcard--start']}>
+          <h3 class="xcard__title">{item.title}</h3>
+          <p class="xcard__body">{item.body}</p>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>
+
+<script>
+  import { observeVisibility } from '../../scripts/visibility';
+
+  for (const region of document.querySelectorAll<HTMLElement>('[data-animated-region]')) observeVisibility(region);
+</script>
+
+<style>
+  .expertise {
+    position: relative;
+    overflow: clip;
+    padding-block: 56px 64px;
+    padding-inline: max(var(--gutter-min), env(safe-area-inset-left)) max(var(--gutter-min), env(safe-area-inset-right));
+    background: var(--color-bg);
+  }
+
+  .expertise__layout {
+    position: relative;
+    display: grid;
+    grid-template-areas:
+      'center'
+      'ring'
+      'cards';
+    gap: 32px;
+    justify-items: center;
+  }
+
+  /* ---------- Ring ---------- */
+
+  .expertise__ring {
+    grid-area: ring;
+    position: relative;
+    width: min(100%, 26rem);
+    aspect-ratio: 1;
+  }
+
+  .expertise__ring :global(.expertise__layer) {
+    position: absolute;
+    left: -10%;
+    top: -1.375%;
+    width: 120%;
+    max-width: none;
+    height: 111.375%;
+  }
+
+  .expertise__ring :global(.expertise__layer--glow) {
+    animation: expertise-breathe 5s ease-in-out infinite;
+  }
+
+  .expertise__ticks {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    animation: expertise-spin 90s linear infinite;
+  }
+
+  /* ---------- Centre copy ---------- */
+
+  .expertise__center {
+    grid-area: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 26rem;
+    text-align: center;
+  }
+
+  .expertise :global(.expertise__title) {
+    font-size: var(--fs-h2-expertise);
+    line-height: 1.1667;
+  }
+
+  .expertise__intro {
+    max-width: 380px;
+    margin-block-start: 14px;
+    font-size: var(--fs-body-sm);
+    line-height: 1.5;
+    color: rgb(230 233 240 / 88%);
+  }
+
+  .expertise__center :global(.expertise__cta) {
+    margin-block-start: 44px;
+  }
+
+  /* ---------- Cards ---------- */
+
+  .expertise__cards {
+    grid-area: cards;
+    display: grid;
+    gap: 16px;
+    width: 100%;
+    margin: 0;
+  }
+
+  .xcard {
+    min-height: 184px;
+    padding: 20px 18px 17px;
+    background: linear-gradient(90deg, rgb(30 32 42 / 78%) 0%, rgb(30 32 42 / 70%) 55%, rgb(170 36 66 / 55%) 100%);
+    backdrop-filter: blur(10px);
+    transition: transform var(--dur-card) ease;
+  }
+
+  .xcard--end {
+    text-align: end;
+    background: linear-gradient(270deg, rgb(30 32 42 / 78%) 0%, rgb(30 32 42 / 70%) 55%, rgb(170 36 66 / 55%) 100%);
+  }
+
+  .xcard:hover {
+    transform: var(--lift-card);
+  }
+
+  .xcard__title {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: var(--fs-expertise-title);
+    line-height: 0.9565;
+    letter-spacing: 0.005em;
+    color: var(--color-white);
+  }
+
+  .xcard__body {
+    max-width: 270px;
+    margin-block-start: clamp(20px, 3.2vw, 46px);
+    font-size: var(--fs-body-xs);
+    line-height: 1.4074;
+    color: var(--color-text-strong);
+  }
+
+  .xcard--end .xcard__body {
+    margin-inline-start: auto;
+  }
+
+  @media (width >= 36rem) {
+    .expertise__layout {
+      grid-template-areas:
+        'ring'
+        'cards';
+    }
+
+    .expertise__ring {
+      width: min(100%, 35rem);
+    }
+
+    .expertise__center {
+      grid-area: ring;
+      align-self: center;
+      max-width: 19rem;
+      z-index: 1;
+    }
+
+    .expertise__cards {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  /* ---------- Desktop: cards around the ring, as in the design ---------- */
+
+  @media (width >= 64rem) {
+    .expertise {
+      padding-block: 146px 44px;
+    }
+
+    .expertise__layout {
+      grid-template:
+        minmax(184px, auto) minmax(252px, auto) minmax(184px, auto)
+        / minmax(0, 315fr) minmax(0, 428fr) minmax(0, 315fr);
+      gap: 0;
+      justify-items: stretch;
+      max-width: 1058px;
+      margin-inline: auto;
+    }
+
+    .expertise__ring {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: min(800px, 55.56vw);
+      transform: translate(-50%, -55.625%);
+    }
+
+    .expertise__center {
+      grid-area: 1 / 2 / -1 / 3;
+      place-self: center center;
+      max-width: 400px;
+    }
+
+    .expertise__cards {
+      grid-area: 1 / 1 / -1 / -1;
+      grid-template-columns: subgrid;
+      grid-template-rows: subgrid;
+      gap: 0;
+    }
+
+    .xcard:nth-child(1) {
+      grid-area: 1 / 1;
+    }
+
+    .xcard:nth-child(2) {
+      grid-area: 1 / 3;
+    }
+
+    .xcard:nth-child(3) {
+      grid-area: 3 / 1;
+    }
+
+    .xcard:nth-child(4) {
+      grid-area: 3 / 3;
+    }
+
+    .xcard__body {
+      margin-block-start: 46px;
+    }
+
+    .xcard--end .xcard__body {
+      margin-inline: 9px 0;
+    }
+  }
+
+  /* Pause the ring while off-screen (toggled by scripts/visibility.ts). */
+  .expertise[data-paused] :global(*) {
+    animation-play-state: paused;
+  }
+
+  @keyframes expertise-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes expertise-breathe {
+    0%,
+    100% {
+      opacity: 0.7;
+    }
+
+    50% {
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .expertise__ring :global(.expertise__layer--glow),
+    .expertise__ticks {
+      animation: none;
+    }
+
+    .xcard {
+      transition: none;
+    }
+
+    .xcard:hover {
+      transform: none;
+    }
+  }
+</style>

@@ -1,0 +1,323 @@
+---
+/**
+ * One of the four glass orbs around the hero agent (USER, LLM, TOOLS, RAG), with its
+ * numbered chip and caption. Positioned in the agent canvas's coordinate system.
+ */
+interface Props {
+  id: 'user' | 'llm' | 'tools' | 'rag';
+  step: number;
+  label: string;
+  caption: string;
+  tone: 'blue' | 'red';
+}
+
+const { id, step, label, caption, tone } = Astro.props;
+const gid = `hero-orb-${id}-g`;
+---
+
+<div class:list={['orb', `orb--${id}`, `orb--${tone}`]}>
+  <div class="orb__bubble" aria-hidden="true">
+    {id === 'user' && (
+      <svg class="orb__icon" width="58" height="58" viewBox="0 0 100 100" focusable="false">
+        <defs>
+          <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#F2F8FF" />
+            <stop offset="1" stop-color="#6FA8FF" />
+          </linearGradient>
+        </defs>
+        <circle cx="50" cy="35" r="16" fill={`url(#${gid})`} />
+        <path d="M20 82c2-17 14-27 30-27s28 10 30 27c0 2-1 3-3 3H23c-2 0-3-1-3-3z" fill={`url(#${gid})`} />
+        <ellipse cx="44" cy="29" rx="6" ry="4" fill="#ffffff" opacity=".5" />
+      </svg>
+    )}
+    {id === 'llm' && (
+      <svg
+        class="orb__icon"
+        width="58"
+        height="58"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke-width="1.25"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        focusable="false"
+      >
+        <defs>
+          <linearGradient id={gid} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#FFD3D9" />
+            <stop offset="1" stop-color="#FF4D6A" />
+          </linearGradient>
+        </defs>
+        <g stroke={`url(#${gid})`}>
+          <path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z" />
+          <path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z" />
+          <path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4" />
+          <path d="M17.599 6.5a3 3 0 0 0 .399-1.375" />
+          <path d="M6.003 5.125A3 3 0 0 0 6.401 6.5" />
+          <path d="M3.477 10.896a4 4 0 0 1 .585-.396" />
+          <path d="M19.938 10.5a4 4 0 0 1 .585.396" />
+          <path d="M6 18a4 4 0 0 1-1.967-.516" />
+          <path d="M19.967 17.484A4 4 0 0 1 18 18" />
+        </g>
+      </svg>
+    )}
+    {id === 'tools' && (
+      <svg
+        class="orb__icon"
+        width="54"
+        height="54"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke-width="1.3"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        focusable="false"
+      >
+        <defs>
+          <linearGradient id={gid} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#E4F4FF" />
+            <stop offset="1" stop-color="#3B8CFF" />
+          </linearGradient>
+        </defs>
+        <g stroke={`url(#${gid})`}>
+          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+          <circle cx="5.6" cy="18.4" r=".6" />
+        </g>
+      </svg>
+    )}
+    {id === 'rag' && (
+      <svg
+        class="orb__icon orb__icon--rag"
+        width="56"
+        height="56"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke-width="1.25"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        focusable="false"
+      >
+        <defs>
+          <linearGradient id={gid} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#FFE0E5" />
+            <stop offset="1" stop-color="#FF4D6A" />
+          </linearGradient>
+        </defs>
+        <g stroke={`url(#${gid})`}>
+          <ellipse cx="10" cy="5" rx="7" ry="3" />
+          <path d="M3 5v12c0 1.66 3.13 3 7 3" />
+          <path d="M3 11c0 1.66 3.13 3 7 3" />
+          <path d="M17 5v5" />
+          <circle cx="17.5" cy="16.5" r="3.3" />
+          <path d="m22 21-2.1-2.1" />
+        </g>
+      </svg>
+    )}
+  </div>
+  <span class="orb__chip" aria-hidden="true">
+    {step}
+  </span>
+  <p class="orb__label">
+    <b class="orb__name">{label}</b>
+    <span class="orb__caption">{caption}</span>
+  </p>
+</div>
+
+<style>
+  .orb {
+    position: absolute;
+    width: 110px;
+    height: 110px;
+  }
+
+  .orb--user {
+    left: 95px;
+    top: 35px;
+  }
+
+  .orb--llm {
+    left: 660px;
+    top: 60px;
+  }
+
+  .orb--tools {
+    left: 50px;
+    top: 405px;
+  }
+
+  .orb--rag {
+    left: 670px;
+    top: 460px;
+  }
+
+  .orb__bubble {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    border: 1px solid rgb(200 225 255 / 30%);
+    border-radius: 50%;
+    background: radial-gradient(
+      circle at 34% 28%,
+      rgb(255 255 255 / 22%) 0%,
+      rgb(255 255 255 / 5%) 22%,
+      rgb(255 255 255 / 2%) 58%,
+      rgb(160 200 255 / 12%) 100%
+    );
+    backdrop-filter: blur(6px);
+    box-shadow:
+      inset -8px -10px 24px rgb(255 255 255 / 6%),
+      inset 6px 8px 16px rgb(255 255 255 / 8%),
+      0 18px 36px rgb(0 0 0 / 50%);
+    transition:
+      transform 0.5s var(--ease-out-expo),
+      box-shadow 0.5s ease;
+  }
+
+  .orb--red .orb__bubble {
+    border-color: rgb(255 210 220 / 32%);
+    background: radial-gradient(
+      circle at 34% 28%,
+      rgb(255 255 255 / 22%) 0%,
+      rgb(255 255 255 / 5%) 22%,
+      rgb(255 255 255 / 2%) 58%,
+      rgb(255 160 175 / 12%) 100%
+    );
+  }
+
+  .orb__bubble:hover {
+    transform: scale(1.06);
+    box-shadow:
+      inset -8px -10px 24px rgb(255 255 255 / 7%),
+      inset 6px 8px 18px rgb(255 255 255 / 10%),
+      0 0 40px rgb(59 140 255 / 35%),
+      0 22px 46px rgb(0 0 0 / 55%);
+  }
+
+  .orb__icon {
+    filter: drop-shadow(0 0 8px rgb(59 150 255 / 60%));
+  }
+
+  .orb--user .orb__icon {
+    filter: drop-shadow(0 0 10px rgb(59 150 255 / 55%));
+  }
+
+  .orb--red .orb__icon {
+    filter: drop-shadow(0 0 8px rgb(255 77 94 / 60%));
+  }
+
+  .orb__icon--rag {
+    animation: orb-ragon var(--T, 11s) ease-in-out infinite both;
+  }
+
+  .orb__chip {
+    position: absolute;
+    left: -6px;
+    top: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: 1px solid rgb(200 225 255 / 38%);
+    border-radius: 50%;
+    background: var(--color-chip-fill);
+    color: var(--color-chip-text);
+    font-family: var(--font-mono);
+    font-size: 10px;
+  }
+
+  .orb--llm .orb__chip {
+    left: 92px;
+  }
+
+  .orb--rag .orb__chip {
+    border-color: rgb(255 190 200 / 45%);
+  }
+
+  .orb__label {
+    position: absolute;
+    left: 50%;
+    top: 118px;
+    width: 136px;
+    margin-left: -68px;
+    font-family: var(--font-hero);
+    font-size: 16px;
+    line-height: 21.6px;
+    text-align: center;
+  }
+
+  .orb--llm .orb__label,
+  .orb--rag .orb__label {
+    width: 160px;
+    margin-left: -80px;
+  }
+
+  .orb__name {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: var(--color-white);
+  }
+
+  .orb--rag .orb__name {
+    color: var(--color-orb-label-rag);
+  }
+
+  .orb__caption {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--color-orb-caption);
+  }
+
+  /*
+   * Below the desktop composition the agent canvas is scaled down; counter-scale the
+   * orb names so they stay legible, and drop the small captions on narrow screens.
+   */
+  @media (width < 64rem) {
+    .orb__name {
+      font-size: calc(12px * max(1, 0.75 / var(--agent-scale, 1)));
+      line-height: 1.2;
+    }
+  }
+
+  @media (width < 40rem) {
+    .orb__caption {
+      display: none;
+    }
+  }
+
+  @keyframes orb-ragon {
+    0%,
+    53% {
+      opacity: 0.18;
+    }
+
+    55.5%,
+    92% {
+      opacity: 1;
+    }
+
+    97%,
+    100% {
+      opacity: 0.18;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .orb__icon--rag {
+      animation: none;
+    }
+
+    .orb__bubble {
+      transition: none;
+    }
+
+    .orb__bubble:hover {
+      transform: none;
+    }
+  }
+</style>

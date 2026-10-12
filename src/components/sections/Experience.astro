@@ -1,0 +1,267 @@
+---
+import { experience } from '../../content/experience';
+import AgentPortrait from '../ui/AgentPortrait.astro';
+import Pill from '../ui/Pill.astro';
+import SectionHeading from '../ui/SectionHeading.astro';
+---
+
+<section id="experience" class="experience" aria-labelledby="experience-title" data-animated-region>
+  <div class="experience__backdrop" aria-hidden="true"></div>
+  <div class="experience__art" aria-hidden="true">
+    <div class="experience__portrait">
+      <AgentPortrait variant="experience" width={840} height={1008} class="experience__portrait-svg" />
+    </div>
+    <svg class="experience__numeral" viewBox="0 0 440 300" focusable="false">
+      <text x="0" y="262">
+        {experience.numeral}
+      </text>
+    </svg>
+  </div>
+
+  <div class="experience__inner container">
+    <SectionHeading id="experience-title" lead={experience.heading.lead} accent={experience.heading.accent} />
+    <p class="section-intro experience__intro">{experience.intro}</p>
+    <ol role="list" class="timeline">
+      {experience.items.map((item) => (
+        <li class="timeline__item">
+          <div class="timeline__head">
+            <h3 class="timeline__role">{item.role}</h3>
+            <span class="timeline__date">
+              <time datetime={item.start}>{item.period}</time>
+            </span>
+          </div>
+          <p class="timeline__summary">{item.summary}</p>
+        </li>
+      ))}
+    </ol>
+    <Pill href="#contact" variant="outline-alt">
+      {experience.cta}
+    </Pill>
+  </div>
+</section>
+
+<style>
+  .experience {
+    position: relative;
+    isolation: isolate;
+    overflow: clip;
+    padding-block-end: 64px;
+    background: var(--color-bg);
+  }
+
+  .experience__backdrop {
+    position: absolute;
+    inset: 45px 0 0;
+    z-index: -2;
+    background:
+      radial-gradient(620px 520px at calc(50% + min(23.61%, 340px)) 45%, rgb(28 78 200 / 85%), transparent 72%),
+      radial-gradient(420px 360px at calc(50% + min(45.83%, 660px)) 17%, rgb(30 70 170 / 60%), transparent 72%),
+      radial-gradient(500px 400px at calc(50% - min(36.11%, 520px)) 80%, rgb(20 36 90 / 55%), transparent 72%),
+      linear-gradient(90deg, #060912 0%, #0a1430 55%, #0c1a44 100%);
+  }
+
+  /* ---------- Decorative portrait + outlined numeral ---------- */
+
+  .experience__art {
+    position: relative;
+    z-index: -1;
+    height: clamp(260px, 72vw, 420px);
+    margin-block-start: 45px;
+    overflow: hidden;
+  }
+
+  .experience__portrait {
+    position: absolute;
+    inset: 0;
+    mask-image: linear-gradient(180deg, #000 60%, transparent 100%);
+  }
+
+  .experience__portrait :global(.experience__portrait-svg) {
+    position: absolute;
+    left: 50%;
+    top: -14%;
+    width: auto;
+    height: 150%;
+    max-width: none;
+    transform: translateX(-46%);
+    animation: experience-blink 5s ease-in-out infinite;
+  }
+
+  .experience__numeral {
+    position: absolute;
+    right: max(var(--gutter-min), 4%);
+    bottom: 0;
+    width: clamp(140px, 36vw, 260px);
+    overflow: visible;
+    fill: none;
+    stroke: rgb(255 255 255 / 75%);
+    stroke-width: 1.6;
+    font-family: var(--font-body);
+    font-weight: 200;
+    font-size: 360px;
+    letter-spacing: -0.02em;
+  }
+
+  /* ---------- Copy + timeline ---------- */
+
+  .experience__inner {
+    padding-block-start: 24px;
+  }
+
+  .experience__intro {
+    max-width: 580px;
+    margin-block-start: 24px;
+  }
+
+  .timeline {
+    position: relative;
+    display: grid;
+    gap: 40px;
+    margin-block: 40px 34px;
+    padding-inline-start: 32px;
+  }
+
+  .timeline__item {
+    position: relative;
+  }
+
+  .timeline__item::before {
+    content: '';
+    position: absolute;
+    left: -31px;
+    top: 10px;
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--color-blue-500);
+    border-radius: 50%;
+    background: var(--color-bg);
+    box-shadow: var(--glow-dot-blue);
+  }
+
+  .timeline__item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: -25px;
+    top: 22px;
+    width: 1px;
+    height: calc(100% + 40px - 12px);
+    background: var(--color-hairline);
+  }
+
+  .timeline__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 10px;
+  }
+
+  .timeline__role {
+    font-weight: 300;
+    font-style: italic;
+    font-size: var(--fs-h3-role);
+    line-height: 1.3636;
+    color: var(--color-white);
+  }
+
+  .timeline__date {
+    display: inline-flex;
+    align-items: center;
+    height: 17px;
+    padding-inline: 9px;
+    border-radius: 9px;
+    background: var(--gradient-date-pill);
+    font-size: var(--fs-date);
+    font-weight: 600;
+    color: var(--color-white);
+    white-space: nowrap;
+  }
+
+  .timeline__summary {
+    max-width: 560px;
+    margin-block-start: 4px;
+    color: var(--color-text-muted);
+  }
+
+  @media (width >= 64rem) {
+    .experience {
+      padding-block: 134px 87px;
+    }
+
+    .experience__art {
+      position: absolute;
+      left: max(calc(50% - 160px), calc(var(--gutter) + 440px));
+      top: 45px;
+      width: 880px;
+      height: 697px;
+      margin: 0;
+      overflow: visible;
+    }
+
+    .experience__portrait {
+      overflow: hidden;
+      mask-image: linear-gradient(90deg, transparent 0%, #000 20%);
+    }
+
+    .experience__portrait :global(.experience__portrait-svg) {
+      left: 21px;
+      top: -103px;
+      width: 840px;
+      height: 1008px;
+      transform: none;
+    }
+
+    .experience__numeral {
+      inset: 385px auto auto 444px;
+      width: 440px;
+    }
+
+    .experience__inner {
+      padding-block-start: 0;
+    }
+
+    .experience__inner > :global(*) {
+      max-width: 640px;
+    }
+
+    .experience__inner > .experience__intro {
+      max-width: 580px;
+    }
+
+    .timeline {
+      gap: 72px;
+      margin-block: 24px 34px;
+    }
+
+    .timeline__item:not(:last-child)::after {
+      height: calc(100% + 72px - 12px);
+    }
+  }
+
+  .experience[data-paused] :global(*) {
+    animation-play-state: paused;
+  }
+
+  @keyframes experience-blink {
+    0%,
+    90%,
+    100% {
+      opacity: 1;
+    }
+
+    94% {
+      opacity: 0.25;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .experience__portrait :global(.experience__portrait-svg) {
+      animation: none;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .timeline__date {
+      border: 1px solid CanvasText;
+    }
+  }
+</style>

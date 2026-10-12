@@ -1,0 +1,190 @@
+---
+import { contact } from '../../content/site';
+import { mailtoHref } from '../../lib/email';
+import AgentPortrait from '../ui/AgentPortrait.astro';
+import RotatingRingLink from '../ui/RotatingRingLink.astro';
+import SectionHeading from '../ui/SectionHeading.astro';
+---
+
+<section id="contact" class="contact" aria-labelledby="contact-title">
+  <div class="contact__fields" aria-hidden="true"></div>
+  <div class="contact__art" aria-hidden="true">
+    <p class="contact__words">
+      <span class="contact__word">{contact.backdrop[0]}</span>
+      <span class="contact__word">{contact.backdrop[1]}</span>
+    </p>
+    <div class="contact__portrait">
+      <AgentPortrait variant="contact" width={780} height={936} class="contact__portrait-svg" />
+    </div>
+  </div>
+
+  <div class="contact__inner container">
+    <div class="contact__copy">
+      <SectionHeading
+        id="contact-title"
+        lead={contact.heading.lead}
+        accent={contact.heading.accent}
+        breakBeforeAccent
+        class="contact__title"
+      />
+      <p class="contact__body">{contact.body}</p>
+    </div>
+    <RotatingRingLink
+      href={mailtoHref()}
+      label={contact.ringLabel}
+      text="CONTACT US • CONTACT US • "
+      size={140}
+      radius={52}
+      variant="contact"
+      class="contact__ring"
+    />
+  </div>
+</section>
+
+<style>
+  .contact {
+    position: relative;
+    isolation: isolate;
+    padding-block: 32px 48px;
+  }
+
+  /* The colour field continues behind the site footer, as in the design. */
+  .contact__fields {
+    position: absolute;
+    inset: 0 0 -330px;
+    z-index: -2;
+    pointer-events: none;
+    background:
+      radial-gradient(520px 420px at calc(50% - min(50%, 720px)) 560px, rgb(30 58 170 / 45%), transparent 72%),
+      radial-gradient(560px 460px at calc(50% + min(30.56%, 440px)) 500px, rgb(170 32 62 / 45%), transparent 72%);
+  }
+
+  .contact__art {
+    position: relative;
+    z-index: -1;
+    height: clamp(300px, 80vw, 520px);
+    overflow: hidden;
+  }
+
+  .contact__words {
+    position: absolute;
+    inset: 8% 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    padding-inline-end: var(--gutter-min);
+    font-family: var(--font-display);
+    font-stretch: 80%;
+    font-size: clamp(4.5rem, 21vw, 13.75rem);
+    line-height: 0.82;
+    white-space: nowrap;
+  }
+
+  .contact__word {
+    background: linear-gradient(180deg, rgb(138 142 153 / 42%), rgb(90 94 105 / 28%));
+    background-clip: text;
+    color: transparent;
+  }
+
+  .contact__portrait {
+    position: absolute;
+    inset: 0;
+    mask-image: linear-gradient(#000 66%, transparent 96%);
+  }
+
+  .contact__portrait :global(.contact__portrait-svg) {
+    position: absolute;
+    left: 50%;
+    top: 4%;
+    width: auto;
+    height: 115%;
+    max-width: none;
+    transform: translateX(-50%) scaleX(-1) rotate(8deg);
+  }
+
+  .contact__inner {
+    display: grid;
+    gap: 32px;
+    justify-items: start;
+    margin-block-start: -48px;
+  }
+
+  .contact :global(.contact__title) {
+    font-size: var(--fs-h2-contact);
+    line-height: 1.2059;
+    letter-spacing: -0.02em;
+  }
+
+  .contact__body {
+    max-width: 372px;
+    margin-block-start: 18px;
+    font-size: var(--fs-body-xs);
+    line-height: 1.4815;
+    color: var(--color-text-muted);
+  }
+
+  @media (width >= 64rem) {
+    .contact {
+      min-height: 880px;
+      padding-block: 392px 197px;
+    }
+
+    .contact__art {
+      position: absolute;
+      inset: 0;
+      height: auto;
+      overflow: visible;
+    }
+
+    .contact__words {
+      inset: 0;
+      display: block;
+      padding: 0;
+      font-size: 220px;
+      line-height: 177px;
+    }
+
+    .contact__word {
+      position: absolute;
+      right: var(--gutter);
+    }
+
+    .contact__word:first-child {
+      top: 174px;
+    }
+
+    .contact__word:last-child {
+      top: 351px;
+    }
+
+    .contact__portrait {
+      inset: 120px auto auto calc(50% - 420px);
+      width: 840px;
+      height: 760px;
+      overflow: hidden;
+    }
+
+    .contact__portrait :global(.contact__portrait-svg) {
+      left: 30px;
+      top: 15px;
+      width: 780px;
+      height: 936px;
+      transform: scaleX(-1) rotate(8deg);
+      transform-origin: 390px 338px;
+    }
+
+    .contact__inner {
+      grid-template-columns: minmax(0, 778fr) minmax(0, 422fr);
+      gap: 0;
+      margin: 0;
+    }
+
+    .contact__copy {
+      margin-inline-start: 6px;
+    }
+
+    .contact__inner :global(.contact__ring) {
+      margin-block-start: 151px;
+    }
+  }
+</style>

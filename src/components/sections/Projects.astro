@@ -1,0 +1,94 @@
+---
+import { projects, projectsSection } from '../../content/projects';
+import ProjectRow from '../projects/ProjectRow.astro';
+import Pill from '../ui/Pill.astro';
+import SectionHeading from '../ui/SectionHeading.astro';
+---
+
+<section id="projects" class="projects" aria-labelledby="projects-title">
+  <div class="projects__fields" aria-hidden="true"></div>
+  <div class="projects__inner container">
+    <header class="projects__header">
+      <SectionHeading id="projects-title" lead={projectsSection.heading.lead} accent={projectsSection.heading.accent} />
+      <p class="section-intro projects__intro">{projectsSection.intro}</p>
+      <Pill href="/projects" size="compact" srSuffix=" projects" class="projects__all">
+        {projectsSection.viewAll}
+      </Pill>
+    </header>
+    <div class="projects__list">
+      {projects.map((project, i) => (
+        <ProjectRow project={project} reverse={i % 2 === 1} />
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .projects {
+    position: relative;
+    isolation: isolate;
+    padding-block: 56px 64px;
+    background: var(--color-bg);
+  }
+
+  .projects__fields {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      radial-gradient(760px 300px at calc(50% + min(25%, 360px)) 38%, rgb(120 26 74 / 55%), transparent 72%),
+      radial-gradient(420px 420px at calc(50% - min(34.03%, 490px)) 47%, rgb(176 52 74 / 85%), transparent 72%),
+      radial-gradient(520px 420px at calc(50% - min(6.94%, 100px)) 65%, rgb(40 72 200 / 85%), transparent 72%),
+      radial-gradient(420px 380px at calc(50% - min(20.83%, 300px)) 54%, rgb(110 52 140 / 70%), transparent 72%),
+      radial-gradient(260px 420px at calc(50% + min(50%, 720px)) 56%, rgb(40 110 210 / 55%), transparent 72%),
+      radial-gradient(620px 360px at calc(50% + min(16.67%, 240px)) 73%, rgb(36 86 190 / 55%), transparent 72%),
+      radial-gradient(260px 360px at calc(50% - min(50%, 720px)) 73%, rgb(150 36 70 / 55%), transparent 72%);
+  }
+
+  .projects__header {
+    display: grid;
+    gap: 12px;
+    justify-items: start;
+  }
+
+  .projects__intro {
+    max-width: 660px;
+  }
+
+  .projects__list {
+    display: grid;
+    gap: 64px;
+    margin-block-start: 40px;
+  }
+
+  @media (width >= 64rem) {
+    .projects {
+      padding-block: 56px 27px;
+    }
+
+    .projects__header {
+      grid-template-columns: 1fr auto;
+      column-gap: 24px;
+    }
+
+    .projects__header :global(.section-heading) {
+      grid-column: 1 / -1;
+    }
+
+    .projects__header :global(.projects__all) {
+      grid-column: 2;
+      grid-row: 2;
+      align-self: start;
+      margin-block-start: -6px;
+      margin-inline-end: -1px;
+    }
+
+    .projects__list {
+      gap: 0;
+    }
+
+    .projects__list > :global(.project:first-child) {
+      min-height: 464px;
+    }
+  }
+</style>
