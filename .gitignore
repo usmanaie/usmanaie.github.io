@@ -42,3 +42,7 @@ pnpm-debug.log*
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Claude Code: skills are reinstalled per machine via the uipro CLI (see README)
+.claude/skills/
+.claude/settings.local.json
