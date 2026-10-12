@@ -37,4 +37,8 @@ export default defineConfig(
     files: ['scripts/**', 'tests/**', '*.config.*'],
     rules: { 'no-console': 'off' },
   },
+  {
+    files: ['tests/**'],
+    rules: { '@typescript-eslint/no-non-null-assertion': 'off' },
+  },
 );

@@ -56,12 +56,32 @@ export function globToRegExp(glob) {
   return new RegExp(`^/?${re}$`);
 }
 
+/** Compressed bodies are cached like a CDN would, so measured TTFB reflects serving, not compressing. */
+const compressedCache = new Map();
+function compress(file, body, encoding) {
+  const key = `${encoding}:${file}`;
+  if (!compressedCache.has(key)) {
+    compressedCache.set(
+      key,
+      encoding === 'br'
+        ? brotliCompressSync(body, { params: { [constants.BROTLI_PARAM_QUALITY]: 11 } })
+        : gzipSync(body, { level: 9 }),
+    );
+  }
+  return compressedCache.get(key);
+}
+
 const rules = hosting.headers.map((rule) => ({ re: globToRegExp(rule.source), headers: rule.headers }));
 
 function headersFor(urlPath) {
   const out = {};
   for (const rule of rules) {
     if (rule.re.test(urlPath)) for (const { key, value } of rule.headers) out[key] = value;
+  }
+  // Production is HTTPS-only, where upgrade-insecure-requests is a no-op. Over plain-http localhost,
+  // WebKit would upgrade every subresource to https:// and fail, so drop just that directive locally.
+  if (out['Content-Security-Policy']) {
+    out['Content-Security-Policy'] = out['Content-Security-Policy'].replace(/;\s*upgrade-insecure-requests/, '');
   }
   return out;
 }
@@ -118,10 +138,10 @@ const server = createServer(async (req, res) => {
   const accept = String(req.headers['accept-encoding'] ?? '');
   if (COMPRESSIBLE.has(ext)) {
     if (accept.includes('br')) {
-      body = brotliCompressSync(body, { params: { [constants.BROTLI_PARAM_QUALITY]: 11 } });
+      body = compress(file, body, 'br');
       headers['content-encoding'] = 'br';
     } else if (accept.includes('gzip')) {
-      body = gzipSync(body, { level: 9 });
+      body = compress(file, body, 'gzip');
       headers['content-encoding'] = 'gzip';
     }
   }
