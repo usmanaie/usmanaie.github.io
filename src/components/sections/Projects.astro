@@ -11,7 +11,7 @@ import SectionHeading from '../ui/SectionHeading.astro';
     <header class="projects__header">
       <SectionHeading id="projects-title" lead={projectsSection.heading.lead} accent={projectsSection.heading.accent} />
       <p class="section-intro projects__intro">{projectsSection.intro}</p>
-      <Pill href="/projects" size="compact" srSuffix=" projects" class="projects__all">
+      <Pill href="/projects" size="compact" label="View all projects" class="projects__all">
         {projectsSection.viewAll}
       </Pill>
     </header>

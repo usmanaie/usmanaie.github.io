@@ -13,25 +13,24 @@ interface Props {
   icon?: 'arrow-up-right' | 'none';
   /** compact: tighter side padding, as on the design's VIEW ALL pill. */
   size?: 'default' | 'compact';
-  /** Visually hidden suffix that completes the accessible name, e.g. ": Multi-Agent AI Platform". */
-  srSuffix?: string;
+  /**
+   * Full accessible name when the visible text alone is ambiguous, e.g. "View case study:
+   * Multi-Agent AI Platform". It must start with the visible text (WCAG 2.5.3 label in name).
+   */
+  label?: string;
   class?: string;
 }
 
-const {
-  href,
-  variant = 'outline',
-  icon = 'arrow-up-right',
-  size = 'default',
-  srSuffix,
-  class: className,
-} = Astro.props;
+const { href, variant = 'outline', icon = 'arrow-up-right', size = 'default', label, class: className } = Astro.props;
 ---
 
-<a class:list={['pill', `pill--${variant}`, { 'pill--compact': size === 'compact' }, className]} href={href}>
+<a
+  class:list={['pill', `pill--${variant}`, { 'pill--compact': size === 'compact' }, className]}
+  href={href}
+  aria-label={label}
+>
   <span class="pill__label">
     <slot />
-    {srSuffix && <span class="visually-hidden">{srSuffix}</span>}
   </span>
   {icon !== 'none' && <Icon name={icon} size={11} />}
 </a>

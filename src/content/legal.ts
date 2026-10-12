@@ -24,7 +24,7 @@ export const privacy: LegalPage = {
     {
       heading: 'Who is responsible',
       paragraphs: [
-        'This website is the personal portfolio of Usman Aslam, who is responsible for the processing described here. You can reach him at the email address linked on this site.',
+        'This website is the personal portfolio of Usman Aslam, who is responsible for the processing described here. You can reach Usman at the email address linked on this site.',
       ],
     },
     {
