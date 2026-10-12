@@ -1,0 +1,104 @@
+---
+import Icon from './Icon.astro';
+
+/**
+ * The design's gradient-bordered pill link.
+ *  - outline:   dark fill, blue -> violet -> red border (section CTAs)
+ *  - outline-alt: same with the slightly lighter fill used in Projects/Experience
+ *  - filled:    pink -> violet fill (Telehealth case study)
+ */
+interface Props {
+  href: string;
+  variant?: 'outline' | 'outline-alt' | 'filled';
+  icon?: 'arrow-up-right' | 'none';
+  /** compact: tighter side padding, as on the design's VIEW ALL pill. */
+  size?: 'default' | 'compact';
+  /** Visually hidden suffix that completes the accessible name, e.g. ": Multi-Agent AI Platform". */
+  srSuffix?: string;
+  class?: string;
+}
+
+const {
+  href,
+  variant = 'outline',
+  icon = 'arrow-up-right',
+  size = 'default',
+  srSuffix,
+  class: className,
+} = Astro.props;
+---
+
+<a class:list={['pill', `pill--${variant}`, { 'pill--compact': size === 'compact' }, className]} href={href}>
+  <span class="pill__label">
+    <slot />
+    {srSuffix && <span class="visually-hidden">{srSuffix}</span>}
+  </span>
+  {icon !== 'none' && <Icon name={icon} size={11} />}
+</a>
+
+<style>
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-block-size: var(--touch-target);
+    padding-inline: 24px;
+    border: 1.5px solid transparent;
+    border-radius: var(--radius-pill);
+    color: var(--color-white);
+    font-size: var(--fs-pill);
+    font-weight: 600;
+    letter-spacing: var(--tracking-pill);
+    line-height: 1;
+    text-decoration: none;
+    white-space: nowrap;
+    transition:
+      box-shadow var(--dur-pill) ease,
+      transform var(--dur-pill) ease;
+  }
+
+  .pill--compact {
+    gap: 7px;
+    padding-inline: 19px;
+  }
+
+  .pill--outline {
+    background:
+      linear-gradient(var(--color-pill-fill), var(--color-pill-fill)) padding-box,
+      var(--gradient-signature) border-box;
+  }
+
+  .pill--outline-alt {
+    background:
+      linear-gradient(var(--color-pill-fill-alt), var(--color-pill-fill-alt)) padding-box,
+      var(--gradient-signature) border-box;
+  }
+
+  .pill--filled {
+    border-color: rgb(255 255 255 / 25%);
+    background: var(--gradient-pill-filled);
+    box-shadow: var(--glow-pill-filled);
+  }
+
+  .pill:hover {
+    transform: var(--lift-pill);
+    box-shadow: var(--glow-pill-hover);
+  }
+
+  @media (forced-colors: active) {
+    .pill {
+      border-color: LinkText;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pill {
+      transition: none;
+    }
+
+    .pill:hover {
+      transform: none;
+    }
+  }
+</style>

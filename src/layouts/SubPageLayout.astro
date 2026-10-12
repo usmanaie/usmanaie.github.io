@@ -1,0 +1,40 @@
+---
+import BaseLayout from './BaseLayout.astro';
+
+/** Shell for sub-pages: same chrome as the home page, with a quieter colour field. */
+interface Props {
+  title: string;
+  description: string;
+  path: string;
+  noindex?: boolean;
+}
+
+const { title, description, path, noindex = false } = Astro.props;
+---
+
+<BaseLayout title={title} description={description} path={path} noindex={noindex}>
+  <div class="subpage">
+    <div class="subpage__fields" aria-hidden="true"></div>
+    <div class="subpage__inner container">
+      <slot />
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .subpage {
+    position: relative;
+    isolation: isolate;
+    min-height: 70svh;
+    padding-block: calc(var(--header-height) + 64px) 96px;
+  }
+
+  .subpage__fields {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      radial-gradient(520px 420px at 0% 18%, rgb(255 52 72 / 18%), transparent 72%),
+      radial-gradient(560px 460px at 100% 8%, rgb(40 100 255 / 20%), transparent 72%);
+  }
+</style>

@@ -1,0 +1,46 @@
+---
+/**
+ * Section heading in the design's light 38/44 style with an italic accent phrase.
+ * `breakBeforeAccent` puts the accent on its own line at desktop widths, as in the design.
+ */
+interface Props {
+  id: string;
+  lead: string;
+  accent?: string;
+  /** Plain (non-italic) second line, used by the Reviews heading. */
+  rest?: string;
+  breakBeforeAccent?: boolean;
+  as?: 'h2' | 'h3';
+  class?: string;
+}
+
+const { id, lead, accent, rest, breakBeforeAccent = false, as: Tag = 'h2', class: className } = Astro.props;
+---
+
+<Tag id={id} class:list={['section-heading', className]}>
+  {lead}{' '}
+  {accent && (
+    <>
+      {breakBeforeAccent && <br class="section-heading__break" />}
+      <em>{accent}</em>
+    </>
+  )}
+  {rest && (
+    <>
+      <br class="section-heading__break" />
+      {rest}
+    </>
+  )}
+</Tag>
+
+<style>
+  .section-heading__break {
+    display: none;
+  }
+
+  @media (width >= 64rem) {
+    .section-heading__break {
+      display: inline;
+    }
+  }
+</style>

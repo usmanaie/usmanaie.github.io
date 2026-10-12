@@ -1,0 +1,135 @@
+---
+/**
+ * Circular link with slowly rotating text around an arrow (About "SCROLL DOWN",
+ * Contact "CONTACT US"). The rotating text is decorative; the link's accessible
+ * name comes from `label`.
+ */
+interface Props {
+  href: string;
+  label: string;
+  text: string;
+  size: number;
+  radius: number;
+  variant: 'scroll' | 'contact';
+  class?: string;
+}
+
+const { href, label, text, size, radius, variant, class: className } = Astro.props;
+const c = size / 2;
+// Spread the repeated text evenly around the whole circle (spacing only, glyphs untouched).
+const circumference = Math.round(2 * Math.PI * radius * 100) / 100;
+const pathId = `ring-${variant}-path`;
+const arrow = variant === 'scroll' ? 'M54 66l13-13M57 53h10v10' : 'M63 77l14-14M66 63h11v11';
+---
+
+<a class:list={['ring', `ring--${variant}`, className]} href={href} aria-label={label}>
+  <svg
+    class="ring__text"
+    width={size}
+    height={size}
+    viewBox={`0 0 ${size} ${size}`}
+    aria-hidden="true"
+    focusable="false"
+  >
+    <defs>
+      <path
+        id={pathId}
+        d={`M${c} ${c} m-${radius} 0 a${radius} ${radius} 0 1 1 ${radius * 2} 0 a${radius} ${radius} 0 1 1 -${radius * 2} 0`}
+      ></path>
+    </defs>
+    <text class="ring__glyphs">
+      <textPath href={`#${pathId}`} textLength={circumference} lengthAdjust="spacing">
+        {text}
+      </textPath>
+    </text>
+  </svg>
+  <svg
+    class="ring__arrow"
+    width={size}
+    height={size}
+    viewBox={`0 0 ${size} ${size}`}
+    aria-hidden="true"
+    focusable="false"
+  >
+    <path d={arrow}></path>
+  </svg>
+</a>
+
+<style>
+  .ring {
+    position: relative;
+    display: block;
+    flex: none;
+    border-radius: 50%;
+  }
+
+  .ring--scroll {
+    width: 120px;
+    height: 120px;
+  }
+
+  .ring--contact {
+    width: 140px;
+    height: 140px;
+  }
+
+  .ring__text,
+  .ring__arrow {
+    position: absolute;
+    inset: 0;
+    overflow: visible;
+  }
+
+  .ring__text {
+    animation: ring-spin 18s linear infinite;
+    transform-origin: 50% 50%;
+  }
+
+  .ring__glyphs {
+    fill: var(--color-ring-text);
+    font-family: var(--font-body);
+  }
+
+  .ring--scroll .ring__glyphs {
+    font-size: 11px;
+    letter-spacing: 3.2px;
+  }
+
+  .ring--contact .ring__glyphs {
+    font-size: 12px;
+    letter-spacing: 4.6px;
+  }
+
+  .ring__arrow {
+    fill: none;
+    stroke: var(--color-red-450);
+    stroke-width: 1.6;
+    stroke-linecap: round;
+  }
+
+  .ring:hover .ring__arrow {
+    stroke: var(--color-red-400);
+  }
+
+  @keyframes ring-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ring__text {
+      animation: none;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .ring__glyphs {
+      fill: LinkText;
+    }
+
+    .ring__arrow {
+      stroke: LinkText;
+    }
+  }
+</style>

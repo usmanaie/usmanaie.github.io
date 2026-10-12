@@ -1,0 +1,63 @@
+---
+import type { LegalPage } from '../../content/legal';
+import { site } from '../../content/site';
+import SubPageLayout from '../../layouts/SubPageLayout.astro';
+import PageIntro from './PageIntro.astro';
+
+interface Props {
+  page: LegalPage;
+  path: string;
+}
+
+const { page, path } = Astro.props;
+const updated = new Date(`${page.lastUpdated}T00:00:00Z`).toLocaleDateString('en-GB', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
+---
+
+<SubPageLayout title={`${page.title} · ${site.name}`} description={page.description} path={path}>
+  <PageIntro title={page.title} intro={page.description} back={{ href: '/', label: 'Back to home' }} />
+  <div class="legal">
+    {page.sections.map((section) => (
+      <section class="legal__section">
+        <h2 class="legal__heading">{section.heading}</h2>
+        {section.paragraphs.map((p) => (
+          <p class="legal__text">{p}</p>
+        ))}
+      </section>
+    ))}
+    <p class="legal__updated">
+      Last updated: <time datetime={page.lastUpdated}>{updated}</time>
+    </p>
+  </div>
+</SubPageLayout>
+
+<style>
+  .legal {
+    display: grid;
+    gap: 36px;
+    max-width: 44rem;
+    margin-block-start: 48px;
+  }
+
+  .legal__heading {
+    font-weight: 300;
+    font-size: var(--fs-h3-card);
+    line-height: 1.25;
+    color: var(--color-heading);
+  }
+
+  .legal__text {
+    margin-block-start: 12px;
+    color: var(--color-text-muted);
+    line-height: 1.6;
+  }
+
+  .legal__updated {
+    color: var(--color-text-soft);
+    font-size: var(--fs-body-sm);
+  }
+</style>

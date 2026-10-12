@@ -1,0 +1,30 @@
+---
+interface Props {
+  tone?: 'blue' | 'blue-light';
+  class?: string;
+}
+
+const { tone = 'blue', class: className } = Astro.props;
+---
+
+<p class:list={['eyebrow', `eyebrow--${tone}`, className]}>
+  <slot />
+</p>
+
+<style>
+  .eyebrow {
+    font-size: var(--fs-eyebrow);
+    font-weight: 500;
+    line-height: 1.75;
+    letter-spacing: var(--tracking-eyebrow);
+    text-transform: uppercase;
+  }
+
+  .eyebrow--blue {
+    color: var(--color-eyebrow-blue);
+  }
+
+  .eyebrow--blue-light {
+    color: var(--color-blue-400);
+  }
+</style>

@@ -1,0 +1,81 @@
+---
+import Icon from '../ui/Icon.astro';
+
+/** Heading block for sub-pages (projects, case studies, legal, 404). */
+interface Props {
+  title: string;
+  id?: string;
+  eyebrow?: string;
+  intro?: string;
+  back?: { href: string; label: string };
+}
+
+const { title, id, eyebrow, intro, back } = Astro.props;
+---
+
+<header class="page-intro">
+  {back && (
+    <a class="page-intro__back" href={back.href}>
+      <Icon name="arrow-left" size={16} strokeWidth={1.8} />
+      {back.label}
+    </a>
+  )}
+  {eyebrow && <p class="page-intro__eyebrow">{eyebrow}</p>}
+  <h1 id={id} class="page-intro__title">
+    {title}
+  </h1>
+  {intro && <p class="page-intro__intro">{intro}</p>}
+</header>
+
+<style>
+  .page-intro {
+    display: grid;
+    gap: 14px;
+    justify-items: start;
+    max-width: 52rem;
+  }
+
+  .page-intro__back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: var(--touch-target);
+    margin-block-end: 12px;
+    color: var(--color-text-soft);
+    font-size: var(--fs-body-sm);
+    text-decoration: none;
+    transition: color var(--dur-link) ease;
+  }
+
+  .page-intro__back:hover {
+    color: var(--color-white);
+  }
+
+  .page-intro__eyebrow {
+    color: var(--color-eyebrow-blue);
+    font-size: var(--fs-eyebrow);
+    font-weight: 500;
+    letter-spacing: var(--tracking-eyebrow);
+    text-transform: uppercase;
+  }
+
+  .page-intro__title {
+    font-weight: 300;
+    font-size: clamp(2.25rem, 1.75rem + 2.2222vw, 3.75rem);
+    line-height: 1.1;
+    letter-spacing: var(--tracking-h2);
+    color: var(--color-heading);
+    text-wrap: balance;
+  }
+
+  .page-intro__intro {
+    max-width: 640px;
+    color: var(--color-text-muted);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .page-intro__back {
+      transition: none;
+    }
+  }
+</style>
