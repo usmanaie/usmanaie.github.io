@@ -28,7 +28,7 @@ const WAVE =
   'M0 12 Q12.5 6 25 12 T50 12 T75 12 T100 12 T125 12 T150 12 T175 12 T200 12 T225 12 T250 12 T275 12 T300 12 T325 12 T350 12 T375 12 T400 12 T425 12 T450 12 T475 12 T500 12';
 ---
 
-<section id="top" class="hero" aria-labelledby="hero-title" data-hero>
+<section id="top" class="hero" aria-labelledby="hero-title" data-hero data-intro>
   <div class="hero__fields" aria-hidden="true"></div>
   <div class="hero__frame">
     <div class="hero__canvas">
@@ -1193,8 +1193,30 @@ const WAVE =
    * Playback control: paused off-screen / hidden tab, replay
    * ============================================================ */
 
+  /*
+   * data-intro: held until the page has loaded and gone idle (scripts/hero.ts) so the
+   * main-thread custom-property animations do not compete with the first render (LCP).
+   * data-paused: off-screen or hidden tab.
+   */
+  .hero[data-intro] :global(*),
   .hero[data-paused] :global(*) {
     animation-play-state: paused;
+  }
+
+  /*
+   * The masked fluid-fill layers, edge tint and power glows are the costliest layers to
+   * paint (mask compositing + blend modes) and are invisible or faint at the start of the
+   * cycle. Skipping them until the intro starts keeps the first render fast; the tint fades in.
+   */
+  @media (prefers-reduced-motion: no-preference) {
+    .hero[data-intro] .agent__mask,
+    .hero[data-intro] .agent__power {
+      display: none;
+    }
+
+    .agent__tint {
+      animation: hero-fade-in 0.8s ease-out both;
+    }
   }
 
   .hero[data-resetting] :global(*) {
@@ -1630,6 +1652,12 @@ const WAVE =
     98%,
     100% {
       opacity: 0.5;
+    }
+  }
+
+  @keyframes hero-fade-in {
+    from {
+      opacity: 0;
     }
   }
 

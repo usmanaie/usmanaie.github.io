@@ -1,9 +1,25 @@
-/* Loaded only when JavaScript is disabled (via <noscript> in <head>). */
-.site-header[data-mode='home'] {
+/*
+ * Loaded only when JavaScript is disabled (via <noscript> in <head>).
+ * Selectors are over-qualified to outrank the scoped component styles that load after this file.
+ */
+html body .site-header[data-site-header][data-mode='home'] {
   visibility: visible;
   transform: none;
 }
 
-.site-header__toggle {
+html .site-header .site-header__toggle {
   display: none;
+}
+
+html body .hero[data-intro] * {
+  animation-play-state: running;
+}
+
+html body .hero[data-intro] .agent__mask,
+html body .hero[data-intro] .agent__power {
+  display: block;
+}
+
+html main > section {
+  content-visibility: visible;
 }

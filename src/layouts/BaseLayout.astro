@@ -89,5 +89,10 @@ const ogImage = new URL('/og.jpg', Astro.site).href;
       <slot />
     </main>
     <SiteFooter onHome={onHome} />
+    <script>
+      import { markReadyWhenIdle } from '../scripts/ready';
+
+      markReadyWhenIdle();
+    </script>
   </body>
 </html>

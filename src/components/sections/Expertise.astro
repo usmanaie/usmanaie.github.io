@@ -1,5 +1,5 @@
 ---
-import { Image } from 'astro:assets';
+import { Picture } from 'astro:assets';
 
 import ringGlow from '../../assets/expertise/ring-glow.png';
 import ringRings from '../../assets/expertise/ring-rings.png';
@@ -18,18 +18,26 @@ import SectionHeading from '../ui/SectionHeading.astro';
 <section id="expertise" class="expertise" aria-labelledby="expertise-title" data-animated-region>
   <div class="expertise__layout">
     <div class="expertise__ring" aria-hidden="true">
-      <Image
+      <Picture
         src={ringGlow}
         alt=""
-        widths={[640, 960, 1920]}
+        formats={['avif', 'webp']}
+        widths={[640, 960, 1440]}
+        quality={55}
         sizes="(width >= 64rem) min(960px, 66.7vw), 120vw"
+        loading="lazy"
+        decoding="async"
         class="expertise__layer expertise__layer--glow"
       />
-      <Image
+      <Picture
         src={ringRings}
         alt=""
-        widths={[640, 960, 1920]}
+        formats={['avif', 'webp']}
+        widths={[640, 960, 1440]}
+        quality={60}
         sizes="(width >= 64rem) min(960px, 66.7vw), 120vw"
+        loading="lazy"
+        decoding="async"
         class="expertise__layer"
       />
       <img src={ticks} alt="" width="800" height="800" loading="lazy" decoding="async" class="expertise__ticks" />

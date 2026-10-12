@@ -88,6 +88,16 @@ em {
   scroll-margin-top: var(--header-height);
 }
 
+/*
+ * During the first render, below-the-fold sections skip style/layout/paint, which keeps
+ * LCP cheap. Once the page is idle (scripts/ready.ts sets data-ready) they render normally,
+ * so in-page anchors land exactly and nothing reflows mid-scroll.
+ */
+html:not([data-ready]) main > section:not(:first-child) {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 900px;
+}
+
 /* ---------- Utilities ---------- */
 
 .container {

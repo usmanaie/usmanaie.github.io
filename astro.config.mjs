@@ -30,6 +30,8 @@ export default defineConfig({
     build: {
       // Never inline assets as data: URIs; they would bypass caching and the CSP.
       assetsInlineLimit: 0,
+      // One stylesheet per page instead of one per component: fewer render-blocking requests.
+      cssCodeSplit: false,
     },
   },
 });

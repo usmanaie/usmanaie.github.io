@@ -1,6 +1,12 @@
 /**
  * Derives static image assets from committed sources.
  *
+ *   src/assets/hero/agent.png  ->  src/assets/hero/agent-2x.png
+ *     INTERIM: the supplied art is 379x598, below its 498x785 display size. A Lanczos 2x
+ *     upscale (758x1196) meets the >= 1.5x resolution Lighthouse expects until the owner
+ *     supplies a real high-resolution source (LAUNCH_CHECKLIST item 13). Replace agent.png
+ *     with the new art and re-run this script; nothing else changes.
+ *
  *   src/assets/hero/agent.png  ->  src/assets/hero/agent-mask.webp
  *     Alpha-only mask for the hero "fluid fill". Generated from the displayed image so the
  *     mask always matches it, and small enough not to cost a second full PNG download.
@@ -20,6 +26,13 @@ const src = path.join(root, 'src/assets/hero/agent.png');
 const mask = path.join(root, 'src/assets/hero/agent-mask.webp');
 
 const { width, height } = await sharp(src).metadata();
+
+const upscaled = path.join(root, 'src/assets/hero/agent-2x.png');
+await sharp(src)
+  .resize(width * 2, height * 2, { kernel: 'lanczos3' })
+  .png({ compressionLevel: 9 })
+  .toFile(upscaled);
+console.log(`agent-2x.png ${width * 2}x${height * 2}`);
 const alpha = await sharp(src).ensureAlpha().extractChannel('alpha').toBuffer();
 
 await sharp({ create: { width, height, channels: 3, background: '#000000' } })

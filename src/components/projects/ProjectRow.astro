@@ -10,9 +10,11 @@ interface Props {
   reverse: boolean;
   /** h3 inside the home page's Projects section, h2 on the /projects page. */
   headingLevel?: 'h2' | 'h3';
+  /** Load eagerly with high priority (the first row on /projects is the LCP element). */
+  priority?: boolean;
 }
 
-const { project, reverse, headingLevel: Heading = 'h3' } = Astro.props;
+const { project, reverse, headingLevel: Heading = 'h3', priority = false } = Astro.props;
 const bright = project.tone === 'bright';
 const titleId = `project-${project.slug}-title`;
 ---
@@ -23,10 +25,11 @@ const titleId = `project-${project.slug}-title`;
       src={project.image}
       alt={project.imageAlt}
       formats={['avif', 'webp']}
-      widths={[603, 1206]}
-      quality={80}
+      widths={[603, 800, 1206]}
+      quality={72}
       sizes="(width >= 64rem) min(603px, 42vw), 100vw"
-      loading="lazy"
+      loading={priority ? 'eager' : 'lazy'}
+      fetchpriority={priority ? 'high' : 'auto'}
       decoding="async"
       class="project__img"
     />
@@ -45,7 +48,7 @@ const titleId = `project-${project.slug}-title`;
     <Pill
       href={`/projects/${project.slug}`}
       variant={bright ? 'filled' : 'outline-alt'}
-      srSuffix={`: ${project.title}`}
+      label={`View case study: ${project.title}`}
       class="project__cta"
     >
       {projectsSection.caseStudy}

@@ -14,7 +14,7 @@ import SubPageLayout from '../../layouts/SubPageLayout.astro';
   />
   <div class="projects-page">
     {projects.map((project, i) => (
-      <ProjectRow project={project} reverse={i % 2 === 1} headingLevel="h2" />
+      <ProjectRow project={project} reverse={i % 2 === 1} headingLevel="h2" priority={i === 0} />
     ))}
   </div>
 </SubPageLayout>
