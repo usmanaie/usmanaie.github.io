@@ -91,6 +91,11 @@ Owner-facing items are also tracked in [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md
     bubbles overhang the stage slightly. Prominent vertical bars glow behind the head and shoulders and fade
     upward past the stage (it clips only at the bottom; the bars ignore the pointer, as they reach behind the
     nav). Copy 540 : flow 761; the headline cap is 44% of the copy column (it still fits).
+- **Section and sub-page balance (owner request).** The home sections below the hero follow the design (within
+  0.5–3% at 1440px); the owner kept the design's vector portraits. The sub-pages are balanced the standard way: a
+  case study sets the story (intro, highlights, next step) beside the project image, centred against it, on
+  desktop (phones keep the reading order); Privacy and Terms are one centred reading column; the 404 is centred;
+  the projects list keeps the home section's alternating rows.
 - **Hero robot (owner request).** The owner asked for AI-generated, high-resolution, full-body art and approved
   candidate "A, presenting" (`design-candidates/`, git-ignored).
   - The final art was produced with **Gemini 3 Pro Image on Vertex AI**, at

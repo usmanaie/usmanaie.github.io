@@ -29,10 +29,18 @@ import SubPageLayout from '../layouts/SubPageLayout.astro';
 </SubPageLayout>
 
 <style>
+  /* Centred in the window, the standard composition for an error page. */
   .not-found {
     display: grid;
+    align-content: center;
     gap: 24px;
-    justify-items: start;
+    justify-items: center;
+    min-height: calc(100svh - var(--header-height) - 260px);
+    text-align: center;
+  }
+
+  .not-found :global(.page-intro) {
+    justify-items: center;
   }
 
   .not-found__code {
@@ -46,6 +54,7 @@ import SubPageLayout from '../layouts/SubPageLayout.astro';
   .not-found__actions {
     display: flex;
     flex-wrap: wrap;
+    justify-content: center;
     gap: 16px;
     margin-block-start: 12px;
   }

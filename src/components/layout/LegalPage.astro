@@ -19,27 +19,34 @@ const updated = new Date(`${page.lastUpdated}T00:00:00Z`).toLocaleDateString('en
 ---
 
 <SubPageLayout title={`${page.title} · ${site.name}`} description={page.description} path={path}>
-  <PageIntro title={page.title} intro={page.description} back={{ href: '/', label: 'Back to home' }} />
-  <div class="legal">
-    {page.sections.map((section) => (
-      <section class="legal__section">
-        <h2 class="legal__heading">{section.heading}</h2>
-        {section.paragraphs.map((p) => (
-          <p class="legal__text">{p}</p>
-        ))}
-      </section>
-    ))}
-    <p class="legal__updated">
-      Last updated: <time datetime={page.lastUpdated}>{updated}</time>
-    </p>
+  <div class="legal-page">
+    <PageIntro title={page.title} intro={page.description} back={{ href: '/', label: 'Back to home' }} />
+    <div class="legal">
+      {page.sections.map((section) => (
+        <section class="legal__section">
+          <h2 class="legal__heading">{section.heading}</h2>
+          {section.paragraphs.map((p) => (
+            <p class="legal__text">{p}</p>
+          ))}
+        </section>
+      ))}
+      <p class="legal__updated">
+        Last updated: <time datetime={page.lastUpdated}>{updated}</time>
+      </p>
+    </div>
   </div>
 </SubPageLayout>
 
 <style>
+  /* One centred reading column: the heading and the text share the same measure. */
+  .legal-page {
+    max-width: 46rem;
+    margin-inline: auto;
+  }
+
   .legal {
     display: grid;
     gap: 36px;
-    max-width: 44rem;
     margin-block-start: 48px;
   }
 

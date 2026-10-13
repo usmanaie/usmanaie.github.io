@@ -29,13 +29,15 @@ const { project } = Astro.props;
   path={`/projects/${project.slug}`}
 >
   <article class="case" aria-labelledby="case-title">
-    <PageIntro
-      id="case-title"
-      title={project.title}
-      eyebrow={project.eyebrow}
-      intro={project.summary}
-      back={{ href: '/projects', label: 'All projects' }}
-    />
+    <div class="case__intro">
+      <PageIntro
+        id="case-title"
+        title={project.title}
+        eyebrow={project.eyebrow}
+        intro={project.summary}
+        back={{ href: '/projects', label: 'All projects' }}
+      />
+    </div>
     <figure class="case__media">
       <Picture
         src={project.image}
@@ -43,13 +45,13 @@ const { project } = Astro.props;
         formats={['avif', 'webp']}
         widths={[603, 1206]}
         quality={80}
-        sizes="(width >= 64rem) 760px, 100vw"
+        sizes="(width >= 64rem) 660px, 100vw"
         loading="eager"
         fetchpriority="high"
         decoding="async"
       />
     </figure>
-    <section class="case__section" aria-labelledby="case-highlights">
+    <section class="case__section case__section--highlights" aria-labelledby="case-highlights">
       <h2 id="case-highlights" class="case__heading">
         Highlights
       </h2>
@@ -59,7 +61,7 @@ const { project } = Astro.props;
         ))}
       </ul>
     </section>
-    <section class="case__section" aria-labelledby="case-next">
+    <section class="case__section case__section--next" aria-labelledby="case-next">
       <h2 id="case-next" class="case__heading">
         Want the full story?
       </h2>
@@ -79,6 +81,42 @@ const { project } = Astro.props;
     display: grid;
     gap: 48px;
     max-width: 760px;
+  }
+
+  /*
+   * Desktop: two balanced columns, the story (intro, highlights, next step) on the left and the
+   * project image on the right, centred against it. Phones keep the reading order: intro,
+   * image, highlights, next step.
+   */
+  @media (width >= 64rem) {
+    .case {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+      grid-template-areas:
+        'intro media'
+        'highlights media'
+        'next media';
+      align-content: center;
+      gap: 40px 72px;
+      max-width: none;
+      min-height: calc(100svh - var(--header-height) - 160px);
+    }
+
+    .case__intro {
+      grid-area: intro;
+    }
+
+    .case__media {
+      grid-area: media;
+      align-self: center;
+    }
+
+    .case__section--highlights {
+      grid-area: highlights;
+    }
+
+    .case__section--next {
+      grid-area: next;
+    }
   }
 
   .case__media {
