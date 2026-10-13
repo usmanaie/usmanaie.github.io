@@ -55,3 +55,9 @@ desktop.ini
 .claude/skills/
 .claude/settings.local.json
 portfolio-build-prompt.md.pdf
+
+# Generated artwork candidates awaiting review (approved files are copied into src/assets)
+design-candidates/
+
+# Python bytecode
+__pycache__/
