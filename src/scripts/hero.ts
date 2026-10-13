@@ -4,8 +4,20 @@ import { observeVisibility } from './visibility';
 /** Timing of the agent loop (ms). The token's travel time matches --step-travel in CSS. */
 export const TIMING = { travel: 1000, dwell: 550, start: 500, hold: 2600 } as const;
 
-/** A full left-to-right head turn (every frame) takes this long, in ms (owner: a slow turn). */
-export const HEAD_SWEEP_MS = 1500;
+/**
+ * The head turns like a critically damped spring: it eases in and out, never overshoots, and a
+ * new turn that interrupts one in progress carries on smoothly instead of stopping and
+ * restarting. Any turn settles (95%) in about this long, in ms (owner: a slow, smooth turn).
+ */
+export const HEAD_TURN_MS = 2200;
+const HEAD_OMEGA = 4.74 / (HEAD_TURN_MS / 1000);
+
+/** One step of the head spring: new position and velocity (frames, frames/s) after `dt` s. */
+export function springStep(pos: number, vel: number, target: number, dt: number): [number, number] {
+  const accel = -HEAD_OMEGA * HEAD_OMEGA * (pos - target) - 2 * HEAD_OMEGA * vel;
+  const v = vel + accel * dt;
+  return [pos + v * dt, v];
+}
 
 export function easeInOut(t: number): number {
   return t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
@@ -95,6 +107,7 @@ export function initHero(root: Document = document): void {
   let headSprite: HTMLImageElement | undefined;
   let headPos = headDefault;
   let headTarget = headDefault;
+  let headVel = 0;
   let headAnim = 0;
   /** The charge fill on the head, mirroring the CSS fill on the body (level 0-1, green 0-1). */
   const tint = { level: 0, green: 0 };
@@ -153,21 +166,28 @@ export function initHero(root: Document = document): void {
     tintAnim = requestAnimationFrame(step);
   }
 
-  /** Turns the head to `frame`, at a steady speed (HEAD_SWEEP_MS for the full range), eased. */
+  /** Turns the head toward `frame` (see HEAD_TURN_MS); runs the spring until it settles. */
   function lookAt(frame: number) {
     headTarget = frame;
     flow.dataset['head'] = String(frame);
-    if (!headSprite) return;
-    cancelAnimationFrame(headAnim);
-    const from = headPos;
-    const duration = (Math.abs(frame - from) / Math.max(1, headFrames - 1)) * HEAD_SWEEP_MS;
-    if (duration < 1) return;
-    const startedAt = performance.now();
+    if (!headSprite || headAnim) return;
+    let last = performance.now();
     const step = (now: number) => {
-      const t = Math.min(1, (now - startedAt) / duration);
-      headPos = from + (frame - from) * easeInOut(t);
-      drawHead(headPos);
-      if (t < 1) headAnim = requestAnimationFrame(step);
+      // Small sub-steps keep the spring stable even after a long (throttled) frame.
+      let dt = Math.min(0.1, (now - last) / 1000);
+      last = now;
+      while (dt > 0) {
+        const h = Math.min(dt, 1 / 120);
+        [headPos, headVel] = springStep(headPos, headVel, headTarget, h);
+        dt -= h;
+      }
+      const settled = Math.abs(headPos - headTarget) < 0.01 && Math.abs(headVel) < 0.01;
+      if (settled) {
+        headPos = headTarget;
+        headVel = 0;
+      }
+      drawHead(Math.min(headFrames - 1, Math.max(0, headPos)));
+      headAnim = settled ? 0 : requestAnimationFrame(step);
     };
     headAnim = requestAnimationFrame(step);
   }
@@ -275,7 +295,9 @@ export function initHero(root: Document = document): void {
     run += 1;
     flow.removeAttribute('data-live');
     cancelAnimationFrame(headAnim);
+    headAnim = 0;
     headPos = headDefault;
+    headVel = 0;
     headTarget = headDefault;
     drawHead(headPos);
     flow.setAttribute('data-approved', '');

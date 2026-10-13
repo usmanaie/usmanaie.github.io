@@ -25,7 +25,7 @@ import numpy as np
 
 # Motion of the fastest-moving parts (90th percentile, px at the band's resolution) allowed
 # between consecutive frames. The neck and shoulders barely move, so an average would understate it.
-STEP_PX = 4.0
+STEP_PX = 2.5
 MIN_STEPS = 2
 # Blur (px) before measuring flow, and smoothing (px) of the flow field inside the figure.
 FLOW_BLUR = 3

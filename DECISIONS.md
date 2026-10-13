@@ -109,12 +109,13 @@ Owner-facing items are also tracked in [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md
     - `scripts/build-robot-head.mjs` puts each head on the one body above the collar (40-row blend), so every
       composite is identical below the seam, then cuts them out to one shared box.
     - `scripts/tween-head.py` (OpenCV, build time only) morphs in-betweens along a smoothed optical flow, so the
-      visor slides instead of crossfading: 32 frames in all, at most ~4 px of motion per frame.
-    - The page draws the head from a 32-frame sprite (~140 KB WebP) onto a canvas, eased at a steady speed
-      (1.5 s for the full left-to-right range, owner: a slow turn) and blended between adjacent frames. The
-      sprite holds only the head box: the band above the seam, cropped to the columns that actually change
-      (41% of the width), which kept the mobile home page under its 500 KB budget (406 KB). While the canvas
-      is live, exactly that box is masked out of the photo (`mask-composite: exclude`).
+      visor slides instead of crossfading: 48 frames in all, at most ~2.5 px of motion per frame.
+    - The page draws the head from a 48-frame sprite (~180 KB WebP) onto a canvas, blended between adjacent
+      frames. The turn follows a critically damped spring (owner: slow and smooth): it eases in and out,
+      settles in ~2.2 s, never overshoots, and a turn that interrupts another carries on without a jerk. The
+      sprite holds only the head box (the band above the seam, cropped to the columns that change, 41% of the
+      width), which keeps the mobile home page under its 500 KB budget. While the canvas is live, exactly that
+      box is masked out of the photo (`mask-composite: exclude`).
     - The robot faces the USER at first paint (the photo itself), turns right for the LLM, RAG and TOOLS,
       slightly left for GUARDRAILS, and back to the USER. The sprite loads after the load event, and never under
       reduced motion or without JS.

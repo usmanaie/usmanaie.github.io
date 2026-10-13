@@ -4,7 +4,15 @@ import { describe, expect, it } from 'vitest';
 
 import { hero } from '../../src/content/site';
 import { AGENT_CORE, flowNodes, HEAD, hops, LOOK_AT, NODE_RADIUS, ROBOT, spokes, STAGE } from '../../src/lib/hero-flow';
-import { easeInOut, headFillTop, headTintColor, levelFor, parseHops } from '../../src/scripts/hero';
+import {
+  easeInOut,
+  HEAD_TURN_MS,
+  headFillTop,
+  headTintColor,
+  levelFor,
+  parseHops,
+  springStep,
+} from '../../src/scripts/hero';
 
 describe('hero flow layout', () => {
   it('numbers participants by first involvement, 1..n', () => {
@@ -91,6 +99,19 @@ describe('controller helpers', () => {
     expect(headFillTop(1, 0.2)).toBe(0);
     expect(headTintColor(0)).toBe('rgb(130 210 255 / 0.55)');
     expect(headTintColor(1)).toBe('rgb(120 240 170 / 0.6)');
+  });
+
+  it('turns the head smoothly: no overshoot, ~95% of the way after HEAD_TURN_MS', () => {
+    let pos = 0;
+    let vel = 0;
+    let max = 0;
+    const dt = 1 / 120;
+    for (let t = 0; t < HEAD_TURN_MS / 1000; t += dt) {
+      [pos, vel] = springStep(pos, vel, 47, dt);
+      max = Math.max(max, pos);
+    }
+    expect(pos).toBeGreaterThan(47 * 0.93);
+    expect(max).toBeLessThanOrEqual(47);
   });
 
   it('parses hop data defensively', () => {

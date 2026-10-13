@@ -55,7 +55,7 @@ const MARGIN = 24;
  */
 const VISIBLE = 0.875;
 /** Sprite resolution relative to the cut-out (the robot is drawn ~200-240 CSS px wide). */
-const SPRITE_SCALE = 0.51;
+const SPRITE_SCALE = 0.46;
 /**
  * A column is part of the head box when, in some frame, more than CHANGE_SHARE of its rows differ
  * from the default frame by more than CHANGE_THRESHOLD (ignores blend and background noise).
