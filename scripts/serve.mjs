@@ -56,10 +56,13 @@ export function globToRegExp(glob) {
   return new RegExp(`^/?${re}$`);
 }
 
-/** Compressed bodies are cached like a CDN would, so measured TTFB reflects serving, not compressing. */
+/**
+ * Compressed bodies are cached like a CDN would, so measured TTFB reflects serving, not
+ * compressing. Keyed by mtime and size so a rebuild is picked up without a restart.
+ */
 const compressedCache = new Map();
-function compress(file, body, encoding) {
-  const key = `${encoding}:${file}`;
+function compress(file, body, encoding, version) {
+  const key = `${encoding}:${file}:${version}`;
   if (!compressedCache.has(key)) {
     compressedCache.set(
       key,
@@ -121,7 +124,10 @@ const server = createServer(async (req, res) => {
   }
 
   let body;
+  let version;
   try {
+    const info = await stat(file);
+    version = `${info.mtimeMs}:${info.size}`;
     body = await readFile(file);
   } catch {
     res.writeHead(404, { 'content-type': 'text/plain' });
@@ -138,10 +144,10 @@ const server = createServer(async (req, res) => {
   const accept = String(req.headers['accept-encoding'] ?? '');
   if (COMPRESSIBLE.has(ext)) {
     if (accept.includes('br')) {
-      body = compress(file, body, 'br');
+      body = compress(file, body, 'br', version);
       headers['content-encoding'] = 'br';
     } else if (accept.includes('gzip')) {
-      body = compress(file, body, 'gzip');
+      body = compress(file, body, 'gzip', version);
       headers['content-encoding'] = 'gzip';
     }
   }
