@@ -1,6 +1,6 @@
 # Usman Aslam — Portfolio
 
-One-page portfolio for Usman Aslam (Lead Software Engineer, agentic AI on Google Cloud), built from the
+One-page portfolio for Usman Aslam (Lead AI Engineer, agentic AI on Google Cloud), built from the
 "★ Portfolio · full one-page site" design export. It is a static Astro site with about 1.5 KB of JavaScript,
 self-hosted fonts, a strict CSP, and automated quality gates.
 

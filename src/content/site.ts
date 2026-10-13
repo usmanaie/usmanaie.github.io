@@ -26,16 +26,16 @@ export function numberToWord(value: number): string {
 
 export const yearsOfExperience = yearsSince(CAREER_START);
 
+/** Current job title (owner-confirmed). Drives <title>, the tagline, the About intro and JSON-LD. */
+const JOB_TITLE = 'Lead AI Engineer';
+
 export const site = {
   name: 'Usman Aslam',
-  /** OWNER-CONFIRM: final job title (the design used both "Lead AI Engineer" and "Lead Software Engineer"). */
-  jobTitle: 'Lead Software Engineer',
+  jobTitle: JOB_TITLE,
   /** Email is stored in parts and only assembled (percent-encoded) at build time. */
   email: { user: 'usmanaslam1002', domain: 'gmail.com' },
-  tagline:
-    'Lead Software Engineer building agentic AI, RAG pipelines and governed, production-grade systems on Google Cloud.',
-  description:
-    'Usman Aslam is a Lead Software Engineer and Google Cloud certified Professional Cloud Developer building agentic AI, RAG pipelines and governed, production-grade systems on Google Cloud.',
+  tagline: `${JOB_TITLE} building agentic AI, RAG pipelines and governed, production-grade systems on Google Cloud.`,
+  description: `Usman Aslam is a ${JOB_TITLE} and Google Cloud certified Professional Cloud Developer building agentic AI, RAG pipelines and governed, production-grade systems on Google Cloud.`,
   locale: 'en',
   themeColor: '#05060B',
   /** OWNER-CONFIRM: add LinkedIn and any other profiles. */
@@ -159,7 +159,7 @@ export const certification = {
 export const about = {
   heading: { lead: 'From Complex Requirements to', accent: 'Production-Grade AI' },
   paragraphs: [
-    'I’m a Lead Software Engineer who designs scalable, enterprise-grade backend systems and intelligent AI solutions that create real business value.',
+    `I’m a ${JOB_TITLE} who designs scalable, enterprise-grade backend systems and intelligent AI solutions that create real business value.`,
     'My work spans telehealth, supply chain and AI governance, and today I specialise in agentic AI on Google Cloud. Across every role, I’ve been drawn to the same challenge:',
   ],
   emphasis: 'Turning ambitious ideas into reliable software.',
