@@ -1,0 +1,19 @@
+{
+  "//": "Eye-light centres (source px, 1696x2528) for the head frames, used by tween-head.py to carry each eye to its partner instead of letting the flow smear it. Omit a frame (or give fewer than two eyes) to skip.",
+  "robot-head-L20-pro-2K.png": [
+    [705, 291],
+    [786, 292]
+  ],
+  "robot-head-LH2-pro-2K.png": [
+    [778, 292],
+    [858, 292]
+  ],
+  "robot-head-F0-pro-2K.png": [
+    [797, 294],
+    [878, 293]
+  ],
+  "robot-A-rest-pro-2K.png": [
+    [862, 297],
+    [938, 305]
+  ]
+}

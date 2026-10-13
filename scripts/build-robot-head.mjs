@@ -12,7 +12,8 @@
  *     body over FEATHER rows, so every composite is identical below the seam.
  *  3. Each composite is cut out (lib/cutout.mjs) and all are trimmed to one shared box.
  *  4. scripts/tween-head.py morphs in-between frames along the optical flow between
- *     neighbouring keys, so the head turns smoothly instead of crossfading.
+ *     neighbouring keys, so the head turns smoothly instead of crossfading. The eye lights
+ *     (scripts/head-landmarks.json) are carried to their partners explicitly.
  *
  * Outputs (src/assets/hero/):
  *   robot-agent.png         the default composite (the LCP image)
@@ -140,6 +141,7 @@ const top = Math.max(0, Math.min(...boxes.map((b) => b.minY)) - MARGIN);
 const trimW = Math.min(body.width, Math.max(...boxes.map((b) => b.maxX)) + MARGIN) - left;
 const trimH = Math.round((Math.min(body.height, Math.max(...boxes.map((b) => b.maxY)) + MARGIN) - top) * VISIBLE);
 const seam = SEAM - top;
+console.log(`trim box: left ${left}, top ${top}, ${trimW}x${trimH}`);
 const trimmed = (c) =>
   sharp(c.rgba, { raw: { width: c.width, height: c.height, channels: 4 } }).extract({
     left,
@@ -165,6 +167,10 @@ await Promise.all(
       .toFile(path.join(work, `key-${i}.png`)),
   ),
 );
+// Eye landmarks (scripts/head-landmarks.json, source px) -> band px, per key, for the tween.
+const landmarks = JSON.parse(await readFile(path.join(root, 'scripts/head-landmarks.json'), 'utf8'));
+const eyes = frameFiles.map((f) => (landmarks[path.basename(f)] ?? []).map(([x, y]) => [x - left, y - top]));
+await writeFile(path.join(work, 'landmarks.json'), JSON.stringify(eyes));
 const tween = spawnSync('python', [path.join(root, 'scripts/tween-head.py'), work], { stdio: 'inherit' });
 if (tween.status !== 0) throw new Error('tween-head.py failed');
 const { count, keys } = JSON.parse(await readFile(path.join(work, 'frames.json'), 'utf8'));

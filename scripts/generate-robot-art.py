@@ -130,7 +130,11 @@ def main() -> None:
     parser.add_argument("--vertex-project", help="use Vertex AI, billed to this GCP project")
     parser.add_argument("--location", default="global")
     parser.add_argument("--size", choices=["1K", "2K", "4K"], default="1K")
-    parser.add_argument("--reference", help="image to keep the character consistent with")
+    parser.add_argument(
+        "--reference",
+        action="append",
+        help="image to keep the character consistent with (repeat for several, in order)",
+    )
     args = parser.parse_args()
 
     from google import genai
@@ -146,9 +150,9 @@ def main() -> None:
     for cid in wanted:
         prompt = f"{STYLE} {CANDIDATES[cid]}"
         contents: list = [prompt]
-        if args.reference:
-            ref = pathlib.Path(args.reference)
-            contents.insert(0, types.Part.from_bytes(data=ref.read_bytes(), mime_type="image/png"))
+        for ref in reversed(args.reference or []):
+            data = pathlib.Path(ref).read_bytes()
+            contents.insert(0, types.Part.from_bytes(data=data, mime_type="image/png"))
         response = client.models.generate_content(
             model=MODELS[args.model],
             contents=contents,

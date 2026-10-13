@@ -110,6 +110,13 @@ Owner-facing items are also tracked in [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md
       composite is identical below the seam, then cuts them out to one shared box.
     - `scripts/tween-head.py` (OpenCV, build time only) morphs in-betweens along a smoothed optical flow, so the
       visor slides instead of crossfading: 48 frames in all, at most ~2.5 px of motion per frame.
+      The eyes travel further than the smoothed flow suggests, which showed as a double pair of eyes
+      mid-turn; the eye lights are recorded per frame (`scripts/head-landmarks.json`) and the flow is
+      steered so each eye slides to its partner. (Generating an extra in-between angle was tried; the
+      model kept turning the head to the right instead.)
+      A plain 50/50 blend still showed both keys' visor edges and sheen as faint streaks, so the
+      in-betweens use a sharpened dissolve: the shapes warp continuously, but each frame takes nearly
+      all of its pixels from the nearer key, handing over within a few frames around the midpoint.
     - The page draws the head from a 48-frame sprite (~180 KB WebP) onto a canvas, blended between adjacent
       frames. The turn follows a critically damped spring (owner: slow and smooth): it eases in and out,
       settles in ~2.2 s, never overshoots, and a turn that interrupts another carries on without a jerk. The
