@@ -77,12 +77,18 @@ Owner-facing items are also tracked in [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md
     right after an LLM request.
   - **Screen readers** get all 14 hops as an ordered list.
 - **Hero type scale (owner request).** Type and spacing follow the design's 1600px canvas scaled like the mockup:
-  one design unit is `min(100vw, 1440px) / 1600`.
+  one design unit (u) is 1/1600 of the design canvas.
   - **Sizes:** headline 231u, subhead 31u, body 15u, design gaps between blocks, CTA and trust badge scaled
     alike. Body and subhead have floors of 14px and 20px for readability.
-  - **Short viewports:** the earlier viewport-height caps are gone, so on short screens (e.g. 1280×585) the hero
-    runs below the fold, as the design did.
-  - **Stage:** the flow stage is landscape (880×720), so it fills its column without a hollow middle.
+  - **Fit to window (owner request):** the unit is `min(min(100vw, 1440px) / 1600, 100svh / 1067)`, so the
+    complete hero (nav, copy, CTA, badges and flow) always fits the window.
+  - **Larger agent (owner request: the robot looked small next to the text).** The flow stage is square
+    (720×720) instead of landscape (880×720), with the nodes moved in, and the flow column is wider (copy 540 :
+    flow 761). The robot is ~35% taller (615px vs ~455px at 1440×900). The headline cap is 44% of the copy column
+    (it still fits; the headline is ~2.22× its font size wide).
+  - **One action row (owner request):** the CTA, the trust badge and the certification share one row spanning
+    both columns below the copy and the flow (the copy column alone is too narrow for all three). On small
+    screens the row wraps: CTA, then each badge.
 - **Hero robot (owner request).** The owner asked for AI-generated, high-resolution, full-body art and approved
   candidate "A, presenting" (`design-candidates/`, git-ignored).
   - The final art was produced with **Gemini 3 Pro Image on Vertex AI**, at
@@ -90,25 +96,15 @@ Owner-facing items are also tracked in [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md
   - `scripts/cutout-robot.mjs` removes the black background by flood-filling only border-connected darkness, so
     the visor and joints stay solid. Enclosed regions that are almost all pure black (the gap between an arm and
     the body) are treated as background too.
-  - **Poses (owner request: the robot faces the current step).** Five more poses (USER wave, LLM point up-right,
-    RAG open palm, TOOLS point down-right, GUARDRAILS halt) were generated from the approved art as reference and
-    approved by the owner. The cut-out script aligns them to the base figure (head-to-feet height, feet, leg
-    centre) on one shared, wider canvas (`robot-layout.json`), so they crossfade in place without the body
-    jumping. The base image, its box and the LCP are unchanged.
-  - **Crossfade:** the incoming pose fades in on top while the outgoing one stays solid underneath, so the body
-    never turns see-through. The pose follows the participant the current hop involves, and the robot returns to
-    the base pose between runs.
-  - **Loading:** pose srcsets (AVIF/WebP, 540/720/1080) ride in `data-poses`, so the HTML requests none of them.
-    The script builds the `<picture>`s on first play, after the load event, and uses a pose only once it has
-    decoded. Reduced motion and no-JS never fetch them.
-  - The energy "charge" is a tint masked to a ~15 KB alpha-only silhouette padded to the pose canvas
-    (`pnpm images`). While a pose shows, the script masks the charge with that pose's own image instead.
+  - **Poses tried and dropped.** Per-step poses (the robot turning to each participant, crossfaded) were built
+    but the owner found the transitions not smooth enough; the hero uses a single image again.
+  - The energy "charge" is a tint masked to a 13.5 KB alpha-only silhouette (`pnpm images`).
   - Gemini output carries Google's invisible SynthID watermark. Commercial use is governed by Google Cloud's
     generative AI terms (launch item 13).
 - **Trust badge and certification (owner request).** "Trusted by innovators worldwide" is restored in the design's
-  style (rotating dotted ring beside the text, next to the CTA).
-  - The certification is a second badge in exactly the same style (`RingBadge.astro`, `kind="cert"`), below the
-    CTA. A vector certification seal takes the place of the "+" inside the ring, with "Google Cloud Certified /
+  style (rotating dotted ring beside the text, after the CTA).
+  - The certification is a second badge in exactly the same style (`RingBadge.astro`, `kind="cert"`), to the
+    right of the trust badge. A vector certification seal takes the place of the "+" inside the ring, with "Google Cloud Certified /
     Professional Cloud Developer" beside it.
   - The raster Google badge was dropped: its lettering was unreadable at badge size. The seal is our own vector,
     not Google artwork.

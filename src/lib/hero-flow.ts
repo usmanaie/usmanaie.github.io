@@ -1,14 +1,14 @@
-import robotLayout from '../assets/hero/robot-layout.json';
 import { type FlowNodeId, hero } from '../content/site';
 
 /**
- * Layout of the hero's agent loop, in the 880x720 (landscape) stage coordinate system.
+ * Layout of the hero's agent loop, in the 720x720 stage coordinate system
+ * (square, so the robot can stand taller in the hero than a landscape stage allowed).
  *
  * Hub and spoke: the agent (the robot's chest core) is the only participant that talks to
  * the others, so every message travels along a spoke between the agent and one node.
  * One source for node positions, spoke paths and the hop sequence.
  */
-export const STAGE = { width: 880, height: 720 } as const;
+export const STAGE = { width: 720, height: 720 } as const;
 export const NODE_RADIUS = 40;
 
 export interface Point {
@@ -17,27 +17,12 @@ export interface Point {
 }
 
 /**
- * Where the robot artwork sits in the stage. The base cut-out (robot-layout.json `figure`,
- * 773x2394) fills the stage height and is centred. CORE is the glowing chest core, as a
- * fraction of the artwork.
+ * Where the robot artwork sits in the stage. The cut-out is 773x2394; it fills the stage
+ * height and is centred. CORE is the glowing chest core, as a fraction of the artwork.
  */
 const ROBOT_HEIGHT = 690;
-const { figure, canvas } = robotLayout;
-const ROBOT_WIDTH = Math.round((ROBOT_HEIGHT * figure.width) / figure.height);
+const ROBOT_WIDTH = Math.round((ROBOT_HEIGHT * 773) / 2394);
 export const ROBOT = { x: (STAGE.width - ROBOT_WIDTH) / 2, y: 15, width: ROBOT_WIDTH, height: ROBOT_HEIGHT } as const;
-
-/**
- * The pose canvas (scripts/cutout-robot.mjs aligns every pose on it) relative to the robot
- * box, in stage px: wider than the base figure because arms reach out towards the bubbles.
- */
-const k = ROBOT_HEIGHT / figure.height;
-const round2 = (v: number) => Math.round(v * 100) / 100;
-export const POSE_CANVAS = {
-  x: round2(-figure.left * k),
-  y: round2(-figure.top * k),
-  width: round2(canvas.width * k),
-  height: round2(canvas.height * k),
-} as const;
 const CORE = { x: 0.589, y: 0.332 };
 
 export const AGENT_CORE: Point = {
@@ -46,13 +31,12 @@ export const AGENT_CORE: Point = {
 };
 
 const POSITIONS: Record<FlowNodeId, Point> = {
-  user: { x: 90, y: 150 },
+  user: { x: 84, y: 150 },
   agent: AGENT_CORE,
-  llm: { x: 800, y: 150 },
-  rag: { x: 826, y: 382 },
-  tools: { x: 790, y: 600 },
-  // Left-middle, so the lower-left stays clear for the trust badge beside the CTA.
-  guardrails: { x: 96, y: 410 },
+  llm: { x: 640, y: 150 },
+  rag: { x: 668, y: 382 },
+  tools: { x: 636, y: 600 },
+  guardrails: { x: 90, y: 410 },
 };
 
 /** How far each spoke bows away from the straight line (fraction of its length). */

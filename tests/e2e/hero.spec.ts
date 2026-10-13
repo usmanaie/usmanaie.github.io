@@ -67,39 +67,6 @@ test.describe('hero', () => {
     await expect(label).toHaveText('retrieve', { timeout: 5000 });
   });
 
-  test('the robot turns to the participant it is talking to, poses loading after first paint', async ({
-    page,
-    request,
-  }) => {
-    // First paint: the HTML holds only the base robot; pose sources ride in data-poses.
-    const html = await (await request.get('/')).text();
-    expect(html.match(/data-pose-layer/g)).toHaveLength(1);
-    expect(html).not.toMatch(/(src|srcset)="[^"]*robot-(user|llm|rag|tools|guardrails)/);
-
-    await page.goto('/');
-    const flow = page.locator('[data-flow]');
-    await expect(page.locator('[data-flow-label]')).toHaveText('retrieve', { timeout: 10000 });
-    await expect(flow).toHaveAttribute('data-pose', 'rag');
-    await expect(page.locator('[data-pose-layer="rag"]')).toHaveClass(/is-shown/);
-    await expect(page.locator('[data-pose-layer="agent"]')).not.toHaveClass(/is-shown/);
-    await expect(page.locator('[data-pose-layer].is-shown')).toHaveCount(1);
-    // The charge follows the pose's silhouette.
-    const mask = await page.locator('[data-flow-charge]').evaluate((el) => getComputedStyle(el).maskImage);
-    expect(mask).toContain('robot-rag');
-    // Pose images are fetched only after the page has loaded (they never compete with LCP).
-    const timing = await page.evaluate(() => {
-      const nav = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
-      const poses = performance
-        .getEntriesByType('resource')
-        .filter((r) => /robot-(user|llm|rag|tools|guardrails)\./.test(r.name));
-      return { loadEnd: nav.loadEventEnd, firstPose: Math.min(...poses.map((r) => r.startTime)), count: poses.length };
-    });
-    expect(timing.count).toBeGreaterThan(0);
-    expect(timing.firstPose).toBeGreaterThanOrEqual(timing.loadEnd);
-    await expect(page.locator('[data-flow-label]')).toHaveText('execute', { timeout: 10000 });
-    await expect(flow).toHaveAttribute('data-pose', 'tools');
-  });
-
   test('the charge turns green once the guardrails approve', async ({ page }) => {
     await page.goto('/');
     const flow = page.locator('[data-flow]');
@@ -162,9 +129,7 @@ test.describe('hero', () => {
     }
   });
 
-  test('the design trust badge sits beside the CTA, with the certification in the same ring style', async ({
-    page,
-  }) => {
+  test('the CTA, trust badge and certification share one row, both badges in the same ring style', async ({ page }) => {
     await page.goto('/');
     const trust = page.locator('#top .trust');
     await expect(trust).toContainText('Trusted by innovators');
@@ -187,6 +152,10 @@ test.describe('hero', () => {
     const badge = await trust.boundingBox();
     expect(badge!.x).toBeGreaterThan(cta!.x + cta!.width);
     expect(Math.abs(badge!.y + badge!.height / 2 - (cta!.y + cta!.height / 2))).toBeLessThan(12);
+    // The certification sits to the right of the trust badge, on the same line.
+    const certBox = await cert.boundingBox();
+    expect(certBox!.x).toBeGreaterThan(badge!.x + badge!.width);
+    expect(Math.abs(certBox!.y + certBox!.height / 2 - (badge!.y + badge!.height / 2))).toBeLessThan(4);
   });
 
   test('animations pause once the hero is scrolled out of view', async ({ page }) => {
@@ -220,9 +189,6 @@ test.describe('reduced motion', () => {
     expect(parseFloat(state.dash)).toBe(0);
     expect(Number(state.level)).toBe(1);
     expect(state.bob).toBe('none');
-    // Static: the base pose only, and the pose images are never fetched.
-    await expect(page.locator('[data-pose-layer]')).toHaveCount(1);
-    await expect(page.locator('[data-flow]')).toHaveAttribute('data-pose', 'agent');
   });
 
   test('anchor navigation jumps instantly', async ({ page }) => {

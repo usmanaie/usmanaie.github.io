@@ -1,48 +1,35 @@
 /**
- * Cuts the hero robot and its poses out of their pure-black generation backgrounds and
- * aligns them on one shared canvas, so the hero can crossfade between poses in place.
+ * Cuts the approved hero robot out of its pure-black generation background.
  *
- *   node scripts/cutout-robot.mjs <base.png> [user=<png>] [llm=<png>] [rag=<png>] [tools=<png>] [guardrails=<png>]
- *
- * Outputs:
- *   src/assets/hero/robot-agent.png         the base pose trimmed to the figure (the LCP image)
- *   src/assets/hero/poses/robot-<id>.webp   one per pose, on the shared canvas
- *   src/assets/hero/robot-layout.json       canvas size + where the base figure sits on it
+ *   node scripts/cutout-robot.mjs <generated.png> [out=src/assets/hero/robot-agent.png]
  *
  * A plain luminance key would also delete the robot's own dark parts (visor, graphite joints,
  * abdomen plates). Instead, background = dark pixels connected to the image border (flood
  * fill); dark regions enclosed by the figure stay opaque unless they are almost entirely
  * pure black (a gap between an arm and the body). Edges get a soft alpha from luminance, starting
  * just above the image's own background level, so the rim glow fades naturally into the page.
- *
- * Alignment: each pose is scaled so its head-to-feet height matches the base, then moved so
- * its feet and the centre of its legs land where the base's do. Arms (which differ per pose)
- * are ignored when measuring. The canvas is the union of every aligned figure plus a margin.
+ * The result is trimmed to the figure with a small margin.
  */
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import sharp from 'sharp';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const [baseInput, ...poseArgs] = process.argv.slice(2);
-if (!baseInput) {
-  console.error('Usage: node scripts/cutout-robot.mjs <base.png> [pose=<png> ...]');
+const input = process.argv[2];
+const output = path.resolve(root, process.argv[3] ?? 'src/assets/hero/robot-agent.png');
+if (!input) {
+  console.error('Usage: node scripts/cutout-robot.mjs <generated.png> [out]');
   process.exit(1);
 }
-const poses = poseArgs.map((arg) => {
-  const [id, file] = arg.split('=');
-  if (!id || !file || !/^[a-z]+$/.test(id)) throw new Error(`Bad pose argument: ${arg}`);
-  return { id, file };
-});
 
 /** Luminance below LOW is background (if reachable from the border); above HIGH is fully opaque. */
 const LOW = 14;
 const HIGH = 46;
 /** An enclosed dark region is background when this share of it is pure black (lum < 5). */
 const GAP_BLACK_SHARE = 0.8;
-/** Alpha above which a pixel counts as part of the figure when measuring. */
+/** Alpha above which a pixel counts as part of the figure when trimming. */
 const SOLID = 24;
 const MARGIN = 24;
 
@@ -122,127 +109,31 @@ async function cutout(file) {
     rgba[o + 2] = data[i * 3 + 2];
     rgba[o + 3] = a;
   }
-  return { rgba, width, height, ...measure(rgba, width, height) };
+  return { rgba, width, height };
 }
 
-/** Bounding box, feet line, leg centre and head top (arms excluded) of the figure. */
-function measure(rgba, width, height) {
-  const solid = (x, y) => rgba[(y * width + x) * 4 + 3] > SOLID;
-  let minX = width;
-  let minY = height;
-  let maxX = 0;
-  let maxY = 0;
-  for (let y = 0; y < height; y += 1) {
-    for (let x = 0; x < width; x += 1) {
-      if (!solid(x, y)) continue;
-      if (x < minX) minX = x;
-      if (x > maxX) maxX = x;
-      if (y < minY) minY = y;
-      if (y > maxY) maxY = y;
-    }
-  }
-  // Legs: the bottom 35% of the figure (no arm reaches that low).
-  const legsTop = Math.round(maxY - (maxY - minY) * 0.35);
-  let sum = 0;
-  let count = 0;
-  for (let y = legsTop; y <= maxY; y += 1) {
-    for (let x = minX; x <= maxX; x += 1) {
-      if (solid(x, y)) {
-        sum += x;
-        count += 1;
-      }
-    }
-  }
-  const legX = sum / count;
-  // Head: the highest solid pixel in a band above the legs (a raised hand lies outside it).
-  const band = (maxY - minY) * 0.1;
-  let headY = maxY;
-  for (let y = minY; y <= maxY && headY === maxY; y += 1) {
-    for (let x = Math.max(0, Math.round(legX - band)); x <= Math.min(width - 1, Math.round(legX + band)); x += 1) {
-      if (solid(x, y)) {
-        headY = y;
-        break;
-      }
-    }
-  }
-  return { box: { minX, minY, maxX, maxY }, legX, feetY: maxY, headY };
+const { rgba, width, height } = await cutout(input);
+let minX = width;
+let minY = height;
+let maxX = 0;
+let maxY = 0;
+for (let i = 0; i < width * height; i += 1) {
+  if (rgba[i * 4 + 3] <= SOLID) continue;
+  const x = i % width;
+  const y = (i / width) | 0;
+  if (x < minX) minX = x;
+  if (x > maxX) maxX = x;
+  if (y < minY) minY = y;
+  if (y > maxY) maxY = y;
 }
+const left = Math.max(0, minX - MARGIN);
+const top = Math.max(0, minY - MARGIN);
+const cropW = Math.min(width, maxX + MARGIN) - left;
+const cropH = Math.min(height, maxY + MARGIN) - top;
 
-const base = await cutout(baseInput);
-const baseHeight = base.feetY - base.headY;
-const layers = [{ id: 'agent', image: base, scale: 1, dx: 0, dy: 0 }];
-for (const pose of poses) {
-  const image = await cutout(pose.file);
-  const scale = baseHeight / (image.feetY - image.headY);
-  // Pose pixel (x, y) lands at (x * scale + dx, y * scale + dy) in base coordinates.
-  const dx = base.legX - image.legX * scale;
-  const dy = base.feetY - image.feetY * scale;
-  layers.push({ id: pose.id, image, scale, dx, dy });
-  console.log(`${pose.id}: scale ${scale.toFixed(3)}, shift ${dx.toFixed(1)}, ${dy.toFixed(1)}`);
-}
-
-// Canvas: the union of every aligned figure, plus a margin, in base pixel coordinates.
-let left = Infinity;
-let top = Infinity;
-let right = -Infinity;
-let bottom = -Infinity;
-for (const { image, scale, dx, dy } of layers) {
-  left = Math.min(left, image.box.minX * scale + dx);
-  top = Math.min(top, image.box.minY * scale + dy);
-  right = Math.max(right, image.box.maxX * scale + dx);
-  bottom = Math.max(bottom, image.box.maxY * scale + dy);
-}
-left = Math.floor(left - MARGIN);
-top = Math.floor(top - MARGIN);
-const canvas = { width: Math.ceil(right + MARGIN) - left, height: Math.ceil(bottom + MARGIN) - top };
-
-async function place({ image, scale, dx, dy }) {
-  const w = Math.round(image.width * scale);
-  const h = Math.round(image.height * scale);
-  const scaled = await sharp(image.rgba, { raw: { width: image.width, height: image.height, channels: 4 } })
-    .resize(w, h)
-    .raw()
-    .toBuffer();
-  // Crop the scaled image to the part that falls on the canvas, then composite it there.
-  const x = Math.round(dx) - left;
-  const y = Math.round(dy) - top;
-  const cropLeft = Math.max(0, -x);
-  const cropTop = Math.max(0, -y);
-  const cropW = Math.min(w, canvas.width - x) - cropLeft;
-  const cropH = Math.min(h, canvas.height - y) - cropTop;
-  const part = await sharp(scaled, { raw: { width: w, height: h, channels: 4 } })
-    .extract({ left: cropLeft, top: cropTop, width: cropW, height: cropH })
-    .png()
-    .toBuffer();
-  return sharp({ create: { ...canvas, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } }).composite([
-    { input: part, left: x + cropLeft, top: y + cropTop },
-  ]);
-}
-
-const heroDir = path.join(root, 'src/assets/hero');
-await mkdir(path.join(heroDir, 'poses'), { recursive: true });
-// Where the base figure (trimmed with the margin) sits on the canvas: the stage layout is
-// defined against it, so adding poses never moves the robot or changes the LCP image.
-const figure = {
-  left: base.box.minX - MARGIN - left,
-  top: base.box.minY - MARGIN - top,
-  width: base.box.maxX - base.box.minX + 2 * MARGIN,
-  height: base.box.maxY - base.box.minY + 2 * MARGIN,
-};
-
-for (const layer of layers) {
-  const placed = await (await place(layer)).png().toBuffer();
-  if (layer.id === 'agent') {
-    const out = path.join(heroDir, 'robot-agent.png');
-    await sharp(placed).extract(figure).png({ compressionLevel: 9 }).toFile(out);
-    console.log(`${path.relative(root, out)} ${figure.width}x${figure.height}`);
-  } else {
-    const out = path.join(heroDir, `poses/robot-${layer.id}.webp`);
-    await sharp(placed).webp({ quality: 90, alphaQuality: 100, effort: 6 }).toFile(out);
-    console.log(`${path.relative(root, out)} ${canvas.width}x${canvas.height}`);
-  }
-}
-
-const layout = { canvas, figure, poses: poses.map((p) => p.id) };
-await writeFile(path.join(heroDir, 'robot-layout.json'), `${JSON.stringify(layout, null, 2)}\n`);
-console.log('robot-layout.json', JSON.stringify(layout));
+await mkdir(path.dirname(output), { recursive: true });
+await sharp(rgba, { raw: { width, height, channels: 4 } })
+  .extract({ left, top, width: cropW, height: cropH })
+  .png({ compressionLevel: 9 })
+  .toFile(output);
+console.log(`${path.relative(root, output)} ${cropW}x${cropH} (from ${width}x${height})`);

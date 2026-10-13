@@ -52,6 +52,17 @@ CANDIDATES = {
     "full body from the top of the head down to both feet standing on the ground plane, nothing "
     "cropped, the feet fully visible with clear empty space below them. Same confident three-quarter "
     "pose with the right hand raised palm-up at chest height presenting something.",
+    # Owner feedback: no hand raised in the air. Same robot, framing and feet as A-full; only the
+    # arms change. Generated with A-full as the reference image.
+    "A-rest": "Recreate the reference image exactly: the same robot, identical materials, lighting, "
+    "colours, camera angle, scale and position in the frame, the head and visor exactly as in the "
+    "reference, both feet in exactly the same place. Change only the arms: both arms hang relaxed "
+    "and natural at the sides of the body, hands loose beside the thighs, nothing raised.",
+    "A-rest-clasp": "Recreate the reference image exactly: the same robot, identical materials, "
+    "lighting, colours, camera angle, scale and position in the frame, the head and visor exactly as "
+    "in the reference, both feet in exactly the same place. Change only the arms: the arms are "
+    "lowered and the hands are loosely joined in front of the body just below the waist, a calm, "
+    "composed stance; no hand is raised.",
     # Pose variants for the hero flow: the robot looks and gestures toward the active step.
     # Generated from the approved full-body art as the reference so the character, lighting,
     # scale and framing stay identical; only head direction and the gesturing arm change.

@@ -1,9 +1,9 @@
 ---
-import { getImage, Picture } from 'astro:assets';
+import { Picture } from 'astro:assets';
 
 import { hero } from '../../content/site';
 import { AGENT_CORE, flowNodes, hops, NODE_RADIUS, spokes, STAGE } from '../../lib/hero-flow';
-import { robotImage, robotPoses } from '../../lib/hero-image';
+import { robotImage } from '../../lib/hero-image';
 
 /**
  * The hero's agent loop, hub and spoke: every message goes through the agent (the robot).
@@ -13,9 +13,7 @@ import { robotImage, robotPoses } from '../../lib/hero-image';
  * The visual diagram is SVG (positions as attributes, so the strict CSP needs no inline
  * styles) and is aria-hidden; screen readers get every hop as an ordered list.
  * Static HTML shows all participants and connections (no-JS, reduced motion, first paint);
- * scripts/hero.ts then plays the request hop by hop, the token carrying each hop's label,
- * and turns the robot to whichever participant it is talking to (pose images, loaded only
- * once the page is idle; their srcsets ride in data-poses so nothing is fetched at first paint).
+ * scripts/hero.ts then plays the request hop by hop, the token carrying each hop's label.
  */
 const ICONS: Record<string, string[]> = {
   user: ['M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z', 'M4.5 20c.8-3.6 3.8-6 7.5-6s6.7 2.4 7.5 6'],
@@ -42,18 +40,6 @@ const ICONS: Record<string, string[]> = {
 const R = NODE_RADIUS;
 /** Chip centre sits on the bubble's edge (upper-left, 45°), so it overlaps the bubble by half. */
 const chipOffset = Math.round(R * Math.SQRT1_2);
-const poseData = JSON.stringify(
-  Object.fromEntries(
-    await Promise.all(
-      Object.entries(robotPoses.images).map(async ([id, src]) => {
-        const variant = (format: 'avif' | 'webp') =>
-          getImage({ src, widths: [...robotPoses.widths], format, quality: robotPoses.quality });
-        const [avif, webp] = await Promise.all([variant('avif'), variant('webp')]);
-        return [id, { avif: avif.srcSet.attribute, webp: webp.srcSet.attribute, src: webp.src }];
-      }),
-    ),
-  ),
-);
 const hopData = JSON.stringify(
   hops.map(({ spoke, direction, to, label, approves }) => ({ spoke, direction, to, label, approves })),
 );
@@ -81,14 +67,11 @@ const hopData = JSON.stringify(
         loading="eager"
         fetchpriority="high"
         decoding="async"
-        class="flow__robot-img flow__layer is-shown"
-        data-pose-layer="agent"
+        class="flow__robot-img"
       />
-      <div class="flow__poses" data-poses={poseData} data-pose-sizes={robotPoses.sizes} aria-hidden="true">
-        <div class="flow__charge" data-flow-charge>
-          <div class="flow__charge-level"></div>
-          <div class="flow__charge-level flow__charge-level--approved"></div>
-        </div>
+      <div class="flow__charge" aria-hidden="true">
+        <div class="flow__charge-level"></div>
+        <div class="flow__charge-level flow__charge-level--approved"></div>
       </div>
     </div>
 
@@ -210,20 +193,19 @@ const hopData = JSON.stringify(
 
   .flow {
     --step-travel: 1s;
-    --pose-fade: 0.45s;
 
     position: relative;
     container-type: inline-size;
     width: 100%;
-    aspect-ratio: 880 / 720;
+    aspect-ratio: 1;
   }
 
   .flow__canvas {
-    --flow-scale: tan(atan2(100cqw, 880px));
+    --flow-scale: tan(atan2(100cqw, 720px));
 
     position: absolute;
     inset: 0 auto auto 0;
-    width: 880px;
+    width: 720px;
     height: 720px;
     transform: scale(var(--flow-scale));
     transform-origin: 0 0;
@@ -231,7 +213,7 @@ const hopData = JSON.stringify(
 
   .flow__halo {
     position: absolute;
-    left: 180px;
+    left: 100px;
     top: 60px;
     width: 520px;
     height: 520px;
@@ -243,7 +225,7 @@ const hopData = JSON.stringify(
 
   .flow__lines {
     position: absolute;
-    left: 230px;
+    left: 150px;
     top: 40px;
     width: 420px;
     height: 640px;
@@ -254,66 +236,23 @@ const hopData = JSON.stringify(
   /* Same box as ROBOT in src/lib/hero-flow.ts (tests/unit/hero-flow.test.ts guards it). */
   .flow__robot {
     position: absolute;
-    left: 328.5px;
+    left: 248.5px;
     top: 15px;
     width: 223px;
     height: 690px;
-
-    /* Pose layers stack among themselves, never above the diagram. */
-    isolation: isolate;
   }
 
   .flow__robot :global(.flow__robot-img) {
-    position: relative;
     display: block;
     width: 100%;
     height: 100%;
     max-width: none;
-  }
-
-  /* Same box as POSE_CANVAS in src/lib/hero-flow.ts (the unit test guards it). */
-  .flow__poses {
-    position: absolute;
-    left: -91.08px;
-    top: -0.29px;
-    width: 443.57px;
-    height: 690.29px;
-    pointer-events: none;
-  }
-
-  .flow__poses :global(img) {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    max-width: none;
-  }
-
-  /*
-   * Pose crossfade: the incoming pose fades in on top while the outgoing one stays solid
-   * underneath and drops out once covered, so the body never turns see-through.
-   */
-  .flow__robot :global(.flow__layer) {
     filter: drop-shadow(0 26px 40px rgb(0 0 0 / 55%));
-    transition: opacity 0s linear var(--pose-fade);
   }
 
-  .flow__robot :global(.flow__layer:not(.is-shown)) {
-    opacity: 0;
-  }
-
-  .flow__robot :global(.flow__layer.is-shown) {
-    z-index: 1;
-    transition: opacity var(--pose-fade) ease;
-  }
-
-  /*
-   * Energy charge: a tint that rises inside the robot's silhouette as the steps complete.
-   * Masked by the base silhouette here; scripts/hero.ts swaps in the shown pose's image.
-   */
+  /* Energy charge: a tint that rises inside the robot's silhouette as the steps complete. */
   .flow__charge {
     position: absolute;
-    z-index: 2;
     inset: 0;
     mask-image: url('../../assets/hero/robot-agent-mask.webp');
     mask-size: 100% 100%;
@@ -357,7 +296,7 @@ const hopData = JSON.stringify(
   .flow__diagram {
     position: absolute;
     inset: 0;
-    width: 880px;
+    width: 720px;
     height: 720px;
     max-width: none;
     overflow: visible;
@@ -549,7 +488,7 @@ const hopData = JSON.stringify(
 
   .flow__replay {
     position: absolute;
-    left: 348px;
+    left: 268px;
     top: 30px;
     width: 184px;
     height: 650px;

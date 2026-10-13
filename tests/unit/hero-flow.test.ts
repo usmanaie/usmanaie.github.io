@@ -1,9 +1,7 @@
-import { readFileSync } from 'node:fs';
-
 import { describe, expect, it } from 'vitest';
 
 import { hero } from '../../src/content/site';
-import { AGENT_CORE, flowNodes, hops, NODE_RADIUS, POSE_CANVAS, ROBOT, spokes, STAGE } from '../../src/lib/hero-flow';
+import { AGENT_CORE, flowNodes, hops, NODE_RADIUS, ROBOT, spokes, STAGE } from '../../src/lib/hero-flow';
 import { levelFor, parseHops } from '../../src/scripts/hero';
 
 describe('hero flow layout', () => {
@@ -13,17 +11,7 @@ describe('hero flow layout', () => {
   });
 
   it('matches the robot box hard-coded in AgentFlow.astro CSS (.flow__robot)', () => {
-    expect(ROBOT).toEqual({ x: 328.5, y: 15, width: 223, height: 690 });
-  });
-
-  it('matches the pose canvas hard-coded in AgentFlow.astro CSS (.flow__poses)', () => {
-    const css = readFileSync('src/components/hero/AgentFlow.astro', 'utf8');
-    const rule = /\.flow__poses \{([^}]*)\}/.exec(css)?.[1] ?? '';
-    const px = (prop: string) => Number(new RegExp(String.raw`\b${prop}: (-?[\d.]+)px`).exec(rule)?.[1]);
-    expect({ x: px('left'), y: px('top'), width: px('width'), height: px('height') }).toEqual(POSE_CANVAS);
-    // The base figure sits inside the canvas, which is wider so arms can reach the bubbles.
-    expect(POSE_CANVAS.x).toBeLessThan(0);
-    expect(POSE_CANVAS.x + POSE_CANVAS.width).toBeGreaterThan(ROBOT.width);
+    expect(ROBOT).toEqual({ x: 248.5, y: 15, width: 223, height: 690 });
   });
 
   it('keeps every bubble inside the stage and clear of the robot', () => {

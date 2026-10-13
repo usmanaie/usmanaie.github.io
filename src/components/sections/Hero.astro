@@ -62,13 +62,14 @@ import Icon from '../ui/Icon.astro';
           {hero.body[0]}
           <br class="hero__br" /> {hero.body[1]}
         </p>
-        <div class="hero__actions">
-          <a class="hero-pill hero-pill--cta" href="#contact">
-            {hero.cta}
-            <Icon name="arrow-right-long" size={22} strokeWidth={1.6} class="hero-pill__icon" />
-          </a>
-          <RingBadge kind="trust" lines={hero.trust} />
-        </div>
+      </div>
+
+      <div class="hero__actions">
+        <a class="hero-pill hero-pill--cta" href="#contact">
+          {hero.cta}
+          <Icon name="arrow-right-long" size={22} strokeWidth={1.6} class="hero-pill__icon" />
+        </a>
+        <RingBadge kind="trust" lines={hero.trust} />
         <RingBadge
           kind="cert"
           lines={[certification.issuer, certification.name]}
@@ -123,7 +124,7 @@ import Icon from '../ui/Icon.astro';
 
   .hero__body {
     display: grid;
-    gap: 40px;
+    gap: 28px;
   }
 
   /* ---------- Copy ---------- */
@@ -184,12 +185,12 @@ import Icon from '../ui/Icon.astro';
     color: var(--color-hero-body);
   }
 
+  /* CTA, then the trust and certification badges side by side (wrapping on small screens). */
   .hero__actions {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 16px 24px;
-    margin-block-start: 6px;
   }
 
   /* ---------- Pills ---------- */
@@ -337,21 +338,28 @@ import Icon from '../ui/Icon.astro';
       font-size: max(0.8125rem, calc(15.5 * var(--u)));
     }
 
+    /*
+     * Copy beside a large, square agent stage; the CTA and both badges share one row below,
+     * spanning the full width (the copy column alone is too narrow for all three).
+     */
     .hero__body {
       flex: 1;
-      grid-template-columns: minmax(0, 560fr) minmax(0, 640fr);
+      grid-template:
+        'copy flow' 1fr
+        'actions actions' auto / minmax(0, 540fr) minmax(0, 761fr);
       align-items: center;
-      gap: calc(32 * var(--u));
-      padding-block: calc(8 * var(--u)) calc(40 * var(--u));
+      gap: calc(14 * var(--u)) calc(32 * var(--u));
+      padding-block: calc(8 * var(--u)) calc(34 * var(--u));
     }
 
     .hero__copy {
+      grid-area: copy;
       max-width: none;
       gap: 0;
     }
 
     .hero__title {
-      font-size: min(calc(231 * var(--u)), 42cqi);
+      font-size: min(calc(231 * var(--u)), 44cqi);
       line-height: 0.8485;
     }
 
@@ -369,9 +377,9 @@ import Icon from '../ui/Icon.astro';
     }
 
     .hero__actions {
+      grid-area: actions;
       flex-wrap: nowrap;
-      gap: calc(120 * var(--u));
-      margin-block-start: calc(23 * var(--u));
+      gap: calc(64 * var(--u));
     }
 
     .hero-pill--cta {
@@ -381,12 +389,8 @@ import Icon from '../ui/Icon.astro';
       font-size: max(0.8125rem, calc(15 * var(--u)));
     }
 
-    .hero__copy :global(.ring-badge) {
+    .hero__actions :global(.ring-badge) {
       --badge-size: calc(80 * var(--u));
-    }
-
-    .hero__copy :global(.cert) {
-      margin-block-start: calc(20 * var(--u));
     }
 
     .hero__br {
@@ -394,6 +398,7 @@ import Icon from '../ui/Icon.astro';
     }
 
     .hero__body :global(.flow) {
+      grid-area: flow;
       width: 100%;
     }
   }

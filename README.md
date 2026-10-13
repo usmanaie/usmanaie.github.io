@@ -131,11 +131,10 @@ artifact, review the screenshots, and commit them to `tests/visual/__screenshots
 
 ## Asset provenance
 
-- **Hero robot** (`src/assets/hero/robot-agent.png`) and its poses (`src/assets/hero/poses/`) were generated
-  with Gemini 3 Pro Image on Vertex AI (`python scripts/generate-robot-art.py --vertex-project <id>`), then cut out
-  and aligned with `node scripts/cutout-robot.mjs <base.png> user=<png> llm=<png> rag=<png> tools=<png>
-guardrails=<png>` and `pnpm images`. The prompts in the script are the provenance record; commercial-use
-  sign-off is launch checklist item 13.
+- **Hero robot** (`src/assets/hero/robot-agent.png`) was generated with Gemini 3 Pro Image on Vertex AI
+  (`python scripts/generate-robot-art.py --vertex-project <id>`), then cut out with `node scripts/cutout-robot.mjs`
+  and `pnpm images`. The prompts in the script are the provenance record; commercial-use sign-off is launch
+  checklist item 13.
 - **Certification seal** in the hero is original vector artwork (no Google badge artwork is used).
 - Project illustrations, the agent portraits and the Expertise ring are original vector artwork from the design
   export, rendered to raster at build time.
