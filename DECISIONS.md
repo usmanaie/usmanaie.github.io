@@ -61,18 +61,28 @@ Owner-facing items are also tracked in [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md
     connectors and the `offset-path` token stay aligned.
   - **Below 1024px** everything stacks: headline, copy, CTA, badge, then the flow. Step names are counter-scaled
     and captions dropped below 640px.
-- **Agent flow (owner request).** The flow now runs end to end: USER → AGENT → LLM → RAG → TOOLS → GUARDRAILS →
-  RESPONSE, then back to USER.
-  - GUARDRAILS was added because governance is a core skill on this site.
-  - The agent token travels the path, and each bubble appears when the token reaches it.
-  - Connectors draw behind the token. The robot's "charge" rises with each completed step.
-  - Step numbers are solid white circles centred on each bubble's edge (50% overlap).
-  - Positions live in one module (`src/lib/hero-flow.ts`). The closed path is a Catmull-Rom spline through the
-    step centres, with arc-length stops computed at build time and unit-tested.
-  - The diagram is SVG (attribute positions, so no inline styles under the CSP), with an equivalent visually
-    hidden `<ol>` for screen readers.
-  - Static HTML shows the completed flow (no-JS, reduced motion, first paint). `scripts/hero.ts` plays it after
-    load, pauses off-screen, and the robot is the replay control.
+- **Agent flow (owner request, revised).** The loop follows the standard tool-calling architecture, as in Google's
+  "Gemini CLI architecture and interaction flow" (the owner's reference).
+  - **Hub and spoke:** the agent (the robot) is the only participant that talks to the others.
+  - **The LLM never calls RAG or tools.** It returns a tool-call request; the agent executes it and sends the
+    result back to the LLM.
+  - **GUARDRAILS** check the final answer before the agent responds to the user.
+  - **Fourteen hops in total:** request → prompt + tools → tool call: retrieve → retrieve → context → context →
+    tool call: act → execute → result → result → answer → policy check → approved → response.
+  - **The label travels with the token** (no static captions, no AGENT card).
+  - **Reveal and highlight:** participants appear when first reached, and the spoke in use is highlighted.
+  - **Numbering:** step numbers are white circles centred on each bubble's edge, numbered by first involvement.
+  - **Single source:** the hop sequence lives in `src/content/site.ts` and the geometry in `src/lib/hero-flow.ts`.
+  - **Guarded:** unit and e2e tests check that every hop goes through the agent, and that RAG and tools run only
+    right after an LLM request.
+  - **Screen readers** get all 14 hops as an ordered list.
+- **Hero type scale (owner request).** Type and spacing follow the design's 1600px canvas scaled like the mockup:
+  one design unit is `min(100vw, 1440px) / 1600`.
+  - **Sizes:** headline 231u, subhead 31u, body 15u, design gaps between blocks, CTA and trust badge scaled
+    alike. Body and subhead have floors of 14px and 20px for readability.
+  - **Short viewports:** the earlier viewport-height caps are gone, so on short screens (e.g. 1280×585) the hero
+    runs below the fold, as the design did.
+  - **Stage:** the flow stage is landscape (880×720), so it fills its column without a hollow middle.
 - **Hero robot (owner request).** The owner asked for AI-generated, high-resolution, full-body art and approved
   candidate "A, presenting" (`design-candidates/`, git-ignored).
   - The final art was produced with **Gemini 3 Pro Image on Vertex AI**, at
@@ -82,8 +92,11 @@ Owner-facing items are also tracked in [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md
   - The energy "charge" is a tint masked to a 13.5 KB alpha-only silhouette (`pnpm images`).
   - Gemini output carries Google's invisible SynthID watermark. Commercial use is governed by Google Cloud's
     generative AI terms (launch item 13).
-- **Certification.** Google's Professional Cloud Developer badge (official artwork, unmodified) and a chip
-  replace the unverified "Trusted by innovators worldwide" claim. It becomes a link once `credentialUrl` is set.
+- **Trust badge and certification (owner request).** "Trusted by innovators worldwide" is restored in the design's
+  style (rotating dotted ring beside the text, next to the CTA).
+  - Google's Professional Cloud Developer badge (official artwork, unmodified) takes the place of the "+" inside
+    the ring.
+  - Its alt text names the credential, and it links to verification once `credentialUrl` is set.
 - **Headline.** Real `<h1>` text, with no SVG and no `textLength`. The design squeezed League Gothic to 70–79% of
   its natural width. I used the font's own **width axis** (`font-stretch: 81%`, variable font with `wdth`
   75–100) plus 10px word spacing, which reproduces the proportions without distorting glyphs.
