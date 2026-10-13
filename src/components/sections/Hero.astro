@@ -1,14 +1,13 @@
 ---
 import { primaryNav, sectionHref } from '../../content/nav';
-import { hero } from '../../content/site';
+import { certification, hero } from '../../content/site';
 import AgentFlow from '../hero/AgentFlow.astro';
-import TrustBadge from '../hero/TrustBadge.astro';
+import RingBadge from '../hero/RingBadge.astro';
 import Icon from '../ui/Icon.astro';
 
 /**
- * Hero (#top). Two columns at >= 1024px (copy | agent flow) sized to fit the viewport
- * height, so the flow can never overlap the copy; a single column below that.
- * The headline is sized to its column, the flow stage is a square scaled to its width.
+ * Hero (#top). At >= 1024px the design composition (copy | agent flow) is scaled as a whole
+ * to fit the window, by width or height, whichever runs out first; below that it stacks.
  */
 ---
 
@@ -68,8 +67,14 @@ import Icon from '../ui/Icon.astro';
             {hero.cta}
             <Icon name="arrow-right-long" size={22} strokeWidth={1.6} class="hero-pill__icon" />
           </a>
-          <TrustBadge />
+          <RingBadge kind="trust" lines={hero.trust} />
         </div>
+        <RingBadge
+          kind="cert"
+          lines={[certification.issuer, certification.name]}
+          href={certification.credentialUrl}
+          linkLabel={`Verify credential: ${certification.issuer}, ${certification.name}`}
+        />
       </div>
 
       <AgentFlow />
@@ -247,19 +252,21 @@ import Icon from '../ui/Icon.astro';
     justify-self: center;
   }
 
-  /* ---------- Desktop: two columns sized to the viewport ---------- */
+  /* ---------- Desktop: the design composition, scaled to fit the window ---------- */
 
   @media (width >= 64rem) {
     /*
-     * Type and spacing follow the design's 1600px canvas, scaled like the mockup
-     * (1440px viewport = 0.9): --u is one design unit. Headline 231u, subhead 31/39u,
-     * body 15/22u; gaps 26u / 10u / 23u between the blocks; the trust badge sits beside the CTA.
+     * One design unit (--u) = 1/1600 of the design canvas, sized to whichever of width or
+     * height runs out first (the canvas is 1600 x 1067, shown at 0.9 on a 1440 viewport).
+     * Every size below is in design units, so the complete hero (nav, copy, CTA, badges and
+     * the agent flow) always fits the window, like the mockup scaled to the page.
+     * Small floors keep text readable on very small windows.
      */
     .hero {
-      --u: calc(min(100vw, 1440px) / 1600);
+      --u: min(calc(min(100vw, 1440px) / 1600), calc(100svh / 1067));
 
       display: flex;
-      min-height: clamp(640px, 100svh, 1000px);
+      min-height: 100svh;
     }
 
     .hero__fields {
@@ -273,31 +280,32 @@ import Icon from '../ui/Icon.astro';
     .hero__inner {
       display: flex;
       flex-direction: column;
-      max-width: calc(var(--container) + 2 * var(--gutter));
-      padding: 0 var(--gutter);
+      width: min(100% - 2 * var(--gutter-min), calc(1333 * var(--u)));
+      max-width: none;
+      padding: 0;
     }
 
     .hero__bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 24px;
-      padding-block: 26px 8px;
+      gap: calc(24 * var(--u));
+      padding-block: calc(26 * var(--u)) calc(8 * var(--u));
     }
 
     .hero__nav-list {
       display: flex;
-      gap: 0 clamp(28px, 3.6vw, 56px);
+      gap: 0 calc(60 * var(--u));
       margin: 0;
     }
 
     .hero__nav-link {
       position: relative;
       display: block;
-      padding-block: 11px;
+      padding-block: max(11px, calc(12 * var(--u)));
       color: var(--color-hero-nav);
-      font-size: 1rem;
-      line-height: 22px;
+      font-size: max(0.8125rem, calc(17.8 * var(--u)));
+      line-height: 1.375;
       text-decoration: none;
       white-space: nowrap;
       transition: color var(--dur-link) ease;
@@ -312,7 +320,7 @@ import Icon from '../ui/Icon.astro';
       content: '';
       position: absolute;
       left: 50%;
-      top: 100%;
+      top: calc(100% - 6px);
       width: 5px;
       height: 5px;
       margin-left: -2.5px;
@@ -321,12 +329,20 @@ import Icon from '../ui/Icon.astro';
       box-shadow: var(--glow-dot-red);
     }
 
+    .hero-pill--nav {
+      width: auto;
+      height: max(44px, calc(51 * var(--u)));
+      gap: calc(28 * var(--u));
+      padding: 0 calc(18 * var(--u)) 0 calc(24 * var(--u));
+      font-size: max(0.8125rem, calc(15.5 * var(--u)));
+    }
+
     .hero__body {
       flex: 1;
       grid-template-columns: minmax(0, 560fr) minmax(0, 640fr);
       align-items: center;
-      gap: clamp(16px, 2vw, 32px);
-      padding-block: 4px 28px;
+      gap: calc(32 * var(--u));
+      padding-block: calc(8 * var(--u)) calc(40 * var(--u));
     }
 
     .hero__copy {
@@ -341,32 +357,36 @@ import Icon from '../ui/Icon.astro';
 
     .hero__sub {
       margin-block-start: calc(26 * var(--u));
-      font-size: max(1.25rem, calc(31 * var(--u)));
+      font-size: max(1.125rem, calc(31 * var(--u)));
       line-height: 1.258;
     }
 
     .hero__text {
       max-width: none;
       margin-block-start: calc(10 * var(--u));
-      font-size: max(0.875rem, calc(15 * var(--u)));
+      font-size: max(0.8125rem, calc(15 * var(--u)));
       line-height: 1.4667;
     }
 
     .hero__actions {
       flex-wrap: nowrap;
-      gap: calc(110 * var(--u));
+      gap: calc(120 * var(--u));
       margin-block-start: calc(23 * var(--u));
     }
 
     .hero-pill--cta {
       gap: calc(24 * var(--u));
-      height: max(46px, calc(60 * var(--u)));
+      height: max(44px, calc(60 * var(--u)));
       padding: 0 calc(30 * var(--u)) 0 calc(40 * var(--u));
-      font-size: max(0.875rem, calc(15 * var(--u)));
+      font-size: max(0.8125rem, calc(15 * var(--u)));
     }
 
-    .hero__actions :global(.trust) {
-      --trust-size: calc(80 * var(--u));
+    .hero__copy :global(.ring-badge) {
+      --badge-size: calc(80 * var(--u));
+    }
+
+    .hero__copy :global(.cert) {
+      margin-block-start: calc(20 * var(--u));
     }
 
     .hero__br {
@@ -374,8 +394,7 @@ import Icon from '../ui/Icon.astro';
     }
 
     .hero__body :global(.flow) {
-      width: min(100%, calc((100svh - 110px) * 880 / 720), 940px);
-      min-width: 440px;
+      width: 100%;
     }
   }
 

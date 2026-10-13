@@ -88,15 +88,31 @@ Owner-facing items are also tracked in [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md
   - The final art was produced with **Gemini 3 Pro Image on Vertex AI**, at
     1696×2528, using the approved draft as a reference image. Prompts live in `scripts/generate-robot-art.py`.
   - `scripts/cutout-robot.mjs` removes the black background by flood-filling only border-connected darkness, so
-    the visor and joints stay solid.
-  - The energy "charge" is a tint masked to a 13.5 KB alpha-only silhouette (`pnpm images`).
+    the visor and joints stay solid. Enclosed regions that are almost all pure black (the gap between an arm and
+    the body) are treated as background too.
+  - **Poses (owner request: the robot faces the current step).** Five more poses (USER wave, LLM point up-right,
+    RAG open palm, TOOLS point down-right, GUARDRAILS halt) were generated from the approved art as reference and
+    approved by the owner. The cut-out script aligns them to the base figure (head-to-feet height, feet, leg
+    centre) on one shared, wider canvas (`robot-layout.json`), so they crossfade in place without the body
+    jumping. The base image, its box and the LCP are unchanged.
+  - **Crossfade:** the incoming pose fades in on top while the outgoing one stays solid underneath, so the body
+    never turns see-through. The pose follows the participant the current hop involves, and the robot returns to
+    the base pose between runs.
+  - **Loading:** pose srcsets (AVIF/WebP, 540/720/1080) ride in `data-poses`, so the HTML requests none of them.
+    The script builds the `<picture>`s on first play, after the load event, and uses a pose only once it has
+    decoded. Reduced motion and no-JS never fetch them.
+  - The energy "charge" is a tint masked to a ~15 KB alpha-only silhouette padded to the pose canvas
+    (`pnpm images`). While a pose shows, the script masks the charge with that pose's own image instead.
   - Gemini output carries Google's invisible SynthID watermark. Commercial use is governed by Google Cloud's
     generative AI terms (launch item 13).
 - **Trust badge and certification (owner request).** "Trusted by innovators worldwide" is restored in the design's
   style (rotating dotted ring beside the text, next to the CTA).
-  - Google's Professional Cloud Developer badge (official artwork, unmodified) takes the place of the "+" inside
-    the ring.
-  - Its alt text names the credential, and it links to verification once `credentialUrl` is set.
+  - The certification is a second badge in exactly the same style (`RingBadge.astro`, `kind="cert"`), below the
+    CTA. A vector certification seal takes the place of the "+" inside the ring, with "Google Cloud Certified /
+    Professional Cloud Developer" beside it.
+  - The raster Google badge was dropped: its lettering was unreadable at badge size. The seal is our own vector,
+    not Google artwork.
+  - It links to verification once `certification.credentialUrl` is set.
 - **Headline.** Real `<h1>` text, with no SVG and no `textLength`. The design squeezed League Gothic to 70–79% of
   its natural width. I used the font's own **width axis** (`font-stretch: 81%`, variable font with `wdth`
   75–100) plus 10px word spacing, which reproduces the proportions without distorting glyphs.

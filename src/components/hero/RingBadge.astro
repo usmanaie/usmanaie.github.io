@@ -1,0 +1,155 @@
+---
+/**
+ * The design's ring badge: a slowly rotating dotted gradient ring with a mark inside and two
+ * lines of text beside it. `trust` is the mockup's "+" with "Trusted by innovators worldwide";
+ * `cert` puts a vector certification seal in the ring (crisp at any size, unlike the raster
+ * badge) beside the credential, and links to verification when `href` is set.
+ * Decorative graphics are aria-hidden. --badge-size scales the whole badge (the hero sizes it
+ * in design units on desktop).
+ */
+interface Props {
+  kind: 'trust' | 'cert';
+  lines: readonly [string, string];
+  href?: string | undefined;
+  /** Accessible name for the link, when `href` is set. */
+  linkLabel?: string;
+}
+
+const { kind, lines, href, linkLabel } = Astro.props;
+const Tag = href ? 'a' : 'div';
+const linkProps = href ? { href, rel: 'noopener noreferrer', 'aria-label': linkLabel } : {};
+const gradientId = `${kind}-ring-g`;
+/** Scalloped rosette edge: 16 lobes around the seal. */
+const lobes = Array.from({ length: 16 }, (_, i) => {
+  const a = (i / 16) * Math.PI * 2;
+  return { cx: +(24 + Math.cos(a) * 17.5).toFixed(2), cy: +(22 + Math.sin(a) * 17.5).toFixed(2) };
+});
+---
+
+<Tag class:list={['ring-badge', kind]} {...linkProps}>
+  <span class="ring-badge__mark" aria-hidden="true">
+    <svg class="ring-badge__ring" viewBox="0 0 80 80" focusable="false">
+      <defs>
+        <linearGradient id={gradientId} x1="0" y1="1" x2="1" y2="0">
+          <stop offset="0" stop-color="#2F7BFF"></stop>
+          <stop offset=".5" stop-color="#8A6BE0"></stop>
+          <stop offset="1" stop-color="#FF3B4E"></stop>
+        </linearGradient>
+      </defs>
+      <circle
+        cx="40"
+        cy="40"
+        r="36"
+        fill="none"
+        stroke={`url(#${gradientId})`}
+        stroke-width="7"
+        stroke-dasharray="1.6 5.9"
+      ></circle>
+    </svg>
+    {kind === 'trust' ? (
+      <svg class="ring-badge__icon trust__plus" viewBox="0 0 80 80" focusable="false">
+        <path d="M40 33v14M33 40h14" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="round" fill="none" />
+      </svg>
+    ) : (
+      <svg class="ring-badge__icon cert__seal" viewBox="0 0 48 48" focusable="false">
+        <path d="M15 33 11 46l6-3 4 5 4-13Z" fill="#4285F4" />
+        <path d="M33 33 37 46l-6-3-4 5-4-13Z" fill="#EA4335" />
+        <g fill="#E8EDF5">
+          {lobes.map((l) => (
+            <circle cx={l.cx} cy={l.cy} r="4.6" />
+          ))}
+        </g>
+        <circle cx="24" cy="22" r="17.5" fill="#E8EDF5" />
+        <g fill="none" stroke-width="2.6" stroke-linecap="butt">
+          <path d="M24 8.8a13.2 13.2 0 0 1 13.2 13.2" stroke="#EA4335" />
+          <path d="M37.2 22A13.2 13.2 0 0 1 24 35.2" stroke="#FBBC04" />
+          <path d="M24 35.2A13.2 13.2 0 0 1 10.8 22" stroke="#34A853" />
+          <path d="M10.8 22A13.2 13.2 0 0 1 24 8.8" stroke="#4285F4" />
+        </g>
+        <path
+          d="m18.2 22.4 4 4 7.8-8.2"
+          fill="none"
+          stroke="#0B1222"
+          stroke-width="2.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+    )}
+  </span>
+  <p class="ring-badge__text">
+    {lines[0]}
+    <br /> {lines[1]}
+  </p>
+</Tag>
+
+<style>
+  .ring-badge {
+    --badge-size: 80px;
+
+    display: flex;
+    align-items: center;
+    align-self: flex-start;
+    gap: calc(var(--badge-size) * 0.2125);
+    color: var(--color-hero-trust);
+    text-decoration: none;
+  }
+
+  .ring-badge__mark {
+    position: relative;
+    flex: none;
+    width: var(--badge-size);
+    height: var(--badge-size);
+  }
+
+  .ring-badge__ring,
+  .trust__plus {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  /* The seal sits inside the ring's dots, centred on the rosette and ribbons together. */
+  .cert__seal {
+    position: absolute;
+    top: 20%;
+    left: 22%;
+    width: 56%;
+    height: 56%;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .ring-badge__ring {
+      animation: ring-badge-spin 30s linear infinite;
+      transform-origin: 50% 50%;
+    }
+
+    a.ring-badge {
+      transition: transform var(--dur-pill) ease;
+    }
+
+    a.ring-badge:hover {
+      transform: var(--lift-pill);
+    }
+  }
+
+  .ring-badge__text {
+    font-family: var(--font-hero);
+    font-size: max(0.8125rem, calc(var(--badge-size) * 0.2));
+    line-height: 1.3125;
+    white-space: nowrap;
+  }
+
+  /* Paused with the rest of the hero when it is off-screen or the tab is hidden. */
+  :global(.hero[data-paused]) .ring-badge__ring {
+    animation-play-state: paused;
+  }
+
+  @keyframes ring-badge-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+</style>

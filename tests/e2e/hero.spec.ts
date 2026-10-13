@@ -20,11 +20,29 @@ test.describe('hero', () => {
     await expect(page.locator('.hero__panel')).toHaveCount(0);
   });
 
-  test('uses the design type scale (231px headline at 1600, 0.8x at 1280)', async ({ page }) => {
+  test('scales the whole design to fit the window (720px tall: height-limited)', async ({ page }) => {
     await page.goto('/');
+    // u = min(1280 / 1600, 720 / 1067): the 231-unit headline scales with the window height.
     const size = await page.locator('h1').evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
-    expect(size).toBeCloseTo(184.8, 0);
+    expect(size).toBeCloseTo((231 * 720) / 1067, 0);
   });
+
+  for (const [width, height] of [
+    [1024, 640],
+    [1280, 585],
+    [1366, 768],
+    [1920, 1080],
+  ] as const) {
+    test(`the complete hero fits a ${width}x${height} window`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      await page.goto('/');
+      for (const selector of ['.hero-pill--cta', '#top .trust', '#top .cert', '[data-flow]', '.hero-pill--nav']) {
+        const box = await page.locator(selector).boundingBox();
+        expect(box!.y + box!.height, selector).toBeLessThanOrEqual(height);
+        expect(box!.x + box!.width, selector).toBeLessThanOrEqual(width);
+      }
+    });
+  }
 
   test('exposes every hop of the agent loop to assistive tech as an ordered list', async ({ page }) => {
     await page.goto('/');
@@ -47,6 +65,47 @@ test.describe('hero', () => {
     const rag = await page.locator('[data-flow-node="rag"]').evaluate((el) => getComputedStyle(el).opacity);
     expect(Number(rag)).toBe(0);
     await expect(label).toHaveText('retrieve', { timeout: 5000 });
+  });
+
+  test('the robot turns to the participant it is talking to, poses loading after first paint', async ({
+    page,
+    request,
+  }) => {
+    // First paint: the HTML holds only the base robot; pose sources ride in data-poses.
+    const html = await (await request.get('/')).text();
+    expect(html.match(/data-pose-layer/g)).toHaveLength(1);
+    expect(html).not.toMatch(/(src|srcset)="[^"]*robot-(user|llm|rag|tools|guardrails)/);
+
+    await page.goto('/');
+    const flow = page.locator('[data-flow]');
+    await expect(page.locator('[data-flow-label]')).toHaveText('retrieve', { timeout: 10000 });
+    await expect(flow).toHaveAttribute('data-pose', 'rag');
+    await expect(page.locator('[data-pose-layer="rag"]')).toHaveClass(/is-shown/);
+    await expect(page.locator('[data-pose-layer="agent"]')).not.toHaveClass(/is-shown/);
+    await expect(page.locator('[data-pose-layer].is-shown')).toHaveCount(1);
+    // The charge follows the pose's silhouette.
+    const mask = await page.locator('[data-flow-charge]').evaluate((el) => getComputedStyle(el).maskImage);
+    expect(mask).toContain('robot-rag');
+    // Pose images are fetched only after the page has loaded (they never compete with LCP).
+    const timing = await page.evaluate(() => {
+      const nav = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+      const poses = performance
+        .getEntriesByType('resource')
+        .filter((r) => /robot-(user|llm|rag|tools|guardrails)\./.test(r.name));
+      return { loadEnd: nav.loadEventEnd, firstPose: Math.min(...poses.map((r) => r.startTime)), count: poses.length };
+    });
+    expect(timing.count).toBeGreaterThan(0);
+    expect(timing.firstPose).toBeGreaterThanOrEqual(timing.loadEnd);
+    await expect(page.locator('[data-flow-label]')).toHaveText('execute', { timeout: 10000 });
+    await expect(flow).toHaveAttribute('data-pose', 'tools');
+  });
+
+  test('the charge turns green once the guardrails approve', async ({ page }) => {
+    await page.goto('/');
+    const flow = page.locator('[data-flow]');
+    await expect(flow).not.toHaveAttribute('data-approved', '');
+    await expect(page.locator('[data-flow-label]')).toHaveText('approved', { timeout: 30000 });
+    await expect(flow).toHaveAttribute('data-approved', '');
   });
 
   test('routes every message through the agent; tools run only when the LLM asks', async ({ page }) => {
@@ -103,13 +162,27 @@ test.describe('hero', () => {
     }
   });
 
-  test('the trust line shows the Google Cloud badge in its ring, beside the CTA', async ({ page }) => {
+  test('the design trust badge sits beside the CTA, with the certification in the same ring style', async ({
+    page,
+  }) => {
     await page.goto('/');
     const trust = page.locator('#top .trust');
     await expect(trust).toContainText('Trusted by innovators');
-    await expect(
-      trust.getByRole('img', { name: 'Google Cloud Certified: Professional Cloud Developer' }),
-    ).toBeVisible();
+    await expect(trust.locator('.trust__plus')).toBeVisible();
+    const cert = page.locator('#top .cert');
+    await expect(cert).toContainText('Google Cloud Certified');
+    await expect(cert).toContainText('Professional Cloud Developer');
+    await expect(cert.locator('svg.cert__seal')).toBeVisible();
+    // Same ring badge as the trust claim: dotted gradient ring, mark inside, two lines beside.
+    for (const badge of [trust, cert]) {
+      await expect(badge.locator('.ring-badge__ring')).toBeVisible();
+      await expect(badge.locator('.ring-badge__text br')).toHaveCount(1);
+    }
+    const [trustRing, certRing] = await Promise.all([
+      trust.locator('.ring-badge__mark').boundingBox(),
+      cert.locator('.ring-badge__mark').boundingBox(),
+    ]);
+    expect(certRing!.width).toBeCloseTo(trustRing!.width, 0);
     const cta = await page.locator('#top .hero-pill--cta').boundingBox();
     const badge = await trust.boundingBox();
     expect(badge!.x).toBeGreaterThan(cta!.x + cta!.width);
@@ -138,6 +211,7 @@ test.describe('reduced motion', () => {
       await expect(page.locator('.flow__diagram').getByText(label, { exact: true })).toBeVisible();
     }
     await expect(page.locator('[data-flow-label]')).toHaveText('');
+    await expect(page.locator('[data-flow]')).toHaveAttribute('data-approved', '');
     const state = await page.evaluate(() => ({
       dash: getComputedStyle(document.querySelector('.flow__seg-core')!).strokeDashoffset,
       level: getComputedStyle(document.querySelector('[data-flow]')!).getPropertyValue('--level').trim(),
@@ -146,6 +220,9 @@ test.describe('reduced motion', () => {
     expect(parseFloat(state.dash)).toBe(0);
     expect(Number(state.level)).toBe(1);
     expect(state.bob).toBe('none');
+    // Static: the base pose only, and the pose images are never fetched.
+    await expect(page.locator('[data-pose-layer]')).toHaveCount(1);
+    await expect(page.locator('[data-flow]')).toHaveAttribute('data-pose', 'agent');
   });
 
   test('anchor navigation jumps instantly', async ({ page }) => {
@@ -157,13 +234,15 @@ test.describe('reduced motion', () => {
 test.describe('mobile hero', () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
-  test('stacks copy, trust badge, then the flow', async ({ page }) => {
+  test('stacks copy, trust badge, certification, then the flow', async ({ page }) => {
     await page.goto('/');
     const title = await page.locator('h1').boundingBox();
     const trust = await page.locator('#top .trust').boundingBox();
     const flow = await page.locator('[data-flow]').boundingBox();
     expect(trust!.y).toBeGreaterThan(title!.y + title!.height);
-    expect(flow!.y).toBeGreaterThan(trust!.y + trust!.height);
+    const cert = await page.locator('#top .cert').boundingBox();
+    expect(cert!.y).toBeGreaterThan(trust!.y + trust!.height);
+    expect(flow!.y).toBeGreaterThan(cert!.y + cert!.height);
     expect(title!.width).toBeGreaterThan(200);
   });
 });

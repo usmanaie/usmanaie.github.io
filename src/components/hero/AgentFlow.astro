@@ -1,9 +1,9 @@
 ---
-import { Picture } from 'astro:assets';
+import { getImage, Picture } from 'astro:assets';
 
 import { hero } from '../../content/site';
 import { AGENT_CORE, flowNodes, hops, NODE_RADIUS, spokes, STAGE } from '../../lib/hero-flow';
-import { robotImage } from '../../lib/hero-image';
+import { robotImage, robotPoses } from '../../lib/hero-image';
 
 /**
  * The hero's agent loop, hub and spoke: every message goes through the agent (the robot).
@@ -13,7 +13,9 @@ import { robotImage } from '../../lib/hero-image';
  * The visual diagram is SVG (positions as attributes, so the strict CSP needs no inline
  * styles) and is aria-hidden; screen readers get every hop as an ordered list.
  * Static HTML shows all participants and connections (no-JS, reduced motion, first paint);
- * scripts/hero.ts then plays the request hop by hop, the token carrying each hop's label.
+ * scripts/hero.ts then plays the request hop by hop, the token carrying each hop's label,
+ * and turns the robot to whichever participant it is talking to (pose images, loaded only
+ * once the page is idle; their srcsets ride in data-poses so nothing is fetched at first paint).
  */
 const ICONS: Record<string, string[]> = {
   user: ['M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z', 'M4.5 20c.8-3.6 3.8-6 7.5-6s6.7 2.4 7.5 6'],
@@ -40,7 +42,21 @@ const ICONS: Record<string, string[]> = {
 const R = NODE_RADIUS;
 /** Chip centre sits on the bubble's edge (upper-left, 45°), so it overlaps the bubble by half. */
 const chipOffset = Math.round(R * Math.SQRT1_2);
-const hopData = JSON.stringify(hops.map(({ spoke, direction, to, label }) => ({ spoke, direction, to, label })));
+const poseData = JSON.stringify(
+  Object.fromEntries(
+    await Promise.all(
+      Object.entries(robotPoses.images).map(async ([id, src]) => {
+        const variant = (format: 'avif' | 'webp') =>
+          getImage({ src, widths: [...robotPoses.widths], format, quality: robotPoses.quality });
+        const [avif, webp] = await Promise.all([variant('avif'), variant('webp')]);
+        return [id, { avif: avif.srcSet.attribute, webp: webp.srcSet.attribute, src: webp.src }];
+      }),
+    ),
+  ),
+);
+const hopData = JSON.stringify(
+  hops.map(({ spoke, direction, to, label, approves }) => ({ spoke, direction, to, label, approves })),
+);
 ---
 
 <div class="flow" data-flow data-hops={hopData}>
@@ -65,10 +81,14 @@ const hopData = JSON.stringify(hops.map(({ spoke, direction, to, label }) => ({ 
         loading="eager"
         fetchpriority="high"
         decoding="async"
-        class="flow__robot-img"
+        class="flow__robot-img flow__layer is-shown"
+        data-pose-layer="agent"
       />
-      <div class="flow__charge" aria-hidden="true">
-        <div class="flow__charge-level"></div>
+      <div class="flow__poses" data-poses={poseData} data-pose-sizes={robotPoses.sizes} aria-hidden="true">
+        <div class="flow__charge" data-flow-charge>
+          <div class="flow__charge-level"></div>
+          <div class="flow__charge-level flow__charge-level--approved"></div>
+        </div>
       </div>
     </div>
 
@@ -190,6 +210,7 @@ const hopData = JSON.stringify(hops.map(({ spoke, direction, to, label }) => ({ 
 
   .flow {
     --step-travel: 1s;
+    --pose-fade: 0.45s;
 
     position: relative;
     container-type: inline-size;
@@ -237,19 +258,62 @@ const hopData = JSON.stringify(hops.map(({ spoke, direction, to, label }) => ({ 
     top: 15px;
     width: 223px;
     height: 690px;
+
+    /* Pose layers stack among themselves, never above the diagram. */
+    isolation: isolate;
   }
 
   .flow__robot :global(.flow__robot-img) {
+    position: relative;
     display: block;
     width: 100%;
     height: 100%;
     max-width: none;
-    filter: drop-shadow(0 26px 40px rgb(0 0 0 / 55%));
   }
 
-  /* Energy charge: a tint that rises inside the robot's silhouette as the steps complete. */
+  /* Same box as POSE_CANVAS in src/lib/hero-flow.ts (the unit test guards it). */
+  .flow__poses {
+    position: absolute;
+    left: -91.08px;
+    top: -0.29px;
+    width: 443.57px;
+    height: 690.29px;
+    pointer-events: none;
+  }
+
+  .flow__poses :global(img) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+  }
+
+  /*
+   * Pose crossfade: the incoming pose fades in on top while the outgoing one stays solid
+   * underneath and drops out once covered, so the body never turns see-through.
+   */
+  .flow__robot :global(.flow__layer) {
+    filter: drop-shadow(0 26px 40px rgb(0 0 0 / 55%));
+    transition: opacity 0s linear var(--pose-fade);
+  }
+
+  .flow__robot :global(.flow__layer:not(.is-shown)) {
+    opacity: 0;
+  }
+
+  .flow__robot :global(.flow__layer.is-shown) {
+    z-index: 1;
+    transition: opacity var(--pose-fade) ease;
+  }
+
+  /*
+   * Energy charge: a tint that rises inside the robot's silhouette as the steps complete.
+   * Masked by the base silhouette here; scripts/hero.ts swaps in the shown pose's image.
+   */
   .flow__charge {
     position: absolute;
+    z-index: 2;
     inset: 0;
     mask-image: url('../../assets/hero/robot-agent-mask.webp');
     mask-size: 100% 100%;
@@ -264,6 +328,19 @@ const hopData = JSON.stringify(hops.map(({ spoke, direction, to, label }) => ({ 
     transform: scaleY(var(--level));
     transform-origin: 50% 100%;
     transition: transform var(--step-travel) cubic-bezier(0.35, 0, 0.25, 1);
+  }
+
+  /* Guardrails approved the answer: the charge turns green (blue while the agent works). */
+  .flow__charge-level--approved {
+    background: linear-gradient(180deg, rgb(120 240 170 / 46%), rgb(40 200 130 / 36%) 55%, rgb(20 160 110 / 40%));
+    opacity: 0;
+    transition:
+      transform var(--step-travel) cubic-bezier(0.35, 0, 0.25, 1),
+      opacity 0.6s ease;
+  }
+
+  .flow[data-approved] .flow__charge-level--approved {
+    opacity: 1;
   }
 
   /* Skip the masked/blended layer until the page is idle: keeps the first render (LCP) cheap. */

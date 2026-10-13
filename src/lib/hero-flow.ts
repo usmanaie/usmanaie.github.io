@@ -1,3 +1,4 @@
+import robotLayout from '../assets/hero/robot-layout.json';
 import { type FlowNodeId, hero } from '../content/site';
 
 /**
@@ -16,12 +17,27 @@ export interface Point {
 }
 
 /**
- * Where the robot artwork sits in the stage. The cut-out is 773x2394; it fills the stage
- * height and is centred. CORE is the glowing chest core, as a fraction of the artwork.
+ * Where the robot artwork sits in the stage. The base cut-out (robot-layout.json `figure`,
+ * 773x2394) fills the stage height and is centred. CORE is the glowing chest core, as a
+ * fraction of the artwork.
  */
 const ROBOT_HEIGHT = 690;
-const ROBOT_WIDTH = Math.round((ROBOT_HEIGHT * 773) / 2394);
+const { figure, canvas } = robotLayout;
+const ROBOT_WIDTH = Math.round((ROBOT_HEIGHT * figure.width) / figure.height);
 export const ROBOT = { x: (STAGE.width - ROBOT_WIDTH) / 2, y: 15, width: ROBOT_WIDTH, height: ROBOT_HEIGHT } as const;
+
+/**
+ * The pose canvas (scripts/cutout-robot.mjs aligns every pose on it) relative to the robot
+ * box, in stage px: wider than the base figure because arms reach out towards the bubbles.
+ */
+const k = ROBOT_HEIGHT / figure.height;
+const round2 = (v: number) => Math.round(v * 100) / 100;
+export const POSE_CANVAS = {
+  x: round2(-figure.left * k),
+  y: round2(-figure.top * k),
+  width: round2(canvas.width * k),
+  height: round2(canvas.height * k),
+} as const;
 const CORE = { x: 0.589, y: 0.332 };
 
 export const AGENT_CORE: Point = {
@@ -30,12 +46,13 @@ export const AGENT_CORE: Point = {
 };
 
 const POSITIONS: Record<FlowNodeId, Point> = {
-  user: { x: 84, y: 168 },
+  user: { x: 90, y: 150 },
   agent: AGENT_CORE,
   llm: { x: 800, y: 150 },
   rag: { x: 826, y: 382 },
   tools: { x: 790, y: 600 },
-  guardrails: { x: 94, y: 560 },
+  // Left-middle, so the lower-left stays clear for the trust badge beside the CTA.
+  guardrails: { x: 96, y: 410 },
 };
 
 /** How far each spoke bows away from the straight line (fraction of its length). */
@@ -103,6 +120,8 @@ export interface Hop {
   to: FlowNodeId;
   label: string;
   text: string;
+  /** Guardrails approved the answer: the robot's charge turns green from here on. */
+  approves: boolean;
 }
 
 /**
@@ -116,5 +135,12 @@ export const hops: Hop[] = hero.hops.map((h) => {
   }
   const outward = h.from === 'agent';
   const other = (outward ? h.to : h.from) as Spoke['id'];
-  return { spoke: other, direction: outward ? 'out' : 'back', to: h.to, label: h.label, text: h.text };
+  return {
+    spoke: other,
+    direction: outward ? 'out' : 'back',
+    to: h.to,
+    label: h.label,
+    text: h.text,
+    approves: 'approves' in h && h.approves === true,
+  };
 });

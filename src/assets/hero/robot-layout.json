@@ -1,0 +1,13 @@
+{
+  "canvas": {
+    "width": 1539,
+    "height": 2395
+  },
+  "figure": {
+    "left": 316,
+    "top": 1,
+    "width": 773,
+    "height": 2394
+  },
+  "poses": ["user", "llm", "rag", "tools", "guardrails"]
+}

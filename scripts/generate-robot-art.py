@@ -52,6 +52,34 @@ CANDIDATES = {
     "full body from the top of the head down to both feet standing on the ground plane, nothing "
     "cropped, the feet fully visible with clear empty space below them. Same confident three-quarter "
     "pose with the right hand raised palm-up at chest height presenting something.",
+    # Pose variants for the hero flow: the robot looks and gestures toward the active step.
+    # Generated from the approved full-body art as the reference so the character, lighting,
+    # scale and framing stay identical; only head direction and the gesturing arm change.
+    **{
+        f"pose-{name}": "Recreate the reference image exactly: the same robot, identical materials, "
+        "lighting, colours, camera angle, scale and position in the frame, both feet in exactly the "
+        "same place on the ground, the left arm relaxed at the side as in the reference. Change only "
+        f"the pose: {pose}"
+        for name, pose in {
+            "user": "the head and visor are clearly turned to the viewer's left (towards the left edge "
+            "of the frame), the face shown in left profile looking up-left, and the right arm reaches up "
+            "and to the left with an open palm, welcoming a request from that direction.",
+            "llm": "the head tilts up and turns toward the upper right of the frame, and the right "
+            "arm points up and to the right with the index finger extended.",
+            "rag": "the head turns to look toward the right of the frame at shoulder height, and the "
+            "right arm extends straight out to the right with an open palm, receiving something.",
+            "tools": "the head tilts clearly downward and turns to the viewer's right, looking at the "
+            "lower right corner of the frame, and the right arm points diagonally downward to the lower "
+            "right at about 45 degrees below horizontal, index finger extended.",
+            "guardrails": "the head turns to look down toward the lower left of the frame, and the "
+            "right arm is raised across the body with the palm facing outward to the lower left, a "
+            "calm stop-and-check gesture.",
+        }.items()
+    },
+    # Targeted fix for the USER pose: keep everything, turn only the head.
+    "pose-user-head": "Keep this image exactly as it is (same robot, pose, raised waving arm, lighting, "
+    "framing and feet). Change only the head: rotate the head and visor about 50 degrees towards the "
+    "viewer's left, so the visor faces the upper-left corner of the frame, as if greeting someone there.",
     "D": "Advanced engineering look: layered armour plates, visible precision joints and fine panel "
     "lines, a dark visor with two glowing eyes. Walking forward mid-stride in a dynamic "
     "three-quarter view, one arm extended toward the right.",

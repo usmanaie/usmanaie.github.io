@@ -135,18 +135,24 @@ export const hero = {
       label: 'policy check',
       text: 'The agent checks the answer against guardrail policies.',
     },
-    { from: 'guardrails', to: 'agent', label: 'approved', text: 'The guardrails approve the answer.' },
+    {
+      from: 'guardrails',
+      to: 'agent',
+      label: 'approved',
+      text: 'The guardrails approve the answer.',
+      approves: true,
+    },
     { from: 'agent', to: 'user', label: 'response', text: 'The agent delivers the response to the user.' },
   ],
 } as const;
 
 export type FlowNodeId = (typeof hero.nodes)[number]['id'];
 
-/** Shown under the hero CTA. The badge image is Google's official artwork, unmodified. */
+/** Shown under the hero CTA in the same ring style as the trust claim, with a vector seal (no Google artwork). */
 export const certification = {
   issuer: 'Google Cloud Certified',
   name: 'Professional Cloud Developer',
-  /** OWNER-CONFIRM: public verification link (Credly/Accredible). When set, the chip becomes a link. */
+  /** OWNER-CONFIRM: public verification link (Credly/Accredible). When set, the badge becomes a link. */
   credentialUrl: undefined as string | undefined,
 };
 
