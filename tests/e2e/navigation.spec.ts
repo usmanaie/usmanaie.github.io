@@ -30,6 +30,72 @@ test.describe('desktop navigation', () => {
     }
   });
 
+  test('every menu link lands its section right under the sticky header', async ({ page }) => {
+    await page.goto('/');
+    const settled = () =>
+      page.evaluate(
+        () =>
+          new Promise((r) => {
+            let last = window.scrollY;
+            const tick = () =>
+              setTimeout(() => {
+                if (window.scrollY === last) r(true);
+                else {
+                  last = window.scrollY;
+                  tick();
+                }
+              }, 150);
+            tick();
+          }),
+      );
+    const headerHeight = await page.evaluate(() =>
+      parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height')),
+    );
+    for (const id of ['about', 'education', 'expertise', 'projects', 'experience']) {
+      // From the hero's own menu (top of the page)...
+      await settled();
+      await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+      await page.locator(`.hero__nav-link[href="#${id}"]`).click();
+      await settled();
+      const fromHero = await page.locator(`#${id}`).evaluate((el) => el.getBoundingClientRect().top);
+      expect(Math.abs(fromHero - headerHeight), `${id} from the hero menu`).toBeLessThanOrEqual(2);
+      // ...and from the sticky header further down, which also marks the section as current.
+      await page.evaluate(() => window.scrollTo({ top: 1600, behavior: 'instant' }));
+      await settled();
+      const link = page.getByRole('navigation', { name: 'Site' }).locator(`a[href="#${id}"]`);
+      await link.click();
+      await settled();
+      const fromHeader = await page.locator(`#${id}`).evaluate((el) => el.getBoundingClientRect().top);
+      expect(Math.abs(fromHeader - headerHeight), `${id} from the sticky header`).toBeLessThanOrEqual(2);
+      await expect(link).toHaveAttribute('aria-current', 'location');
+    }
+  });
+
+  test('menu links land exactly even before the page is idle, and when arriving with a #hash', async ({ page }) => {
+    const top = (id: string) => page.locator(`#${id}`).evaluate((el) => el.getBoundingClientRect().top);
+    const settled = async () => {
+      let last = -1;
+      await expect
+        .poll(async () => {
+          const y = await page.evaluate(() => window.scrollY);
+          const still = y === last;
+          last = y;
+          return still;
+        })
+        .toBe(true);
+    };
+    // Click straight after the HTML is parsed, while below-the-fold sections still have estimated sizes.
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    await page.locator('.hero__nav-link[href="#experience"]').click();
+    await settled();
+    expect(Math.abs((await top('experience')) - 64)).toBeLessThanOrEqual(2);
+    // Arriving from a sub-page link (/#projects).
+    await page.goto('/privacy');
+    await page.goto('/#projects');
+    await settled();
+    expect(Math.abs((await top('projects')) - 64)).toBeLessThanOrEqual(2);
+  });
+
   test('the compact header appears after the hero and scroll-spy marks the current section', async ({ page }) => {
     await page.goto('/');
     const header = page.locator('[data-site-header]');

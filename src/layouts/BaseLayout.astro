@@ -98,8 +98,9 @@ const ogImage = new URL('/og.jpg', Astro.site).href;
     </main>
     <SiteFooter onHome={onHome} />
     <script>
-      import { markReadyWhenIdle } from '../scripts/ready';
+      import { markReadyWhenIdle, readyForAnchors } from '../scripts/ready';
 
+      readyForAnchors();
       markReadyWhenIdle();
     </script>
   </body>

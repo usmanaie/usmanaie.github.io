@@ -12,3 +12,26 @@ export function whenIdle(callback: () => void): void {
 export function markReadyWhenIdle(): void {
   whenIdle(() => document.documentElement.setAttribute('data-ready', ''));
 }
+
+const markReady = () => document.documentElement.setAttribute('data-ready', '');
+
+/**
+ * In-page anchors need real section sizes to land exactly, but before the page is idle the
+ * sections below the fold only have estimated sizes (see global.css). So a click on an in-page
+ * link marks the document ready before the browser scrolls, and arriving with a #hash marks it
+ * ready and re-lands on the target.
+ */
+export function readyForAnchors(): void {
+  document.addEventListener(
+    'click',
+    (event) => {
+      const link = event.target instanceof Element ? event.target.closest('a[href*="#"]') : null;
+      if (link instanceof HTMLAnchorElement && link.hash && link.pathname === location.pathname) markReady();
+    },
+    { capture: true },
+  );
+  if (location.hash.length > 1) {
+    markReady();
+    document.getElementById(decodeURIComponent(location.hash.slice(1)))?.scrollIntoView({ behavior: 'instant' });
+  }
+}

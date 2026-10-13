@@ -216,6 +216,9 @@ All token changes are minimal and documented in `tokens.css`:
     ~300ms of simulated round-trip.
   - **`content-visibility: auto` on below-the-fold sections until the page is idle.** Then `data-ready` switches
     it off so in-page anchors land exactly. Leaving it on made anchor jumps land short as sections expanded.
+    A menu click (or arriving with a `#hash`) before the page is idle switches it off first, so those land
+    exactly too. One anchor offset only: `scroll-padding-top` on the root (a duplicate `scroll-margin-top` on
+    every `[id]` had sections landing 64px low, under a strip of the previous section).
   - **The hero's masked fill layers, edge tint and power glows are skipped until the intro starts** after load.
     They are the costliest paints and are invisible or faint at the start of the cycle; the tint fades in. The
     cycle itself also starts after load + idle, from 0%.
