@@ -13,7 +13,14 @@ export function markReadyWhenIdle(): void {
   whenIdle(() => document.documentElement.setAttribute('data-ready', ''));
 }
 
-const markReady = () => document.documentElement.setAttribute('data-ready', '');
+const markReady = () => {
+  const root = document.documentElement;
+  if (root.hasAttribute('data-ready')) return;
+  root.setAttribute('data-ready', '');
+  // Lay the sections out now, before the browser starts the anchor scroll: if they grew a frame
+  // later, mid-scroll, scroll anchoring could cancel the smooth scroll.
+  void root.offsetHeight;
+};
 
 /**
  * In-page anchors need real section sizes to land exactly, but before the page is idle the
