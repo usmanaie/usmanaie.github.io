@@ -83,22 +83,64 @@ export const hero = {
   navCta: 'Let’s talk',
   replayLabel: 'Replay the agent flow',
   flowLabel: 'How an AI agent handles a request',
+  /** OWNER-CONFIRM: "Trusted by innovators worldwide". Shown beside the certification badge. */
+  trust: ['Trusted by innovators', 'worldwide'],
   /**
-   * End-to-end agent loop, in order. The agent itself (step 2) is the robot; every other
-   * step is a bubble. The loop closes when the response returns to the user.
+   * Participants, numbered by first involvement. The agent (the robot) is the hub: it is the
+   * only participant that talks to the others. The LLM never calls tools or retrieval itself;
+   * it returns a tool-call request and the agent executes it (the standard tool-calling loop).
    */
-  flow: [
-    { id: 'user', label: 'USER', caption: 'request · intent', tone: 'blue' },
-    { id: 'agent', label: 'AGENT', caption: 'plan · orchestrate', tone: 'blue' },
-    { id: 'llm', label: 'LLM', caption: 'reason · decide', tone: 'red' },
-    { id: 'rag', label: 'RAG', caption: 'retrieve · ground', tone: 'red' },
-    { id: 'tools', label: 'TOOLS', caption: 'call · execute', tone: 'blue' },
-    { id: 'guardrails', label: 'GUARDRAILS', caption: 'verify · comply', tone: 'red' },
-    { id: 'response', label: 'RESPONSE', caption: 'answer · deliver', tone: 'blue' },
+  nodes: [
+    { id: 'user', label: 'USER', tone: 'blue' },
+    { id: 'agent', label: 'AGENT', tone: 'blue' },
+    { id: 'llm', label: 'LLM', tone: 'red' },
+    { id: 'rag', label: 'RAG', tone: 'red' },
+    { id: 'tools', label: 'TOOLS', tone: 'blue' },
+    { id: 'guardrails', label: 'GUARDRAILS', tone: 'red' },
+  ],
+  /**
+   * One request, end to end. `label` rides on the travelling token; `text` is the full step
+   * for screen readers (rendered as an ordered list).
+   */
+  hops: [
+    { from: 'user', to: 'agent', label: 'request', text: 'The user sends a request to the agent.' },
+    {
+      from: 'agent',
+      to: 'llm',
+      label: 'prompt + tools',
+      text: 'The agent sends the prompt, history, context and the available tools to the LLM.',
+    },
+    {
+      from: 'llm',
+      to: 'agent',
+      label: 'tool call: retrieve',
+      text: 'The LLM asks the agent to run the retrieval tool.',
+    },
+    { from: 'agent', to: 'rag', label: 'retrieve', text: 'The agent queries the knowledge base (RAG).' },
+    { from: 'rag', to: 'agent', label: 'context', text: 'Retrieval returns grounding context to the agent.' },
+    { from: 'agent', to: 'llm', label: 'context', text: 'The agent sends the retrieved context back to the LLM.' },
+    { from: 'llm', to: 'agent', label: 'tool call: act', text: 'The LLM asks the agent to run an action tool.' },
+    {
+      from: 'agent',
+      to: 'tools',
+      label: 'execute',
+      text: 'The agent executes the tool (with approval if it changes anything).',
+    },
+    { from: 'tools', to: 'agent', label: 'result', text: 'The tool returns its result to the agent.' },
+    { from: 'agent', to: 'llm', label: 'result', text: 'The agent sends the tool result to the LLM.' },
+    { from: 'llm', to: 'agent', label: 'answer', text: 'The LLM returns the final answer to the agent.' },
+    {
+      from: 'agent',
+      to: 'guardrails',
+      label: 'policy check',
+      text: 'The agent checks the answer against guardrail policies.',
+    },
+    { from: 'guardrails', to: 'agent', label: 'approved', text: 'The guardrails approve the answer.' },
+    { from: 'agent', to: 'user', label: 'response', text: 'The agent delivers the response to the user.' },
   ],
 } as const;
 
-export type FlowStepId = (typeof hero.flow)[number]['id'];
+export type FlowNodeId = (typeof hero.nodes)[number]['id'];
 
 /** Shown under the hero CTA. The badge image is Google's official artwork, unmodified. */
 export const certification = {

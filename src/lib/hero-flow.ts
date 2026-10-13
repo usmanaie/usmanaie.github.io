@@ -1,12 +1,19 @@
-import { type FlowStepId, hero } from '../content/site';
-import { closedSpline, loopPath, type Point, segmentPath, stopDistances } from './flow-path';
+import { type FlowNodeId, hero } from '../content/site';
 
 /**
- * Layout of the hero's agent flow, in the 720x720 stage coordinate system.
- * One source for node positions, the connector segments and the token's stop distances.
+ * Layout of the hero's agent loop, in the 880x720 (landscape) stage coordinate system.
+ *
+ * Hub and spoke: the agent (the robot's chest core) is the only participant that talks to
+ * the others, so every message travels along a spoke between the agent and one node.
+ * One source for node positions, spoke paths and the hop sequence.
  */
-export const STAGE = 720;
+export const STAGE = { width: 880, height: 720 } as const;
 export const NODE_RADIUS = 40;
+
+export interface Point {
+  x: number;
+  y: number;
+}
 
 /**
  * Where the robot artwork sits in the stage. The cut-out is 773x2394; it fills the stage
@@ -14,44 +21,100 @@ export const NODE_RADIUS = 40;
  */
 const ROBOT_HEIGHT = 690;
 const ROBOT_WIDTH = Math.round((ROBOT_HEIGHT * 773) / 2394);
-export const ROBOT = { x: (STAGE - ROBOT_WIDTH) / 2, y: 15, width: ROBOT_WIDTH, height: ROBOT_HEIGHT } as const;
+export const ROBOT = { x: (STAGE.width - ROBOT_WIDTH) / 2, y: 15, width: ROBOT_WIDTH, height: ROBOT_HEIGHT } as const;
 const CORE = { x: 0.589, y: 0.332 };
 
-/** The AGENT step is the robot's chest core. */
-const AGENT_CORE: Point = {
+export const AGENT_CORE: Point = {
   x: Math.round(ROBOT.x + CORE.x * ROBOT.width),
   y: Math.round(ROBOT.y + CORE.y * ROBOT.height),
 };
 
-/** The AGENT label tag floats beside the robot's head. */
-export const AGENT_TAG = { x: 540, y: 52 } as const;
-
-const POSITIONS: Record<FlowStepId, Point> = {
-  user: { x: 104, y: 150 },
+const POSITIONS: Record<FlowNodeId, Point> = {
+  user: { x: 84, y: 168 },
   agent: AGENT_CORE,
-  llm: { x: 630, y: 150 },
-  rag: { x: 650, y: 380 },
-  tools: { x: 600, y: 604 },
-  guardrails: { x: 124, y: 604 },
-  response: { x: 92, y: 380 },
+  llm: { x: 800, y: 150 },
+  rag: { x: 826, y: 382 },
+  tools: { x: 790, y: 600 },
+  guardrails: { x: 94, y: 560 },
+};
+
+/** How far each spoke bows away from the straight line (fraction of its length). */
+const BOW: Record<Exclude<FlowNodeId, 'agent'>, number> = {
+  user: 0.16,
+  llm: -0.16,
+  rag: 0.12,
+  tools: 0.14,
+  guardrails: -0.14,
 };
 
 export interface FlowNode {
-  id: FlowStepId;
+  id: FlowNodeId;
   step: number;
   label: string;
-  caption: string;
   tone: 'blue' | 'red';
   x: number;
   y: number;
 }
 
-export const flowNodes: FlowNode[] = hero.flow.map((s, i) => ({ ...s, step: i + 1, ...POSITIONS[s.id] }));
+export const flowNodes: FlowNode[] = hero.nodes.map((n, i) => ({ ...n, step: i + 1, ...POSITIONS[n.id] }));
 
-const segments = closedSpline(flowNodes.map(({ x, y }) => ({ x, y })));
+export interface Spoke {
+  id: Exclude<FlowNodeId, 'agent'>;
+  tone: 'blue' | 'red';
+  /** Path from the agent out to the node, and the same curve reversed. */
+  out: string;
+  back: string;
+  /** Direction of the spoke's first use, so it is drawn in that direction. */
+  firstDirection: 'out' | 'back';
+}
 
-/** Connector i joins step i+1 to step i+2; the last one closes the loop back to the user. */
-export const flowSegments = segments.map(segmentPath);
-export const flowLoop = loopPath(segments);
-/** offset-distance (%) of each step along the loop, for the travelling agent token. */
-export const flowStops = stopDistances(segments);
+function spokePaths(to: Point, bow: number): { out: string; back: string } {
+  const from = AGENT_CORE;
+  const mx = (from.x + to.x) / 2;
+  const my = (from.y + to.y) / 2;
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  // Control point: the midpoint pushed sideways (perpendicular) by `bow` of the length.
+  const cx = Math.round(mx - dy * bow);
+  const cy = Math.round(my + dx * bow);
+  return {
+    out: `M ${from.x} ${from.y} Q ${cx} ${cy} ${to.x} ${to.y}`,
+    back: `M ${to.x} ${to.y} Q ${cx} ${cy} ${from.x} ${from.y}`,
+  };
+}
+
+export const spokes: Spoke[] = flowNodes
+  .filter((n): n is FlowNode & { id: Spoke['id'] } => n.id !== 'agent')
+  .map((n) => {
+    const first = hero.hops.find((h) => h.from === n.id || h.to === n.id);
+    return {
+      id: n.id,
+      tone: n.tone,
+      ...spokePaths(n, BOW[n.id]),
+      firstDirection: first?.to === 'agent' ? 'back' : 'out',
+    };
+  });
+
+export interface Hop {
+  /** The spoke this hop travels and in which direction. */
+  spoke: Spoke['id'];
+  direction: 'out' | 'back';
+  /** Node that receives the message (revealed and highlighted on arrival). */
+  to: FlowNodeId;
+  label: string;
+  text: string;
+}
+
+/**
+ * Every hop is agent <-> one node; anything else would mean a non-agent calling another
+ * directly. The content type already rules that out; the runtime check guards future edits.
+ */
+export const hops: Hop[] = hero.hops.map((h) => {
+  const { from, to } = h as { from: FlowNodeId; to: FlowNodeId };
+  if (from !== 'agent' && to !== 'agent') {
+    throw new Error(`Invalid hop ${from} -> ${to}: every message must go through the agent`);
+  }
+  const outward = h.from === 'agent';
+  const other = (outward ? h.to : h.from) as Spoke['id'];
+  return { spoke: other, direction: outward ? 'out' : 'back', to: h.to, label: h.label, text: h.text };
+});

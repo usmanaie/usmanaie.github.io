@@ -2,20 +2,37 @@ import { whenIdle } from './ready';
 import { observeVisibility } from './visibility';
 
 /** Timing of the agent loop (ms). The token's travel time matches --step-travel in CSS. */
-export const TIMING = { travel: 1100, dwell: 950, hold: 2600, reveal: 500 } as const;
+export const TIMING = { travel: 1000, dwell: 550, start: 500, hold: 2600 } as const;
 
-/** Robot energy level (0-1) once `visited` of `total` steps are done. */
-export function levelFor(visited: number, total: number): number {
-  return total > 0 ? Math.min(1, Math.max(0, visited / total)) : 0;
+/** Robot energy level (0-1) once `done` of `total` hops have completed. */
+export function levelFor(done: number, total: number): number {
+  return total > 0 ? Math.min(1, Math.max(0, done / total)) : 0;
+}
+
+export interface HopData {
+  spoke: string;
+  direction: 'out' | 'back';
+  to: string;
+  label: string;
+}
+
+export function parseHops(json: string | undefined): HopData[] {
+  if (!json) return [];
+  try {
+    const value: unknown = JSON.parse(json);
+    return Array.isArray(value) ? (value as HopData[]) : [];
+  } catch {
+    return [];
+  }
 }
 
 /**
- * Hero agent-flow controller.
- *  - Static HTML shows the completed flow (no-JS, reduced motion, first paint for LCP).
- *  - Once the page is idle, the loop plays: the agent token travels the path step by step;
- *    each step reveals its bubble, draws the connector behind the token and raises the
- *    robot's energy level. After RESPONSE the token returns to USER, holds, and repeats.
- *  - Pauses while the hero is off-screen or the tab is hidden; the robot replays from step 1.
+ * Hero agent-loop controller.
+ *  - Static HTML shows every participant and connection (no-JS, reduced motion, first paint).
+ *  - Once the page is idle, one request plays hop by hop: the agent token travels each spoke
+ *    carrying that hop's label ("request", "tool call: retrieve", ...); participants appear
+ *    when first reached, the spoke in use is highlighted, and the robot charges as hops complete.
+ *  - Pauses while the hero is off-screen or the tab is hidden; the robot replays from the start.
  */
 export function initHero(root: Document = document): void {
   const heroEl = root.querySelector<HTMLElement>('[data-hero]');
@@ -27,15 +44,20 @@ export function initHero(root: Document = document): void {
   observeVisibility(hero);
   whenIdle(() => hero.removeAttribute('data-intro'));
 
+  const tokenEl = flow.querySelector<HTMLElement>('[data-flow-token]');
+  const labelEl = flow.querySelector<HTMLElement>('[data-flow-label]');
+  const hops = parseHops(flow.dataset['hops']);
+  if (!tokenEl || !labelEl || hops.length === 0) return;
+  const token: HTMLElement = tokenEl;
+  const label: HTMLElement = labelEl;
+
+  const nodes = new Map(
+    [...flow.querySelectorAll<SVGGElement>('[data-flow-node]')].map((n) => [n.dataset['flowNode'], n]),
+  );
+  const spokes = new Map(
+    [...flow.querySelectorAll<SVGGElement>('[data-flow-spoke]')].map((s) => [s.dataset['flowSpoke'], s]),
+  );
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-  const token = flow.querySelector<HTMLElement>('[data-flow-token]');
-  const nodes = [...flow.querySelectorAll<SVGGElement>('[data-flow-node]')];
-  const segments = [...flow.querySelectorAll<SVGGElement>('[data-flow-seg]')];
-  const stops = (flow.dataset['stops'] ?? '').split(',').map(Number);
-  if (!token || nodes.length === 0 || stops.length !== nodes.length) return;
-
-  token.style.offsetPath = `path('${flow.dataset['path'] ?? ''}')`;
-
   let run = 0;
 
   /** Waits `ms`, then keeps waiting while paused; resolves false if a newer run started. */
@@ -48,24 +70,29 @@ export function initHero(root: Document = document): void {
     return id === run;
   }
 
-  const setLevel = (visited: number) => flow.style.setProperty('--level', String(levelFor(visited, nodes.length)));
-  const moveToken = (distance: number) => {
-    if (token) token.style.offsetDistance = `${distance}%`;
-  };
+  const setLevel = (done: number) => flow.style.setProperty('--level', String(levelFor(done, hops.length)));
 
-  function visit(index: number) {
-    nodes.forEach((node, i) => {
-      node.classList.toggle('is-visited', i <= index);
-      node.classList.toggle('is-active', i === index);
-    });
-    setLevel(index + 1);
+  function activate(nodeId: string) {
+    for (const [id, node] of nodes) node.classList.toggle('is-active', id === nodeId);
+    nodes.get(nodeId)?.classList.add('is-visited');
+  }
+
+  /** Puts the token at the start of a spoke without animating, ready to travel. */
+  function placeOn(hop: HopData) {
+    const spoke = spokes.get(hop.spoke);
+    const path = hop.direction === 'out' ? spoke?.dataset['out'] : spoke?.dataset['back'];
+    token.classList.add('is-jumping');
+    token.style.offsetPath = `path('${path ?? ''}')`;
+    token.style.offsetDistance = '0%';
+    void token.offsetWidth;
+    token.classList.remove('is-jumping');
   }
 
   function reset() {
     flow.setAttribute('data-resetting', '');
-    for (const node of nodes) node.classList.remove('is-visited', 'is-active');
-    for (const seg of segments) seg.classList.remove('is-drawn');
-    moveToken(0);
+    for (const node of nodes.values()) node.classList.remove('is-visited', 'is-active');
+    for (const spoke of spokes.values()) spoke.classList.remove('is-drawn', 'is-active');
+    label.textContent = '';
     setLevel(0);
     void flow.offsetWidth;
     flow.removeAttribute('data-resetting');
@@ -77,21 +104,25 @@ export function initHero(root: Document = document): void {
     flow.setAttribute('data-live', '');
     for (;;) {
       reset();
-      if (!(await wait(TIMING.reveal, id))) return;
-      visit(0);
-      for (let i = 1; i < nodes.length; i += 1) {
-        if (!(await wait(TIMING.dwell, id))) return;
-        segments[i - 1]?.classList.add('is-drawn');
-        moveToken(stops[i] ?? 0);
-        if (!(await wait(TIMING.travel, id))) return;
-        visit(i);
+      const first = hops[0];
+      if (first) {
+        placeOn(first);
+        activate(first.direction === 'out' ? 'agent' : first.spoke);
       }
-      // RESPONSE travels back to the USER: the loop is complete.
-      if (!(await wait(TIMING.dwell, id))) return;
-      segments[nodes.length - 1]?.classList.add('is-drawn');
-      moveToken(100);
-      if (!(await wait(TIMING.travel, id))) return;
-      nodes.forEach((node) => node.classList.remove('is-active'));
+      if (!(await wait(TIMING.start, id))) return;
+      for (const [i, hop] of hops.entries()) {
+        placeOn(hop);
+        label.textContent = hop.label;
+        for (const [sid, spoke] of spokes) spoke.classList.toggle('is-active', sid === hop.spoke);
+        spokes.get(hop.spoke)?.classList.add('is-drawn');
+        token.style.offsetDistance = '100%';
+        if (!(await wait(TIMING.travel, id))) return;
+        activate(hop.to);
+        setLevel(i + 1);
+        if (!(await wait(TIMING.dwell, id))) return;
+      }
+      label.textContent = '';
+      for (const spoke of spokes.values()) spoke.classList.remove('is-active');
       flow.setAttribute('data-complete', '');
       if (!(await wait(TIMING.hold, id))) return;
       flow.removeAttribute('data-complete');
