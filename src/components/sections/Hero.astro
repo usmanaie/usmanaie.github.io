@@ -2,7 +2,7 @@
 import { primaryNav, sectionHref } from '../../content/nav';
 import { hero } from '../../content/site';
 import AgentFlow from '../hero/AgentFlow.astro';
-import CertBadge from '../hero/CertBadge.astro';
+import TrustBadge from '../hero/TrustBadge.astro';
 import Icon from '../ui/Icon.astro';
 
 /**
@@ -68,7 +68,7 @@ import Icon from '../ui/Icon.astro';
             {hero.cta}
             <Icon name="arrow-right-long" size={22} strokeWidth={1.6} class="hero-pill__icon" />
           </a>
-          <CertBadge />
+          <TrustBadge />
         </div>
       </div>
 
@@ -250,7 +250,14 @@ import Icon from '../ui/Icon.astro';
   /* ---------- Desktop: two columns sized to the viewport ---------- */
 
   @media (width >= 64rem) {
+    /*
+     * Type and spacing follow the design's 1600px canvas, scaled like the mockup
+     * (1440px viewport = 0.9): --u is one design unit. Headline 231u, subhead 31/39u,
+     * body 15/22u; gaps 26u / 10u / 23u between the blocks; the trust badge sits beside the CTA.
+     */
     .hero {
+      --u: calc(min(100vw, 1440px) / 1600);
+
       display: flex;
       min-height: clamp(640px, 100svh, 1000px);
     }
@@ -316,23 +323,50 @@ import Icon from '../ui/Icon.astro';
 
     .hero__body {
       flex: 1;
-      grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+      grid-template-columns: minmax(0, 560fr) minmax(0, 640fr);
       align-items: center;
-      gap: clamp(32px, 4vw, 72px);
-      padding-block: 8px 32px;
+      gap: clamp(16px, 2vw, 32px);
+      padding-block: 4px 28px;
     }
 
     .hero__copy {
       max-width: none;
-      gap: clamp(14px, 2.4svh, 24px);
+      gap: 0;
     }
 
     .hero__title {
-      font-size: min(42cqi, 19svh, 13rem);
+      font-size: min(calc(231 * var(--u)), 42cqi);
+      line-height: 0.8485;
     }
 
     .hero__sub {
-      font-size: min(clamp(1.375rem, 1.1458rem + 1.0185vw, 1.9375rem), 3.7svh);
+      margin-block-start: calc(26 * var(--u));
+      font-size: max(1.25rem, calc(31 * var(--u)));
+      line-height: 1.258;
+    }
+
+    .hero__text {
+      max-width: none;
+      margin-block-start: calc(10 * var(--u));
+      font-size: max(0.875rem, calc(15 * var(--u)));
+      line-height: 1.4667;
+    }
+
+    .hero__actions {
+      flex-wrap: nowrap;
+      gap: calc(110 * var(--u));
+      margin-block-start: calc(23 * var(--u));
+    }
+
+    .hero-pill--cta {
+      gap: calc(24 * var(--u));
+      height: max(46px, calc(60 * var(--u)));
+      padding: 0 calc(30 * var(--u)) 0 calc(40 * var(--u));
+      font-size: max(0.875rem, calc(15 * var(--u)));
+    }
+
+    .hero__actions :global(.trust) {
+      --trust-size: calc(80 * var(--u));
     }
 
     .hero__br {
@@ -340,8 +374,8 @@ import Icon from '../ui/Icon.astro';
     }
 
     .hero__body :global(.flow) {
-      width: min(100%, calc(100svh - 150px), 760px);
-      min-width: 420px;
+      width: min(100%, calc((100svh - 110px) * 880 / 720), 940px);
+      min-width: 440px;
     }
   }
 
