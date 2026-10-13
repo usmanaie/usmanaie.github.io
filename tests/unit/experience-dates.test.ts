@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { experience } from '../../src/content/experience';
+import { experience, shownCompanies } from '../../src/content/experience';
 import { formatMonth, periodLabel } from '../../src/lib/experience-dates';
 
 describe('experience dates', () => {
@@ -18,5 +18,10 @@ describe('experience dates', () => {
       expect([...roleStarts].sort().reverse()).toEqual(roleStarts);
       for (const role of company.roles) expect(role.summary.length).toBeGreaterThan(40);
     }
+  });
+
+  it('shows only TMC and Z-Axiss (Trillo and LineSquare are kept but hidden)', () => {
+    expect(shownCompanies.map((c) => c.company)).toEqual(['TMC (TallyMarks Consulting)', 'Z-Axiss']);
+    expect(experience.companies).toHaveLength(4);
   });
 });

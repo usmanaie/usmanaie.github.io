@@ -19,6 +19,8 @@ export interface ExperienceCompany {
   location: string;
   workplace: 'On-site' | 'Remote';
   roles: ExperienceRole[];
+  /** Kept for the record but not shown on the site (owner's choice). */
+  hidden?: boolean;
 }
 
 export const experience: {
@@ -76,6 +78,7 @@ export const experience: {
     {
       company: 'Trillo Inc.',
       logo: trilloLogo,
+      hidden: true,
       location: 'California, United States',
       workplace: 'Remote',
       roles: [
@@ -91,6 +94,7 @@ export const experience: {
     {
       company: 'LineSquare Technologies',
       logo: linesquareLogo,
+      hidden: true,
       location: 'Islamabad, Pakistan',
       workplace: 'On-site',
       roles: [
@@ -105,3 +109,6 @@ export const experience: {
     },
   ],
 };
+
+/** The companies shown on the site (owner: TMC and Z-Axiss only). */
+export const shownCompanies = experience.companies.filter((c) => !c.hidden);
