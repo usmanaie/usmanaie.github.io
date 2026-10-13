@@ -131,8 +131,11 @@ artifact, review the screenshots, and commit them to `tests/visual/__screenshots
 
 ## Asset provenance
 
-- **Hero agent artwork** (`src/assets/hero/agent.png`) comes from the design export. Ownership or a commercial
-  licence must be confirmed by the owner before launch (launch checklist item 13).
+- **Hero robot** (`src/assets/hero/robot-agent.png`) was generated with Gemini 3 Pro Image on Vertex AI
+  (`python scripts/generate-robot-art.py --vertex-project <id>`), then cut out with `node scripts/cutout-robot.mjs`.
+  The prompts in the script are the provenance record; commercial-use sign-off is launch checklist item 13.
+- **Google Cloud certification badge** (`src/assets/brand/gcp-professional-cloud-developer.png`) is Google's
+  official badge artwork, displayed unmodified.
 - Project illustrations, the agent portraits and the Expertise ring are original vector artwork from the design
   export, rendered to raster at build time.
 - Fonts are all under the SIL Open Font License: Manrope, Hanken Grotesk, League Gothic, Instrument Serif,

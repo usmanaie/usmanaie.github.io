@@ -50,12 +50,40 @@ Owner-facing items are also tracked in [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md
 
 ## Fidelity decisions
 
-- **Hero ≥ 1024px.** The 1600×1067 composition is kept and scaled by one unitless factor,
-  `--hero-scale: tan(atan2(min(100cqw, 1440px), 1600px))`. That is a CSS-only length ratio, so orbs, connectors and
-  `offset-path` objects stay aligned with no JavaScript. Above 1440px the composition is centred at its 1440 size,
-  and the colour fields extend full-bleed. **Below 1024px** the copy re-flows: headline, then subhead and CTA,
-  then trust badge, then the agent illustration as its own scaled 880×900 canvas. Orb names are counter-scaled to
-  stay legible, and captions are dropped below 640px.
+- **Hero redesign (owner request, 2026-10-13).** The design's single scaled 1600×1067 canvas is replaced by a
+  **two-column grid** (copy | agent flow) sized to the viewport: `min-height: clamp(640px, 100svh, 1000px)`.
+  - **The card container is removed.** The overlap the owner saw came from the composition itself (the agent
+    column started inside the headline's span, also visible in the mockup), not from the card. The grid now
+    guarantees a gap.
+  - **The headline is sized to its column** (`min(42cqi, 19svh)`, a container query), so it can never reach the
+    flow.
+  - **The flow** is a 720×720 stage scaled by one unitless factor (`tan(atan2(100cqw, 720px))`), so bubbles,
+    connectors and the `offset-path` token stay aligned.
+  - **Below 1024px** everything stacks: headline, copy, CTA, badge, then the flow. Step names are counter-scaled
+    and captions dropped below 640px.
+- **Agent flow (owner request).** The flow now runs end to end: USER → AGENT → LLM → RAG → TOOLS → GUARDRAILS →
+  RESPONSE, then back to USER.
+  - GUARDRAILS was added because governance is a core skill on this site.
+  - The agent token travels the path, and each bubble appears when the token reaches it.
+  - Connectors draw behind the token. The robot's "charge" rises with each completed step.
+  - Step numbers are solid white circles centred on each bubble's edge (50% overlap).
+  - Positions live in one module (`src/lib/hero-flow.ts`). The closed path is a Catmull-Rom spline through the
+    step centres, with arc-length stops computed at build time and unit-tested.
+  - The diagram is SVG (attribute positions, so no inline styles under the CSP), with an equivalent visually
+    hidden `<ol>` for screen readers.
+  - Static HTML shows the completed flow (no-JS, reduced motion, first paint). `scripts/hero.ts` plays it after
+    load, pauses off-screen, and the robot is the replay control.
+- **Hero robot (owner request).** The owner asked for AI-generated, high-resolution, full-body art and approved
+  candidate "A, presenting" (`design-candidates/`, git-ignored).
+  - The final art was produced with **Gemini 3 Pro Image on Vertex AI**, at
+    1696×2528, using the approved draft as a reference image. Prompts live in `scripts/generate-robot-art.py`.
+  - `scripts/cutout-robot.mjs` removes the black background by flood-filling only border-connected darkness, so
+    the visor and joints stay solid.
+  - The energy "charge" is a tint masked to a 13.5 KB alpha-only silhouette (`pnpm images`).
+  - Gemini output carries Google's invisible SynthID watermark. Commercial use is governed by Google Cloud's
+    generative AI terms (launch item 13).
+- **Certification.** Google's Professional Cloud Developer badge (official artwork, unmodified) and a chip
+  replace the unverified "Trusted by innovators worldwide" claim. It becomes a link once `credentialUrl` is set.
 - **Headline.** Real `<h1>` text, with no SVG and no `textLength`. The design squeezed League Gothic to 70–79% of
   its natural width. I used the font's own **width axis** (`font-stretch: 81%`, variable font with `wdth`
   75–100) plus 10px word spacing, which reproduces the proportions without distorting glyphs.
@@ -114,13 +142,9 @@ All token changes are minimal and documented in `tokens.css`:
 - **Fonts**: six subset WOFF2 files, **70 KB total**, self-hosted, `font-display: swap`. Only League Gothic and
   Manrope (above the fold) are preloaded. Capsize-generated metric-adjusted fallbacks prevent layout shift.
   Weights are restricted to those used: Hanken 200–600 + 300 italic, Manrope 300–700.
-- **Hero image (LCP).** AVIF/WebP/PNG via `<picture>`, preloaded with `fetchpriority="high"`, never lazy.
-  - The supplied art is **379×598, below its 498×785 display size**. Lighthouse expects ≥ 1.5× resolution
-    (a Best Practices failure otherwise), so `pnpm images` serves an **interim Lanczos 2× upscale** (758×1196,
-    53 KB AVIF).
-  - This is documented in `scripts/build-images.mjs`. Replacing `agent.png` with real high-resolution art is
-    launch item 13.
-  - The fluid-fill mask is a 15 KB alpha-only WebP derived from the same source, so mask and image always match.
+- **Hero image (LCP).** The robot cut-out ships as AVIF/WebP/PNG at widths 360/540/720 (46–91 KB AVIF), preloaded
+  via `imagesrcset`, `fetchpriority="high"`, never lazy. Widths start at 360 because browsers and Lighthouse judge
+  resolution against the robot's untransformed 223px CSS width inside the scaled stage.
 - **Hero animation.** Keyframes are ported verbatim, plus these optimisations:
   - Connector blur filters use the default object-bounding-box filter region instead of the design's full
     1600×1067 region.
