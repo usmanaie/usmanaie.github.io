@@ -1,3 +1,4 @@
+import robotHead from '../assets/hero/robot-head.json';
 import { type FlowNodeId, hero } from '../content/site';
 
 /**
@@ -17,13 +18,42 @@ export interface Point {
 }
 
 /**
- * Where the robot artwork sits in the stage. The cut-out is 773x2394; it fills the stage
- * height and is centred. CORE is the glowing chest core, as a fraction of the artwork.
+ * Where the robot artwork sits in the stage. The cut-out (robot-head.json width x height,
+ * built by scripts/build-robot-head.mjs) fills the stage height and is centred. CORE is the
+ * glowing chest core, as a fraction of the artwork.
  */
 const ROBOT_HEIGHT = 690;
-const ROBOT_WIDTH = Math.round((ROBOT_HEIGHT * 773) / 2394);
+const ROBOT_WIDTH = Math.round((ROBOT_HEIGHT * robotHead.width) / robotHead.height);
 export const ROBOT = { x: (STAGE.width - ROBOT_WIDTH) / 2, y: 15, width: ROBOT_WIDTH, height: ROBOT_HEIGHT } as const;
-const CORE = { x: 0.589, y: 0.332 };
+const CORE = { x: 0.584, y: 0.329 };
+
+/**
+ * The robot's turning head: frames in the sprite run from facing the viewer's left (the USER
+ * bubble) through front to the right. `keys` are the frame indices of the generated angles
+ * (3/4 left, slight left, front, slight right, 3/4 right); the rest are morphed in-betweens.
+ * BOX is where the sprite is drawn (and the photo masked), in px within the robot box: the
+ * band above the collar, cropped to the columns that change between frames.
+ */
+const round2 = (v: number) => Math.round(v * 100) / 100;
+export const HEAD = {
+  frames: robotHead.frames,
+  defaultFrame: robotHead.default,
+  box: {
+    x: round2(robotHead.headLeft * ROBOT.width),
+    width: round2(robotHead.headWidth * ROBOT.width),
+    height: round2(robotHead.seam * ROBOT.height),
+  },
+} as const;
+
+const [LEFT = 0, SLIGHT_LEFT = 0, , , RIGHT = 0] = robotHead.keys;
+/** Which way the robot looks while talking to each participant (a frame index). */
+export const LOOK_AT: Record<Exclude<FlowNodeId, 'agent'>, number> = {
+  user: LEFT,
+  guardrails: SLIGHT_LEFT,
+  llm: RIGHT,
+  rag: RIGHT,
+  tools: RIGHT,
+};
 
 export const AGENT_CORE: Point = {
   x: Math.round(ROBOT.x + CORE.x * ROBOT.width),

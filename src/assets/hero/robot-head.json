@@ -1,0 +1,10 @@
+{
+  "frames": 32,
+  "keys": [0, 10, 15, 23, 31],
+  "default": 0,
+  "seam": 0.17181,
+  "headLeft": 0.288321,
+  "headWidth": 0.409976,
+  "width": 822,
+  "height": 2398
+}

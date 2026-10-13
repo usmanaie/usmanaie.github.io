@@ -1,8 +1,10 @@
+import { readFileSync } from 'node:fs';
+
 import { describe, expect, it } from 'vitest';
 
 import { hero } from '../../src/content/site';
-import { AGENT_CORE, flowNodes, hops, NODE_RADIUS, ROBOT, spokes, STAGE } from '../../src/lib/hero-flow';
-import { levelFor, parseHops } from '../../src/scripts/hero';
+import { AGENT_CORE, flowNodes, HEAD, hops, LOOK_AT, NODE_RADIUS, ROBOT, spokes, STAGE } from '../../src/lib/hero-flow';
+import { easeInOut, levelFor, parseHops } from '../../src/scripts/hero';
 
 describe('hero flow layout', () => {
   it('numbers participants by first involvement, 1..n', () => {
@@ -11,7 +13,26 @@ describe('hero flow layout', () => {
   });
 
   it('matches the robot box hard-coded in AgentFlow.astro CSS (.flow__robot)', () => {
-    expect(ROBOT).toEqual({ x: 248.5, y: 15, width: 223, height: 690 });
+    expect(ROBOT).toEqual({ x: 241.5, y: 15, width: 237, height: 690 });
+  });
+
+  it('matches the head box hard-coded in AgentFlow.astro CSS (.flow__head and the photo mask)', () => {
+    const css = readFileSync('src/components/hero/AgentFlow.astro', 'utf8');
+    const rule = /\.flow__head \{([^}]*)\}/.exec(css)?.[1] ?? '';
+    const px = (prop: string) => Number(new RegExp(String.raw`\b${prop}: ([\d.]+)px`).exec(rule)?.[1]);
+    const { x, width, height } = HEAD.box;
+    expect({ x: px('left'), width: px('width'), height: px('height') }).toEqual({ x, width, height });
+    expect(css).toMatch(new RegExp(String.raw`mask-size:\s*100% 100%,\s*${width}px ${height}px;`));
+    expect(css).toMatch(new RegExp(String.raw`mask-position:\s*0 0,\s*${x}px 0;`));
+  });
+
+  it('turns the head left for the USER (the static default) and right for the LLM and tools', () => {
+    expect(LOOK_AT.user).toBe(HEAD.defaultFrame);
+    expect(LOOK_AT.guardrails).toBeGreaterThan(LOOK_AT.user);
+    expect(LOOK_AT.guardrails).toBeLessThan(LOOK_AT.llm);
+    expect(LOOK_AT.llm).toBe(HEAD.frames - 1);
+    expect(LOOK_AT.rag).toBe(LOOK_AT.llm);
+    expect(LOOK_AT.tools).toBe(LOOK_AT.llm);
   });
 
   it('keeps every bubble inside the stage and clear of the robot', () => {
@@ -58,6 +79,9 @@ describe('controller helpers', () => {
     expect(levelFor(14, 14)).toBe(1);
     expect(levelFor(20, 14)).toBe(1);
     expect(levelFor(1, 0)).toBe(0);
+    expect(easeInOut(0)).toBe(0);
+    expect(easeInOut(0.5)).toBe(0.5);
+    expect(easeInOut(1)).toBe(1);
   });
 
   it('parses hop data defensively', () => {

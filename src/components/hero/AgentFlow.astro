@@ -1,8 +1,9 @@
 ---
 import { Picture } from 'astro:assets';
 
+import headSprite from '../../assets/hero/robot-head-sprite.webp';
 import { hero } from '../../content/site';
-import { AGENT_CORE, flowNodes, hops, NODE_RADIUS, spokes, STAGE } from '../../lib/hero-flow';
+import { AGENT_CORE, flowNodes, HEAD, hops, LOOK_AT, NODE_RADIUS, spokes, STAGE } from '../../lib/hero-flow';
 import { robotImage } from '../../lib/hero-image';
 
 /**
@@ -13,7 +14,9 @@ import { robotImage } from '../../lib/hero-image';
  * The visual diagram is SVG (positions as attributes, so the strict CSP needs no inline
  * styles) and is aria-hidden; screen readers get every hop as an ordered list.
  * Static HTML shows all participants and connections (no-JS, reduced motion, first paint);
- * scripts/hero.ts then plays the request hop by hop, the token carrying each hop's label.
+ * scripts/hero.ts then plays the request hop by hop, the token carrying each hop's label, and
+ * turns the robot's head toward the participant it is talking to (a sprite of head frames,
+ * loaded only after the page has loaded; first paint shows the head facing the USER).
  */
 const ICONS: Record<string, string[]> = {
   user: ['M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z', 'M4.5 20c.8-3.6 3.8-6 7.5-6s6.7 2.4 7.5 6'],
@@ -41,11 +44,25 @@ const R = NODE_RADIUS;
 /** Chip centre sits on the bubble's edge (upper-left, 45°), so it overlaps the bubble by half. */
 const chipOffset = Math.round(R * Math.SQRT1_2);
 const hopData = JSON.stringify(
-  hops.map(({ spoke, direction, to, label, approves }) => ({ spoke, direction, to, label, approves })),
+  hops.map(({ spoke, direction, to, label, approves }) => ({
+    spoke,
+    direction,
+    to,
+    label,
+    approves,
+    look: LOOK_AT[spoke],
+  })),
 );
 ---
 
-<div class="flow" data-flow data-hops={hopData}>
+<div
+  class="flow"
+  data-flow
+  data-hops={hopData}
+  data-head-sprite={headSprite.src}
+  data-head-frames={HEAD.frames}
+  data-head-default={HEAD.defaultFrame}
+>
   <ol class="visually-hidden" aria-label={hero.flowLabel}>
     {hops.map((hop) => (
       <li>{hop.text}</li>
@@ -69,6 +86,7 @@ const hopData = JSON.stringify(
         decoding="async"
         class="flow__robot-img"
       />
+      <canvas class="flow__head" data-flow-head aria-hidden="true"></canvas>
       <div class="flow__charge" aria-hidden="true">
         <div class="flow__charge-level"></div>
         <div class="flow__charge-level flow__charge-level--approved"></div>
@@ -236,9 +254,9 @@ const hopData = JSON.stringify(
   /* Same box as ROBOT in src/lib/hero-flow.ts (tests/unit/hero-flow.test.ts guards it). */
   .flow__robot {
     position: absolute;
-    left: 248.5px;
+    left: 241.5px;
     top: 15px;
-    width: 223px;
+    width: 237px;
     height: 690px;
   }
 
@@ -248,6 +266,36 @@ const hopData = JSON.stringify(
     height: 100%;
     max-width: none;
     filter: drop-shadow(0 26px 40px rgb(0 0 0 / 55%));
+  }
+
+  /*
+   * The turning head: a canvas over the head box (HEAD.box in hero-flow.ts: the band above the
+   * collar, cropped to the columns that change; the unit test guards these numbers). Once it
+   * is drawing, that box is masked out of the photo.
+   */
+  .flow__head {
+    position: absolute;
+    top: 0;
+    left: 68.33px;
+    display: none;
+    width: 97.16px;
+    height: 118.55px;
+  }
+
+  .flow[data-head-live] .flow__head {
+    display: block;
+  }
+
+  .flow[data-head-live] .flow__robot :global(.flow__robot-img) {
+    mask-image: linear-gradient(#000 0 0), linear-gradient(#000 0 0);
+    mask-size:
+      100% 100%,
+      97.16px 118.55px;
+    mask-position:
+      0 0,
+      68.33px 0;
+    mask-repeat: no-repeat;
+    mask-composite: exclude;
   }
 
   /* Energy charge: a tint that rises inside the robot's silhouette as the steps complete. */

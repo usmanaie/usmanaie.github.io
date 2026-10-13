@@ -93,12 +93,31 @@ Owner-facing items are also tracked in [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md
   candidate "A, presenting" (`design-candidates/`, git-ignored).
   - The final art was produced with **Gemini 3 Pro Image on Vertex AI**, at
     1696×2528, using the approved draft as a reference image. Prompts live in `scripts/generate-robot-art.py`.
-  - `scripts/cutout-robot.mjs` removes the black background by flood-filling only border-connected darkness, so
+  - **Arms down (owner request: no hand raised in the air).** The shipped body is "A-rest", regenerated from the
+    approved art with both arms relaxed at the sides.
+  - `scripts/lib/cutout.mjs` removes the black background by flood-filling only border-connected darkness, so
     the visor and joints stay solid. Enclosed regions that are almost all pure black (the gap between an arm and
-    the body) are treated as background too.
-  - **Poses tried and dropped.** Per-step poses (the robot turning to each participant, crossfaded) were built
-    but the owner found the transitions not smooth enough; the hero uses a single image again.
-  - The energy "charge" is a tint masked to a 13.5 KB alpha-only silhouette (`pnpm images`).
+    the body) are treated as background too, and the alpha ramp starts just above each image's background level.
+  - **Poses tried and dropped.** Per-step full-body poses, crossfaded, were built first; the owner found the
+    transitions not smooth. Separate AI generations never match exactly, so swapping whole frames flickers.
+  - **Head turn (owner request: face the user, then front, then right, and back; smooth).** Only the head moves,
+    so the body stays pixel-identical:
+    - Five head angles were generated from the body as reference: 3/4 left, slight left, front, slight right
+      (A-rest itself) and 3/4 right. Exact-angle prompts were unreliable; describing what is visible worked.
+    - `scripts/build-robot-head.mjs` puts each head on the one body above the collar (40-row blend), so every
+      composite is identical below the seam, then cuts them out to one shared box.
+    - `scripts/tween-head.py` (OpenCV, build time only) morphs in-betweens along a smoothed optical flow, so the
+      visor slides instead of crossfading: 32 frames in all, at most ~4 px of motion per frame.
+    - The page draws the head from a 32-frame sprite (~140 KB WebP) onto a canvas, eased at a steady speed
+      (1.5 s for the full left-to-right range, owner: a slow turn) and blended between adjacent frames. The
+      sprite holds only the head box: the band above the seam, cropped to the columns that actually change
+      (41% of the width), which kept the mobile home page under its 500 KB budget (406 KB). While the canvas
+      is live, exactly that box is masked out of the photo (`mask-composite: exclude`).
+    - The robot faces the USER at first paint (the photo itself), turns right for the LLM, RAG and TOOLS,
+      slightly left for GUARDRAILS, and back to the USER. The sprite loads after the load event, and never under
+      reduced motion or without JS.
+  - The energy "charge" is a tint masked to an alpha-only silhouette (`pnpm images`) that stops at the collar,
+    so it never outlines a head that has turned away.
   - Gemini output carries Google's invisible SynthID watermark. Commercial use is governed by Google Cloud's
     generative AI terms (launch item 13).
 - **Trust badge and certification (owner request).** "Trusted by innovators worldwide" is restored in the design's
@@ -167,9 +186,10 @@ All token changes are minimal and documented in `tokens.css`:
 - **Fonts**: six subset WOFF2 files, **70 KB total**, self-hosted, `font-display: swap`. Only League Gothic and
   Manrope (above the fold) are preloaded. Capsize-generated metric-adjusted fallbacks prevent layout shift.
   Weights are restricted to those used: Hanken 200–600 + 300 italic, Manrope 300–700.
-- **Hero image (LCP).** The robot cut-out ships as AVIF/WebP/PNG at widths 360/540/720 (46–91 KB AVIF), preloaded
-  via `imagesrcset`, `fetchpriority="high"`, never lazy. Widths start at 360 because browsers and Lighthouse judge
-  resolution against the robot's untransformed 223px CSS width inside the scaled stage.
+- **Hero image (LCP).** The robot cut-out ships as AVIF/WebP/PNG at widths 360/540/720, preloaded via
+  `imagesrcset`, `fetchpriority="high"`, never lazy. Widths start at 360 because browsers and Lighthouse judge
+  resolution against the robot's untransformed 237px CSS width inside the scaled stage. The head-turn sprite
+  loads only after the load event.
 - **Hero animation.** Keyframes are ported verbatim, plus these optimisations:
   - Connector blur filters use the default object-bounding-box filter region instead of the design's full
     1600×1067 region.

@@ -4,6 +4,13 @@ import { observeVisibility } from './visibility';
 /** Timing of the agent loop (ms). The token's travel time matches --step-travel in CSS. */
 export const TIMING = { travel: 1000, dwell: 550, start: 500, hold: 2600 } as const;
 
+/** A full left-to-right head turn (every frame) takes this long, in ms (owner: a slow turn). */
+export const HEAD_SWEEP_MS = 1500;
+
+export function easeInOut(t: number): number {
+  return t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
+}
+
 /** Robot energy level (0-1) once `done` of `total` hops have completed. */
 export function levelFor(done: number, total: number): number {
   return total > 0 ? Math.min(1, Math.max(0, done / total)) : 0;
@@ -15,6 +22,8 @@ export interface HopData {
   to: string;
   label: string;
   approves?: boolean;
+  /** Head frame to turn to while this hop runs (towards the participant). */
+  look?: number;
 }
 
 export function parseHops(json: string | undefined): HopData[] {
@@ -33,6 +42,8 @@ export function parseHops(json: string | undefined): HopData[] {
  *  - Once the page is idle, one request plays hop by hop: the agent token travels each spoke
  *    carrying that hop's label ("request", "tool call: retrieve", ...); participants appear
  *    when first reached, the spoke in use is highlighted, and the robot charges as hops complete.
+ *  - The robot turns its head toward the participant of each hop: a sprite of head frames
+ *    (loaded on first play) drawn to a canvas over the head, eased between frames.
  *  - Pauses while the hero is off-screen or the tab is hidden; the robot replays from the start.
  */
 export function initHero(root: Document = document): void {
@@ -60,6 +71,68 @@ export function initHero(root: Document = document): void {
   );
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let run = 0;
+
+  const headCanvas = flow.querySelector<HTMLCanvasElement>('[data-flow-head]');
+  const headUrl = flow.dataset['headSprite'];
+  const headFrames = Number(flow.dataset['headFrames'] ?? 0);
+  const headDefault = Number(flow.dataset['headDefault'] ?? 0);
+  let headSprite: HTMLImageElement | undefined;
+  let headPos = headDefault;
+  let headTarget = headDefault;
+  let headAnim = 0;
+
+  /** Draws head frame `pos`, blending into the next frame for fractional positions. */
+  function drawHead(pos: number) {
+    const ctx = headCanvas?.getContext('2d');
+    if (!headCanvas || !ctx || !headSprite) return;
+    const { width: w, height: h } = headCanvas;
+    const a = Math.floor(pos);
+    const f = pos - a;
+    ctx.clearRect(0, 0, w, h);
+    ctx.globalAlpha = 1;
+    ctx.drawImage(headSprite, 0, a * h, w, h, 0, 0, w, h);
+    if (f > 0.01 && a + 1 < headFrames) {
+      ctx.globalAlpha = f;
+      ctx.drawImage(headSprite, 0, (a + 1) * h, w, h, 0, 0, w, h);
+    }
+  }
+
+  /** Turns the head to `frame`, at a steady speed (HEAD_SWEEP_MS for the full range), eased. */
+  function lookAt(frame: number) {
+    headTarget = frame;
+    flow.dataset['head'] = String(frame);
+    if (!headSprite) return;
+    cancelAnimationFrame(headAnim);
+    const from = headPos;
+    const duration = (Math.abs(frame - from) / Math.max(1, headFrames - 1)) * HEAD_SWEEP_MS;
+    if (duration < 1) return;
+    const startedAt = performance.now();
+    const step = (now: number) => {
+      const t = Math.min(1, (now - startedAt) / duration);
+      headPos = from + (frame - from) * easeInOut(t);
+      drawHead(headPos);
+      if (t < 1) headAnim = requestAnimationFrame(step);
+    };
+    headAnim = requestAnimationFrame(step);
+  }
+
+  /** Loads the head sprite (after the page has loaded), then hands the head over to the canvas. */
+  async function loadHead() {
+    if (headSprite || !headCanvas || !headUrl || headFrames < 2) return;
+    const img = new Image();
+    img.src = headUrl;
+    try {
+      await img.decode();
+    } catch {
+      return;
+    }
+    headCanvas.width = img.naturalWidth;
+    headCanvas.height = Math.floor(img.naturalHeight / headFrames);
+    headSprite = img;
+    drawHead(headPos);
+    flow.setAttribute('data-head-live', '');
+    lookAt(headTarget);
+  }
 
   /** Waits `ms`, then keeps waiting while paused; resolves false if a newer run started. */
   async function wait(ms: number, id: number): Promise<boolean> {
@@ -95,6 +168,7 @@ export function initHero(root: Document = document): void {
     for (const spoke of spokes.values()) spoke.classList.remove('is-drawn', 'is-active');
     label.textContent = '';
     flow.removeAttribute('data-approved');
+    lookAt(headDefault);
     setLevel(0);
     void flow.offsetWidth;
     flow.removeAttribute('data-resetting');
@@ -104,6 +178,7 @@ export function initHero(root: Document = document): void {
     run += 1;
     const id = run;
     flow.setAttribute('data-live', '');
+    void loadHead();
     for (;;) {
       reset();
       const first = hops[0];
@@ -114,6 +189,7 @@ export function initHero(root: Document = document): void {
       if (!(await wait(TIMING.start, id))) return;
       for (const [i, hop] of hops.entries()) {
         placeOn(hop);
+        lookAt(hop.look ?? headDefault);
         label.textContent = hop.label;
         for (const [sid, spoke] of spokes) spoke.classList.toggle('is-active', sid === hop.spoke);
         spokes.get(hop.spoke)?.classList.add('is-drawn');
@@ -135,6 +211,10 @@ export function initHero(root: Document = document): void {
   function showComplete() {
     run += 1;
     flow.removeAttribute('data-live');
+    cancelAnimationFrame(headAnim);
+    headPos = headDefault;
+    headTarget = headDefault;
+    drawHead(headPos);
     flow.setAttribute('data-approved', '');
     flow.style.setProperty('--level', '1');
   }
