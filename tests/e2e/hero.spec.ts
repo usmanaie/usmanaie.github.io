@@ -83,6 +83,9 @@ test.describe('hero', () => {
     // The photo's own head is masked out; the canvas draws the turning head.
     const mask = await page.locator('.flow__robot-img').evaluate((el) => getComputedStyle(el).maskImage);
     expect(mask).toContain('linear-gradient');
+    // The body's charge fill stops at the collar; the canvas fills the head itself.
+    const chargeMask = await page.locator('.flow__charge').evaluate((el) => getComputedStyle(el).maskImage);
+    expect(chargeMask).toContain('robot-agent-mask-body');
     const drawn = await page.locator('[data-flow-head]').evaluate((c) => {
       const canvas = c as HTMLCanvasElement;
       const data = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data;
@@ -170,7 +173,9 @@ test.describe('hero', () => {
     }
   });
 
-  test('the CTA, trust badge and certification share one row, both badges in the same ring style', async ({ page }) => {
+  test('the CTA, trust badge and certification share one row right under the text, above the robot', async ({
+    page,
+  }) => {
     await page.goto('/');
     const trust = page.locator('#top .trust');
     await expect(trust).toContainText('Trusted by innovators');
@@ -189,10 +194,18 @@ test.describe('hero', () => {
       cert.locator('.ring-badge__mark').boundingBox(),
     ]);
     expect(certRing!.width).toBeCloseTo(trustRing!.width, 0);
+    // The left column reads as one block: no gap between the text and the CTA (as in the design).
+    const text = await page.locator('#top .hero__text').boundingBox();
     const cta = await page.locator('#top .hero-pill--cta').boundingBox();
+    const ctaGap = cta!.y - (text!.y + text!.height);
+    expect(ctaGap).toBeGreaterThan(0);
+    expect(ctaGap).toBeLessThan(40);
+    // As in the design, the badges sit in front of the CTA's row (layered above the agent flow).
     const badge = await trust.boundingBox();
     expect(badge!.x).toBeGreaterThan(cta!.x + cta!.width);
-    expect(Math.abs(badge!.y + badge!.height / 2 - (cta!.y + cta!.height / 2))).toBeLessThan(12);
+    expect(Math.abs(badge!.y + badge!.height / 2 - (cta!.y + cta!.height / 2))).toBeLessThan(6);
+    const layer = await page.locator('#top .hero__actions').evaluate((el) => Number(getComputedStyle(el).zIndex));
+    expect(layer).toBeGreaterThan(0);
     // The certification sits to the right of the trust badge, on the same line.
     const certBox = await cert.boundingBox();
     expect(certBox!.x).toBeGreaterThan(badge!.x + badge!.width);

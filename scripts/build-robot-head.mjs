@@ -49,6 +49,11 @@ const TORSO = { x0: 560, x1: 1150, y0: 530, y1: 900 };
 const SEARCH = 32;
 const DEFAULT_FRAME = 0;
 const MARGIN = 24;
+/**
+ * Keep the top of the figure only: the hero's stage crops the robot at the shins, so the rest
+ * never shows (and would only add bytes to the LCP image).
+ */
+const VISIBLE = 0.875;
 /** Sprite resolution relative to the cut-out (the robot is drawn ~200-240 CSS px wide). */
 const SPRITE_SCALE = 0.51;
 /**
@@ -133,7 +138,7 @@ const boxes = cutouts.map((c) => figureBox(c.rgba, c.width, c.height));
 const left = Math.max(0, Math.min(...boxes.map((b) => b.minX)) - MARGIN);
 const top = Math.max(0, Math.min(...boxes.map((b) => b.minY)) - MARGIN);
 const trimW = Math.min(body.width, Math.max(...boxes.map((b) => b.maxX)) + MARGIN) - left;
-const trimH = Math.min(body.height, Math.max(...boxes.map((b) => b.maxY)) + MARGIN) - top;
+const trimH = Math.round((Math.min(body.height, Math.max(...boxes.map((b) => b.maxY)) + MARGIN) - top) * VISIBLE);
 const seam = SEAM - top;
 const trimmed = (c) =>
   sharp(c.rgba, { raw: { width: c.width, height: c.height, channels: 4 } }).extract({

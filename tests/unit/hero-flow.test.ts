@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import { hero } from '../../src/content/site';
 import { AGENT_CORE, flowNodes, HEAD, hops, LOOK_AT, NODE_RADIUS, ROBOT, spokes, STAGE } from '../../src/lib/hero-flow';
-import { easeInOut, levelFor, parseHops } from '../../src/scripts/hero';
+import { easeInOut, headFillTop, headTintColor, levelFor, parseHops } from '../../src/scripts/hero';
 
 describe('hero flow layout', () => {
   it('numbers participants by first involvement, 1..n', () => {
@@ -13,7 +13,9 @@ describe('hero flow layout', () => {
   });
 
   it('matches the robot box hard-coded in AgentFlow.astro CSS (.flow__robot)', () => {
-    expect(ROBOT).toEqual({ x: 241.5, y: 15, width: 237, height: 690 });
+    expect(ROBOT).toEqual({ x: 248.5, y: 10, width: 343, height: 875 });
+    // Taller than the stage: its bottom edge crops the robot (at the shins).
+    expect(ROBOT.y + ROBOT.height).toBeGreaterThan(STAGE.height);
   });
 
   it('matches the head box hard-coded in AgentFlow.astro CSS (.flow__head and the photo mask)', () => {
@@ -35,10 +37,11 @@ describe('hero flow layout', () => {
     expect(LOOK_AT.tools).toBe(LOOK_AT.llm);
   });
 
-  it('keeps every bubble inside the stage and clear of the robot', () => {
+  it('keeps every bubble (nearly) inside the stage and clear of the robot', () => {
     for (const node of flowNodes.filter((n) => n.id !== 'agent')) {
       expect(node.x - NODE_RADIUS).toBeGreaterThanOrEqual(0);
-      expect(node.x + NODE_RADIUS).toBeLessThanOrEqual(STAGE.width);
+      // Right-hand bubbles may overhang the stage slightly (into the page gutter).
+      expect(node.x + NODE_RADIUS).toBeLessThanOrEqual(STAGE.width + 16);
       const overlapsRobot = node.x + NODE_RADIUS > ROBOT.x + 30 && node.x - NODE_RADIUS < ROBOT.x + ROBOT.width - 30;
       expect(overlapsRobot).toBe(false);
     }
@@ -82,6 +85,12 @@ describe('controller helpers', () => {
     expect(easeInOut(0)).toBe(0);
     expect(easeInOut(0.5)).toBe(0.5);
     expect(easeInOut(1)).toBe(1);
+    // The fill reaches the head (the top `seam` of the robot) only near the end of the run.
+    expect(headFillTop(0.5, 0.2)).toBe(1);
+    expect(headFillTop(0.9, 0.2)).toBeCloseTo(0.5);
+    expect(headFillTop(1, 0.2)).toBe(0);
+    expect(headTintColor(0)).toBe('rgb(130 210 255 / 0.55)');
+    expect(headTintColor(1)).toBe('rgb(120 240 170 / 0.6)');
   });
 
   it('parses hop data defensively', () => {

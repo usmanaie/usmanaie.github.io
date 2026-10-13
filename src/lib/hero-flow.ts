@@ -2,14 +2,15 @@ import robotHead from '../assets/hero/robot-head.json';
 import { type FlowNodeId, hero } from '../content/site';
 
 /**
- * Layout of the hero's agent loop, in the 720x720 stage coordinate system
- * (square, so the robot can stand taller in the hero than a landscape stage allowed).
+ * Layout of the hero's agent loop, in the 720x880 (portrait) stage coordinate system. The robot
+ * is larger than the stage and runs off its bottom edge (cropped at the shins), so it carries
+ * the visual weight of a portrait opposite the headline.
  *
  * Hub and spoke: the agent (the robot's chest core) is the only participant that talks to
  * the others, so every message travels along a spoke between the agent and one node.
  * One source for node positions, spoke paths and the hop sequence.
  */
-export const STAGE = { width: 720, height: 720 } as const;
+export const STAGE = { width: 720, height: 880 } as const;
 export const NODE_RADIUS = 40;
 
 export interface Point {
@@ -19,13 +20,21 @@ export interface Point {
 
 /**
  * Where the robot artwork sits in the stage. The cut-out (robot-head.json width x height,
- * built by scripts/build-robot-head.mjs) fills the stage height and is centred. CORE is the
- * glowing chest core, as a fraction of the artwork.
+ * built by scripts/build-robot-head.mjs, already trimmed just below the knees) runs past the
+ * stage's bottom edge, which crops it at the shins. CORE is the glowing chest core, as a
+ * fraction of the artwork.
  */
-const ROBOT_HEIGHT = 690;
+const ROBOT_HEIGHT = 875;
 const ROBOT_WIDTH = Math.round((ROBOT_HEIGHT * robotHead.width) / robotHead.height);
-export const ROBOT = { x: (STAGE.width - ROBOT_WIDTH) / 2, y: 15, width: ROBOT_WIDTH, height: ROBOT_HEIGHT } as const;
-const CORE = { x: 0.584, y: 0.329 };
+/** Right of centre, so the CTA row under the copy ends clear of the robot's legs. */
+const ROBOT_SHIFT = 60;
+export const ROBOT = {
+  x: (STAGE.width - ROBOT_WIDTH) / 2 + ROBOT_SHIFT,
+  y: 10,
+  width: ROBOT_WIDTH,
+  height: ROBOT_HEIGHT,
+} as const;
+const CORE = { x: 0.584, y: 0.376 };
 
 /**
  * The robot's turning head: frames in the sprite run from facing the viewer's left (the USER
@@ -38,6 +47,8 @@ const round2 = (v: number) => Math.round(v * 100) / 100;
 export const HEAD = {
   frames: robotHead.frames,
   defaultFrame: robotHead.default,
+  /** The head band's height as a fraction of the robot box (the charge fill reaches it last). */
+  seam: robotHead.seam,
   box: {
     x: round2(robotHead.headLeft * ROBOT.width),
     width: round2(robotHead.headWidth * ROBOT.width),
@@ -61,12 +72,13 @@ export const AGENT_CORE: Point = {
 };
 
 const POSITIONS: Record<FlowNodeId, Point> = {
-  user: { x: 84, y: 150 },
+  user: { x: 84, y: 200 },
   agent: AGENT_CORE,
-  llm: { x: 640, y: 150 },
-  rag: { x: 668, y: 382 },
-  tools: { x: 636, y: 600 },
-  guardrails: { x: 90, y: 410 },
+  // The right-hand bubbles overhang the stage a little (into the page gutter) for breathing room.
+  llm: { x: 666, y: 200 },
+  rag: { x: 694, y: 440 },
+  tools: { x: 662, y: 680 },
+  guardrails: { x: 90, y: 500 },
 };
 
 /** How far each spoke bows away from the straight line (fraction of its length). */

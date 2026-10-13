@@ -140,6 +140,11 @@ const lobes = Array.from({ length: 16 }, (_, i) => {
     font-size: max(0.8125rem, calc(var(--badge-size) * 0.2));
     line-height: 1.3125;
     white-space: nowrap;
+
+    /* Legible where the hero's CTA row passes in front of the robot. */
+    text-shadow:
+      0 0 3px rgb(5 6 11 / 90%),
+      0 0 10px rgb(5 6 11 / 80%);
   }
 
   /* Paused with the rest of the hero when it is off-screen or the tab is hidden. */

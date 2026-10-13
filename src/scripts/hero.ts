@@ -11,6 +11,20 @@ export function easeInOut(t: number): number {
   return t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
 }
 
+/**
+ * Where the charge fill starts within the head band, as a fraction of the band from its top
+ * (1 = not reached yet). The fill rises from the robot's feet; the band is its top `seam`.
+ */
+export function headFillTop(level: number, seam: number): number {
+  return Math.min(1, Math.max(0, (1 - level) / seam));
+}
+
+/** Fill colour on the head: the charge's blue, turning to its green once approved (0-1). */
+export function headTintColor(green: number): string {
+  const mix = (a: number, b: number) => a + (b - a) * green;
+  return `rgb(${mix(130, 120)} ${mix(210, 240)} ${mix(255, 170)} / ${mix(0.55, 0.6)})`;
+}
+
 /** Robot energy level (0-1) once `done` of `total` hops have completed. */
 export function levelFor(done: number, total: number): number {
   return total > 0 ? Math.min(1, Math.max(0, done / total)) : 0;
@@ -76,25 +90,67 @@ export function initHero(root: Document = document): void {
   const headUrl = flow.dataset['headSprite'];
   const headFrames = Number(flow.dataset['headFrames'] ?? 0);
   const headDefault = Number(flow.dataset['headDefault'] ?? 0);
+  const headSeam = Number(flow.dataset['headSeam'] ?? 0.2);
+  const frameCanvas = document.createElement('canvas');
   let headSprite: HTMLImageElement | undefined;
   let headPos = headDefault;
   let headTarget = headDefault;
   let headAnim = 0;
+  /** The charge fill on the head, mirroring the CSS fill on the body (level 0-1, green 0-1). */
+  const tint = { level: 0, green: 0 };
+  let tintAnim = 0;
 
-  /** Draws head frame `pos`, blending into the next frame for fractional positions. */
+  /**
+   * Draws head frame `pos` (blending into the next frame for fractional positions), then the
+   * charge fill where it has risen into the head: multiplied like the body's fill, and kept to
+   * the head's own silhouette.
+   */
   function drawHead(pos: number) {
     const ctx = headCanvas?.getContext('2d');
-    if (!headCanvas || !ctx || !headSprite) return;
+    const frameCtx = frameCanvas.getContext('2d');
+    if (!headCanvas || !ctx || !frameCtx || !headSprite) return;
     const { width: w, height: h } = headCanvas;
     const a = Math.floor(pos);
     const f = pos - a;
-    ctx.clearRect(0, 0, w, h);
-    ctx.globalAlpha = 1;
-    ctx.drawImage(headSprite, 0, a * h, w, h, 0, 0, w, h);
+    frameCtx.clearRect(0, 0, w, h);
+    frameCtx.globalAlpha = 1;
+    frameCtx.drawImage(headSprite, 0, a * h, w, h, 0, 0, w, h);
     if (f > 0.01 && a + 1 < headFrames) {
-      ctx.globalAlpha = f;
-      ctx.drawImage(headSprite, 0, (a + 1) * h, w, h, 0, 0, w, h);
+      frameCtx.globalAlpha = f;
+      frameCtx.drawImage(headSprite, 0, (a + 1) * h, w, h, 0, 0, w, h);
     }
+    ctx.globalCompositeOperation = 'copy';
+    ctx.drawImage(frameCanvas, 0, 0);
+    const top = headFillTop(tint.level, headSeam);
+    if (top < 1) {
+      ctx.globalCompositeOperation = 'multiply';
+      ctx.fillStyle = headTintColor(tint.green);
+      ctx.fillRect(0, top * h, w, h - top * h);
+      ctx.globalCompositeOperation = 'destination-in';
+      ctx.drawImage(frameCanvas, 0, 0);
+    }
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  /** Moves the head's fill toward `level` / `green` like the CSS fill (or at once, if `now`). */
+  function setTint(level: number, green: number, now = false) {
+    cancelAnimationFrame(tintAnim);
+    if (now) {
+      tint.level = level;
+      tint.green = green;
+      drawHead(headPos);
+      return;
+    }
+    const from = { ...tint };
+    const startedAt = performance.now();
+    const step = (time: number) => {
+      const t = time - startedAt;
+      tint.level = from.level + (level - from.level) * easeInOut(Math.min(1, t / TIMING.travel));
+      tint.green = from.green + (green - from.green) * Math.min(1, t / 600);
+      drawHead(headPos);
+      if (t < Math.max(TIMING.travel, 600)) tintAnim = requestAnimationFrame(step);
+    };
+    tintAnim = requestAnimationFrame(step);
   }
 
   /** Turns the head to `frame`, at a steady speed (HEAD_SWEEP_MS for the full range), eased. */
@@ -128,6 +184,8 @@ export function initHero(root: Document = document): void {
     }
     headCanvas.width = img.naturalWidth;
     headCanvas.height = Math.floor(img.naturalHeight / headFrames);
+    frameCanvas.width = headCanvas.width;
+    frameCanvas.height = headCanvas.height;
     headSprite = img;
     drawHead(headPos);
     flow.setAttribute('data-head-live', '');
@@ -144,7 +202,12 @@ export function initHero(root: Document = document): void {
     return id === run;
   }
 
-  const setLevel = (done: number) => flow.style.setProperty('--level', String(levelFor(done, hops.length)));
+  const approved = () => (flow.hasAttribute('data-approved') ? 1 : 0);
+  const setLevel = (done: number, now = false) => {
+    const level = levelFor(done, hops.length);
+    flow.style.setProperty('--level', String(level));
+    setTint(level, approved(), now);
+  };
 
   function activate(nodeId: string) {
     for (const [id, node] of nodes) node.classList.toggle('is-active', id === nodeId);
@@ -169,7 +232,7 @@ export function initHero(root: Document = document): void {
     label.textContent = '';
     flow.removeAttribute('data-approved');
     lookAt(headDefault);
-    setLevel(0);
+    setLevel(0, true);
     void flow.offsetWidth;
     flow.removeAttribute('data-resetting');
   }
@@ -196,8 +259,8 @@ export function initHero(root: Document = document): void {
         token.style.offsetDistance = '100%';
         if (!(await wait(TIMING.travel, id))) return;
         activate(hop.to);
-        setLevel(i + 1);
         if (hop.approves) flow.setAttribute('data-approved', '');
+        setLevel(i + 1);
         if (!(await wait(TIMING.dwell, id))) return;
       }
       label.textContent = '';
@@ -217,6 +280,7 @@ export function initHero(root: Document = document): void {
     drawHead(headPos);
     flow.setAttribute('data-approved', '');
     flow.style.setProperty('--level', '1');
+    setTint(1, 1, true);
   }
 
   const start = () => (reduceMotion.matches ? showComplete() : void play());

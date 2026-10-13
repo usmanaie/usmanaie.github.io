@@ -62,6 +62,7 @@ const hopData = JSON.stringify(
   data-head-sprite={headSprite.src}
   data-head-frames={HEAD.frames}
   data-head-default={HEAD.defaultFrame}
+  data-head-seam={HEAD.seam}
 >
   <ol class="visually-hidden" aria-label={hero.flowLabel}>
     {hops.map((hop) => (
@@ -215,7 +216,13 @@ const hopData = JSON.stringify(
     position: relative;
     container-type: inline-size;
     width: 100%;
-    aspect-ratio: 1;
+    aspect-ratio: 720 / 880;
+
+    /*
+     * The robot runs off the stage's bottom edge (cropped at the shins): clip only there, so the
+     * bars behind it can rise above the stage and fade out.
+     */
+    clip-path: inset(-50% -50% 0);
   }
 
   .flow__canvas {
@@ -224,40 +231,53 @@ const hopData = JSON.stringify(
     position: absolute;
     inset: 0 auto auto 0;
     width: 720px;
-    height: 720px;
+    height: 880px;
     transform: scale(var(--flow-scale));
     transform-origin: 0 0;
   }
 
   .flow__halo {
     position: absolute;
-    left: 100px;
+    left: 80px;
     top: 60px;
-    width: 520px;
-    height: 520px;
+    width: 640px;
+    height: 820px;
     border-radius: 50%;
     background:
-      radial-gradient(circle at 48% 44%, rgb(50 130 255 / 30%), transparent 60%),
-      radial-gradient(circle at 70% 72%, rgb(255 60 80 / 16%), transparent 62%);
+      radial-gradient(50% 42% at 50% 36%, rgb(50 130 255 / 30%), transparent 72%),
+      radial-gradient(46% 40% at 66% 70%, rgb(255 60 80 / 16%), transparent 70%);
+    pointer-events: none;
   }
 
+  /*
+   * Vertical bars behind the robot, as prominent as in the design: bright, blue-tinted lines that
+   * glow strongest behind the head and shoulders and fade toward the edges and the floor.
+   */
   .flow__lines {
     position: absolute;
-    left: 150px;
-    top: 40px;
-    width: 420px;
-    height: 640px;
-    background: repeating-linear-gradient(90deg, rgb(140 165 215 / 9%) 0 1px, transparent 1px 15px);
-    mask-image: radial-gradient(50% 50% at 50% 50%, #000 35%, transparent 100%);
+    left: 20px;
+    top: -160px;
+    width: 680px;
+    height: 1040px;
+    background:
+      repeating-linear-gradient(90deg, rgb(150 185 255 / 30%) 0 1px, transparent 1px 13px),
+      repeating-linear-gradient(90deg, transparent 0 6px, rgb(90 130 230 / 12%) 6px 7px, transparent 7px 13px);
+    mask-image: radial-gradient(52% 58% at 54% 42%, #000 28%, rgb(0 0 0 / 45%) 62%, transparent 100%);
+
+    /* Decorative, and reaches up behind the nav: never intercept clicks. */
+    pointer-events: none;
   }
 
   /* Same box as ROBOT in src/lib/hero-flow.ts (tests/unit/hero-flow.test.ts guards it). */
   .flow__robot {
     position: absolute;
-    left: 241.5px;
-    top: 15px;
-    width: 237px;
-    height: 690px;
+    left: 248.5px;
+    top: 10px;
+    width: 343px;
+    height: 875px;
+
+    /* Fade into the page where the stage crops the legs, like a portrait's bottom edge. */
+    mask-image: linear-gradient(#000 87%, transparent 99%);
   }
 
   .flow__robot :global(.flow__robot-img) {
@@ -276,10 +296,10 @@ const hopData = JSON.stringify(
   .flow__head {
     position: absolute;
     top: 0;
-    left: 68.33px;
+    left: 98.89px;
     display: none;
-    width: 97.16px;
-    height: 118.55px;
+    width: 140.62px;
+    height: 171.83px;
   }
 
   .flow[data-head-live] .flow__head {
@@ -290,10 +310,10 @@ const hopData = JSON.stringify(
     mask-image: linear-gradient(#000 0 0), linear-gradient(#000 0 0);
     mask-size:
       100% 100%,
-      97.16px 118.55px;
+      140.62px 171.83px;
     mask-position:
       0 0,
-      68.33px 0;
+      98.89px 0;
     mask-repeat: no-repeat;
     mask-composite: exclude;
   }
@@ -306,6 +326,11 @@ const hopData = JSON.stringify(
     mask-size: 100% 100%;
     mask-repeat: no-repeat;
     mix-blend-mode: multiply;
+  }
+
+  /* While the head turns on its canvas, the fill there is drawn on the canvas (scripts/hero.ts). */
+  .flow[data-head-live] .flow__charge {
+    mask-image: url('../../assets/hero/robot-agent-mask-body.webp');
   }
 
   .flow__charge-level {
@@ -345,7 +370,7 @@ const hopData = JSON.stringify(
     position: absolute;
     inset: 0;
     width: 720px;
-    height: 720px;
+    height: 880px;
     max-width: none;
     overflow: visible;
   }
@@ -536,14 +561,14 @@ const hopData = JSON.stringify(
 
   .flow__replay {
     position: absolute;
-    left: 268px;
-    top: 30px;
-    width: 184px;
-    height: 650px;
+    left: 280px;
+    top: 20px;
+    width: 280px;
+    height: 840px;
     margin: 0;
     padding: 0;
     border: 0;
-    border-radius: 92px;
+    border-radius: 140px;
     background: transparent;
     cursor: pointer;
   }

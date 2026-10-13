@@ -62,20 +62,21 @@ import Icon from '../ui/Icon.astro';
           {hero.body[0]}
           <br class="hero__br" /> {hero.body[1]}
         </p>
-      </div>
-
-      <div class="hero__actions">
-        <a class="hero-pill hero-pill--cta" href="#contact">
-          {hero.cta}
-          <Icon name="arrow-right-long" size={22} strokeWidth={1.6} class="hero-pill__icon" />
-        </a>
-        <RingBadge kind="trust" lines={hero.trust} />
-        <RingBadge
-          kind="cert"
-          lines={[certification.issuer, certification.name]}
-          href={certification.credentialUrl}
-          linkLabel={`Verify credential: ${certification.issuer}, ${certification.name}`}
-        />
+        <div class="hero__actions">
+          <a class="hero-pill hero-pill--cta" href="#contact">
+            {hero.cta}
+            <Icon name="arrow-right-long" size={22} strokeWidth={1.6} class="hero-pill__icon" />
+          </a>
+          <div class="hero__badges">
+            <RingBadge kind="trust" lines={hero.trust} />
+            <RingBadge
+              kind="cert"
+              lines={[certification.issuer, certification.name]}
+              href={certification.credentialUrl}
+              linkLabel={`Verify credential: ${certification.issuer}, ${certification.name}`}
+            />
+          </div>
+        </div>
       </div>
 
       <AgentFlow />
@@ -185,8 +186,16 @@ import Icon from '../ui/Icon.astro';
     color: var(--color-hero-body);
   }
 
-  /* CTA, then the trust and certification badges side by side (wrapping on small screens). */
+  /* The CTA right under the text, then the trust and certification badges (one row on desktop). */
   .hero__actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+    margin-block-start: 6px;
+  }
+
+  .hero__badges {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -339,22 +348,20 @@ import Icon from '../ui/Icon.astro';
     }
 
     /*
-     * Copy beside a large, square agent stage; the CTA and both badges share one row below,
-     * spanning the full width (the copy column alone is too narrow for all three).
+     * Copy (vertically centred) beside a portrait agent stage that sits flush with the hero's
+     * bottom edge, the robot cropped at the shins like the design's portrait.
      */
     .hero__body {
       flex: 1;
-      grid-template:
-        'copy flow' 1fr
-        'actions actions' auto / minmax(0, 540fr) minmax(0, 761fr);
+      grid-template-columns: minmax(0, 540fr) minmax(0, 761fr);
       align-items: center;
-      gap: calc(14 * var(--u)) calc(32 * var(--u));
-      padding-block: calc(8 * var(--u)) calc(34 * var(--u));
+      gap: calc(32 * var(--u));
+      padding-block: calc(8 * var(--u)) 0;
     }
 
     .hero__copy {
-      grid-area: copy;
       max-width: none;
+      padding-block-end: calc(24 * var(--u));
       gap: 0;
     }
 
@@ -376,10 +383,23 @@ import Icon from '../ui/Icon.astro';
       line-height: 1.4667;
     }
 
+    /*
+     * As in the design: the CTA, trust badge and certification on one row under the text. The
+     * row runs past the copy column into the stage's empty lower-left, so it is layered above
+     * the agent flow.
+     */
     .hero__actions {
-      grid-area: actions;
+      position: relative;
+      z-index: 1;
+      flex-direction: row;
+      align-items: center;
+      gap: calc(32 * var(--u));
+      margin-block-start: calc(23 * var(--u));
+    }
+
+    .hero__badges {
       flex-wrap: nowrap;
-      gap: calc(64 * var(--u));
+      gap: calc(32 * var(--u));
     }
 
     .hero-pill--cta {
@@ -390,7 +410,7 @@ import Icon from '../ui/Icon.astro';
     }
 
     .hero__actions :global(.ring-badge) {
-      --badge-size: calc(80 * var(--u));
+      --badge-size: calc(72 * var(--u));
     }
 
     .hero__br {
@@ -398,7 +418,7 @@ import Icon from '../ui/Icon.astro';
     }
 
     .hero__body :global(.flow) {
-      grid-area: flow;
+      align-self: end;
       width: 100%;
     }
   }

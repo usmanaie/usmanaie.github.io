@@ -82,13 +82,15 @@ Owner-facing items are also tracked in [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md
     alike. Body and subhead have floors of 14px and 20px for readability.
   - **Fit to window (owner request):** the unit is `min(min(100vw, 1440px) / 1600, 100svh / 1067)`, so the
     complete hero (nav, copy, CTA, badges and flow) always fits the window.
-  - **Larger agent (owner request: the robot looked small next to the text).** The flow stage is square
-    (720×720) instead of landscape (880×720), with the nodes moved in, and the flow column is wider (copy 540 :
-    flow 761). The robot is ~35% taller (615px vs ~455px at 1440×900). The headline cap is 44% of the copy column
-    (it still fits; the headline is ~2.22× its font size wide).
-  - **One action row (owner request):** the CTA, the trust badge and the certification share one row spanning
-    both columns below the copy and the flow (the copy column alone is too narrow for all three). On small
-    screens the row wraps: CTA, then each badge.
+  - **Balance (owner request: match the reference's balance).** The left column is one block: headline, text,
+    then the CTA, trust badge and certification on one row right under the text, as in the design. The row runs
+    into the stage's empty lower-left, so it is layered above the agent flow (`z-index`), and the badge text has
+    a dark halo for legibility. The agent stage is a 720×880 portrait set flush with the hero's bottom edge, and
+    the robot runs off it, cropped at the shins and fading out like the reference's portrait (the art is trimmed
+    to the visible part). The robot sits right of centre so the row ends clear of its legs; the right-hand
+    bubbles overhang the stage slightly. Prominent vertical bars glow behind the head and shoulders and fade
+    upward past the stage (it clips only at the bottom; the bars ignore the pointer, as they reach behind the
+    nav). Copy 540 : flow 761; the headline cap is 44% of the copy column (it still fits).
 - **Hero robot (owner request).** The owner asked for AI-generated, high-resolution, full-body art and approved
   candidate "A, presenting" (`design-candidates/`, git-ignored).
   - The final art was produced with **Gemini 3 Pro Image on Vertex AI**, at
@@ -116,8 +118,10 @@ Owner-facing items are also tracked in [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md
     - The robot faces the USER at first paint (the photo itself), turns right for the LLM, RAG and TOOLS,
       slightly left for GUARDRAILS, and back to the USER. The sprite loads after the load event, and never under
       reduced motion or without JS.
-  - The energy "charge" is a tint masked to an alpha-only silhouette (`pnpm images`) that stops at the collar,
-    so it never outlines a head that has turned away.
+  - The energy "charge" is a tint masked to an alpha-only silhouette (`pnpm images`). While the head turns on its
+    canvas, the CSS fill uses a body-only mask and the canvas draws the fill on the head itself (multiplied and
+    kept to the head's silhouette), following the same level and blue-to-green change. Under reduced motion the
+    full mask covers the static head.
   - Gemini output carries Google's invisible SynthID watermark. Commercial use is governed by Google Cloud's
     generative AI terms (launch item 13).
 - **Trust badge and certification (owner request).** "Trusted by innovators worldwide" is restored in the design's
@@ -187,8 +191,9 @@ All token changes are minimal and documented in `tokens.css`:
   Manrope (above the fold) are preloaded. Capsize-generated metric-adjusted fallbacks prevent layout shift.
   Weights are restricted to those used: Hanken 200–600 + 300 italic, Manrope 300–700.
 - **Hero image (LCP).** The robot cut-out ships as AVIF/WebP/PNG at widths 360/540/720, preloaded via
-  `imagesrcset`, `fetchpriority="high"`, never lazy. Widths start at 360 because browsers and Lighthouse judge
-  resolution against the robot's untransformed 237px CSS width inside the scaled stage. The head-turn sprite
+  `imagesrcset`, `fetchpriority="high"`, never lazy. Lighthouse judges resolution against the robot's
+  untransformed 343px CSS width inside the scaled stage, so `sizes` steers phones to the 540 file, encoded at
+  quality 56 (~43 KB) so the headline's LCP stays under 2 s. The head-turn sprite
   loads only after the load event.
 - **Hero animation.** Keyframes are ported verbatim, plus these optimisations:
   - Connector blur filters use the default object-bounding-box filter region instead of the design's full
