@@ -1,0 +1,582 @@
+---
+import { hero } from '../../content/site';
+import { Picture } from 'astro:assets';
+
+import { AGENT_TAG, flowLoop, flowNodes, flowSegments, flowStops, NODE_RADIUS, STAGE } from '../../lib/hero-flow';
+import { robotImage } from '../../lib/hero-image';
+
+/**
+ * The hero's end-to-end agent loop: USER → AGENT → LLM → RAG → TOOLS → GUARDRAILS → RESPONSE.
+ *
+ * The visual diagram is SVG (positions as attributes, so the strict CSP needs no inline
+ * styles) and is aria-hidden; screen readers get the same steps as an ordered list.
+ * Static HTML shows the completed flow (no-JS, reduced motion, first paint);
+ * scripts/hero.ts then plays it step by step with the agent token travelling the path.
+ */
+const ICONS: Record<string, string[]> = {
+  user: ['M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z', 'M4.5 20c.8-3.6 3.8-6 7.5-6s6.7 2.4 7.5 6'],
+  llm: [
+    'M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z',
+    'M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z',
+    'M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4',
+    'M12 5v13',
+  ],
+  rag: [
+    'M3 5c0-1.66 3.13-3 7-3s7 1.34 7 3-3.13 3-7 3-7-1.34-7-3Z',
+    'M3 5v12c0 1.66 3.13 3 7 3',
+    'M3 11c0 1.66 3.13 3 7 3',
+    'M17 5v5',
+    'M17.5 19.8a3.3 3.3 0 1 0 0-6.6 3.3 3.3 0 0 0 0 6.6Z',
+    'm22 21-2.1-2.1',
+  ],
+  tools: [
+    'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z',
+  ],
+  guardrails: ['M12 3 4.5 6v5.5c0 4.6 3.2 8.6 7.5 9.5 4.3-.9 7.5-4.9 7.5-9.5V6L12 3Z', 'm8.8 12.2 2.3 2.3 4.4-4.6'],
+  response: [
+    'M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5H10l-4.5 4v-4h0A1.5 1.5 0 0 1 4 14.5Z',
+    'M8 9h8M8 12h5',
+  ],
+};
+
+const R = NODE_RADIUS;
+/** Screen-reader text for a step, e.g. "Guardrails: verify, comply". */
+const describe = (node: (typeof flowNodes)[number]) =>
+  `${node.label.charAt(0)}${node.label.slice(1).toLowerCase()}: ${node.caption.replace(' · ', ', ')}`;
+/** Chip centre sits on the bubble's edge (upper-left, 45°), so it overlaps the bubble by half. */
+const chipOffset = Math.round(R * Math.SQRT1_2);
+---
+
+<div class="flow" data-flow data-stops={flowStops.join(',')} data-path={flowLoop}>
+  <ol class="visually-hidden" aria-label={hero.flowLabel}>
+    {flowNodes.map((node) => (
+      <li>{describe(node)}</li>
+    ))}
+  </ol>
+
+  <div class="flow__canvas">
+    <div class="flow__halo" aria-hidden="true"></div>
+    <div class="flow__lines" aria-hidden="true"></div>
+
+    <div class="flow__robot">
+      <Picture
+        src={robotImage.src}
+        widths={[...robotImage.widths]}
+        sizes={robotImage.sizes}
+        quality={robotImage.quality}
+        formats={['avif', 'webp']}
+        alt=""
+        loading="eager"
+        fetchpriority="high"
+        decoding="async"
+        class="flow__robot-img"
+      />
+      <div class="flow__charge" aria-hidden="true">
+        <div class="flow__charge-level"></div>
+      </div>
+    </div>
+
+    <svg class="flow__diagram" viewBox={`0 0 ${STAGE} ${STAGE}`} aria-hidden="true" focusable="false">
+      <defs>
+        <radialGradient id="flow-bubble-blue" cx="34%" cy="28%" r="80%">
+          <stop offset="0" stop-color="#ffffff" stop-opacity=".22"></stop>
+          <stop offset=".25" stop-color="#ffffff" stop-opacity=".05"></stop>
+          <stop offset=".6" stop-color="#0b1222" stop-opacity=".55"></stop>
+          <stop offset="1" stop-color="#a0c8ff" stop-opacity=".18"></stop>
+        </radialGradient>
+        <radialGradient id="flow-bubble-red" cx="34%" cy="28%" r="80%">
+          <stop offset="0" stop-color="#ffffff" stop-opacity=".22"></stop>
+          <stop offset=".25" stop-color="#ffffff" stop-opacity=".05"></stop>
+          <stop offset=".6" stop-color="#160b14" stop-opacity=".55"></stop>
+          <stop offset="1" stop-color="#ffa0af" stop-opacity=".18"></stop>
+        </radialGradient>
+        <linearGradient id="flow-icon-blue" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#E4F4FF"></stop>
+          <stop offset="1" stop-color="#3B8CFF"></stop>
+        </linearGradient>
+        <linearGradient id="flow-icon-red" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#FFE0E5"></stop>
+          <stop offset="1" stop-color="#FF4D6A"></stop>
+        </linearGradient>
+        <filter id="flow-blur" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="4"></feGaussianBlur>
+        </filter>
+      </defs>
+
+      <g class="flow__track">
+        {flowSegments.map((d) => (
+          <path d={d} />
+        ))}
+      </g>
+      <g class="flow__segments">
+        {flowSegments.map((d, i) => (
+          <g class:list={['flow__seg', i % 2 === 0 ? 'flow__seg--blue' : 'flow__seg--red']} data-flow-seg={i}>
+            <path class="flow__seg-glow" d={d} pathLength="1" filter="url(#flow-blur)" />
+            <path class="flow__seg-core" d={d} pathLength="1" />
+          </g>
+        ))}
+      </g>
+
+      {flowNodes.map((node) =>
+        node.id === 'agent' ? (
+          <g class="flow-node flow-node--agent" data-flow-node={node.step}>
+            <circle class="flow-node__ring" cx={node.x} cy={node.y} r="26" />
+            <circle class="flow-node__chip" cx={node.x - 18} cy={node.y - 18} r="13" />
+            <text class="flow-node__chip-text" x={node.x - 18} y={node.y - 18}>
+              {node.step}
+            </text>
+            <rect class="flow-node__tag" x={AGENT_TAG.x - 70} y={AGENT_TAG.y - 22} width="140" height="44" rx="22" />
+            <text class="flow-node__name" x={AGENT_TAG.x} y={AGENT_TAG.y - 3}>
+              {node.label}
+            </text>
+            <text class="flow-node__caption" x={AGENT_TAG.x} y={AGENT_TAG.y + 13}>
+              {node.caption}
+            </text>
+          </g>
+        ) : (
+          <g class:list={['flow-node', `flow-node--${node.tone}`]} data-flow-node={node.step}>
+            <g class="flow-node__bubble">
+              <circle class="flow-node__pulse" cx={node.x} cy={node.y} r={R} />
+              <circle class="flow-node__disc" cx={node.x} cy={node.y} r={R} fill={`url(#flow-bubble-${node.tone})`} />
+              <svg
+                class="flow-node__icon"
+                x={node.x - 17}
+                y={node.y - 17}
+                width="34"
+                height="34"
+                viewBox="0 0 24 24"
+                stroke={`url(#flow-icon-${node.tone})`}
+              >
+                {(ICONS[node.id] ?? []).map((d) => (
+                  <path d={d} />
+                ))}
+              </svg>
+            </g>
+            <circle class="flow-node__chip" cx={node.x - chipOffset} cy={node.y - chipOffset} r="13" />
+            <text class="flow-node__chip-text" x={node.x - chipOffset} y={node.y - chipOffset}>
+              {node.step}
+            </text>
+            <text class="flow-node__name" x={node.x} y={node.y + R + 20}>
+              {node.label}
+            </text>
+            <text class="flow-node__caption" x={node.x} y={node.y + R + 37}>
+              {node.caption}
+            </text>
+          </g>
+        ),
+      )}
+    </svg>
+
+    <div class="flow__token" data-flow-token aria-hidden="true">
+      <svg viewBox="0 0 40 40" width="40" height="40" focusable="false">
+        <circle cx="20" cy="20" r="18" fill="#0B1222" stroke="#CFF1FF" stroke-width="2"></circle>
+        <rect x="9" y="15" width="22" height="9" rx="4.5" fill="#03050A" stroke="#9FD8FF" stroke-width="1.2"></rect>
+        <ellipse cx="15" cy="19.5" rx="3" ry="1.4" fill="#BFEAFF"></ellipse>
+        <ellipse cx="25" cy="19.5" rx="3" ry="1.4" fill="#FFD0D6"></ellipse>
+      </svg>
+    </div>
+
+    <button class="flow__replay" type="button" data-hero-replay>
+      <span class="visually-hidden">{hero.replayLabel}</span>
+    </button>
+  </div>
+</div>
+
+<style>
+  @property --flow-scale {
+    syntax: '<number>';
+    inherits: true;
+    initial-value: 1;
+  }
+
+  @property --level {
+    syntax: '<number>';
+    inherits: true;
+    initial-value: 0;
+  }
+
+  .flow {
+    --step-travel: 1.1s;
+
+    position: relative;
+    container-type: inline-size;
+    width: 100%;
+    aspect-ratio: 1;
+  }
+
+  .flow__canvas {
+    --flow-scale: tan(atan2(100cqw, 720px));
+
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 720px;
+    height: 720px;
+    transform: scale(var(--flow-scale));
+    transform-origin: 0 0;
+  }
+
+  .flow__halo {
+    position: absolute;
+    left: 100px;
+    top: 60px;
+    width: 520px;
+    height: 520px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 48% 44%, rgb(50 130 255 / 30%), transparent 60%),
+      radial-gradient(circle at 70% 72%, rgb(255 60 80 / 16%), transparent 62%);
+  }
+
+  .flow__lines {
+    position: absolute;
+    left: 150px;
+    top: 40px;
+    width: 420px;
+    height: 640px;
+    background: repeating-linear-gradient(90deg, rgb(140 165 215 / 9%) 0 1px, transparent 1px 15px);
+    mask-image: radial-gradient(50% 50% at 50% 50%, #000 35%, transparent 100%);
+  }
+
+  /* Same box as ROBOT in src/lib/hero-flow.ts (tests/unit/hero-flow.test.ts guards it). */
+  .flow__robot {
+    position: absolute;
+    left: 248.5px;
+    top: 15px;
+    width: 223px;
+    height: 690px;
+  }
+
+  .flow__robot :global(.flow__robot-img) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    filter: drop-shadow(0 26px 40px rgb(0 0 0 / 55%));
+  }
+
+  /* Energy charge: a tint that rises inside the robot's silhouette as the steps complete. */
+  .flow__charge {
+    position: absolute;
+    inset: 0;
+    mask-image: url('../../assets/hero/robot-agent-mask.webp');
+    mask-size: 100% 100%;
+    mask-repeat: no-repeat;
+    mix-blend-mode: multiply;
+  }
+
+  .flow__charge-level {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgb(130 210 255 / 55%), rgb(90 150 255 / 42%) 55%, rgb(255 110 140 / 48%));
+    transform: scaleY(var(--level));
+    transform-origin: 50% 100%;
+    transition: transform var(--step-travel) cubic-bezier(0.35, 0, 0.25, 1);
+  }
+
+  /* Skip the masked/blended layer until the page is idle: keeps the first render (LCP) cheap. */
+  :global(.hero[data-intro]) .flow__charge {
+    display: none;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .flow__robot {
+      animation: flow-bob 6s ease-in-out infinite;
+    }
+  }
+
+  .flow__diagram {
+    position: absolute;
+    inset: 0;
+    width: 720px;
+    height: 720px;
+    max-width: none;
+    overflow: visible;
+  }
+
+  /* ---------- Connectors ---------- */
+
+  .flow__track path {
+    fill: none;
+    stroke: rgb(160 190 240 / 14%);
+    stroke-width: 1.5;
+    stroke-dasharray: 2 7;
+    stroke-linecap: round;
+  }
+
+  .flow__seg path {
+    fill: none;
+    stroke-linecap: round;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset var(--step-travel) cubic-bezier(0.45, 0, 0.25, 1);
+  }
+
+  .flow__seg-glow {
+    stroke-width: 7;
+    opacity: 0.7;
+  }
+
+  .flow__seg-core {
+    stroke-width: 2;
+  }
+
+  .flow__seg--blue .flow__seg-glow {
+    stroke: var(--color-blue-450);
+  }
+
+  .flow__seg--blue .flow__seg-core {
+    stroke: #cdebff;
+  }
+
+  .flow__seg--red .flow__seg-glow {
+    stroke: var(--color-red-500);
+  }
+
+  .flow__seg--red .flow__seg-core {
+    stroke: #ffd3d9;
+  }
+
+  /* ---------- Nodes ---------- */
+
+  .flow-node {
+    transition: opacity 0.5s ease;
+  }
+
+  .flow-node__bubble {
+    transform-box: fill-box;
+    transform-origin: center;
+    transition: transform 0.6s var(--ease-out-expo);
+  }
+
+  .flow-node__disc {
+    stroke-width: 1;
+  }
+
+  .flow-node--blue .flow-node__disc {
+    stroke: rgb(200 225 255 / 35%);
+  }
+
+  .flow-node--red .flow-node__disc {
+    stroke: rgb(255 210 220 / 38%);
+  }
+
+  .flow-node__icon {
+    fill: none;
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    overflow: visible;
+  }
+
+  .flow-node__pulse {
+    fill: none;
+    stroke-width: 2;
+    opacity: 0;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .flow-node--blue .flow-node__pulse {
+    stroke: rgb(190 230 255 / 90%);
+  }
+
+  .flow-node--red .flow-node__pulse {
+    stroke: rgb(255 210 220 / 90%);
+  }
+
+  .flow-node__chip {
+    fill: #fff;
+    stroke: rgb(5 6 11 / 60%);
+    stroke-width: 1;
+  }
+
+  .flow-node__chip-text {
+    fill: #05060b;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    text-anchor: middle;
+    dominant-baseline: central;
+  }
+
+  .flow-node__name,
+  .flow-node__caption {
+    text-anchor: middle;
+    paint-order: stroke;
+    stroke: var(--color-bg-hero);
+    stroke-width: 5px;
+    stroke-linejoin: round;
+    font-size: calc(var(--label-size) * max(1, 0.62 / var(--flow-scale)));
+  }
+
+  .flow-node__name {
+    --label-size: 14px;
+
+    fill: #fff;
+    font-family: var(--font-hero);
+    font-weight: 700;
+    letter-spacing: 0.16em;
+  }
+
+  .flow-node--red .flow-node__name {
+    fill: var(--color-orb-label-rag);
+  }
+
+  .flow-node__caption {
+    --label-size: 12px;
+
+    fill: rgb(225 232 245 / 72%);
+    font-family: var(--font-mono);
+  }
+
+  .flow-node__ring {
+    fill: none;
+    stroke: rgb(190 230 255 / 85%);
+    stroke-width: 2;
+    stroke-dasharray: 4 5;
+  }
+
+  .flow-node__tag {
+    fill: rgb(8 12 22 / 82%);
+    stroke: rgb(200 225 255 / 30%);
+  }
+
+  /* ---------- Agent token ---------- */
+
+  .flow__token {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 40px;
+    height: 40px;
+    offset-anchor: 50% 50%;
+    offset-rotate: 0deg;
+    offset-distance: 0%;
+    opacity: 0;
+    filter: drop-shadow(0 0 10px rgb(110 200 255 / 85%));
+    transition:
+      offset-distance var(--step-travel) cubic-bezier(0.45, 0, 0.25, 1),
+      opacity 0.3s ease;
+    pointer-events: none;
+  }
+
+  /* ---------- Replay (the robot is the hit area; never covers a bubble) ---------- */
+
+  .flow__replay {
+    position: absolute;
+    left: 268px;
+    top: 30px;
+    width: 184px;
+    height: 650px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 92px;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .flow__replay:focus-visible {
+    outline-width: 3px;
+  }
+
+  /* ---------- Live playback (scripts/hero.ts adds data-live) ---------- */
+
+  .flow[data-live] .flow-node:not(.is-visited) {
+    opacity: 0;
+  }
+
+  .flow[data-live] .flow-node:not(.is-visited) .flow-node__bubble {
+    transform: scale(0.55);
+  }
+
+  .flow[data-live] .flow__seg:not(.is-drawn) path {
+    stroke-dashoffset: 1;
+  }
+
+  .flow[data-live] .flow__token {
+    opacity: 1;
+  }
+
+  .flow-node.is-active .flow-node__pulse {
+    animation: flow-pulse 1.4s ease-out infinite;
+  }
+
+  .flow-node.is-active .flow-node__bubble {
+    transform: scale(1.08);
+  }
+
+  .flow-node--agent.is-active .flow-node__ring {
+    animation: flow-spin 4s linear infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .flow[data-resetting] *,
+  .flow[data-resetting] :global(*) {
+    transition: none;
+  }
+
+  /* Paused off-screen / hidden tab (the hero carries data-paused) */
+  :global(.hero[data-paused]) .flow :global(*) {
+    animation-play-state: paused;
+  }
+
+  @keyframes flow-pulse {
+    from {
+      opacity: 0.9;
+      transform: scale(1);
+    }
+
+    to {
+      opacity: 0;
+      transform: scale(1.45);
+    }
+  }
+
+  @keyframes flow-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes flow-bob {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+
+    50% {
+      transform: translateY(-6px);
+    }
+  }
+
+  /* Narrow screens: larger step names, captions dropped (they would collide). */
+  @media (width < 40rem) {
+    .flow-node__name {
+      font-size: calc(var(--label-size) * max(1, 0.78 / var(--flow-scale)));
+      transform: translateY(8px);
+    }
+
+    .flow-node__caption {
+      display: none;
+    }
+
+    .flow-node__tag {
+      display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .flow :global(*) {
+      animation: none;
+      transition: none;
+    }
+  }
+
+  @supports not (offset-path: path('M 0 0')) {
+    .flow__token {
+      display: none;
+    }
+  }
+</style>

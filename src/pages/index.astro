@@ -12,10 +12,16 @@ import Reviews from '../components/sections/Reviews.astro';
 import { reviewsContent, reviewsEnabled } from '../content/reviews-source';
 import { site } from '../content/site';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { heroImage } from '../lib/hero-image';
+import { robotImage } from '../lib/hero-image';
 import { homeStructuredData } from '../lib/structured-data';
 
-const lcp = await getImage({ ...heroImage, format: 'avif' });
+const lcp = await getImage({
+  src: robotImage.src,
+  widths: [...robotImage.widths],
+  sizes: robotImage.sizes,
+  quality: robotImage.quality,
+  format: 'avif',
+});
 ---
 
 <BaseLayout
@@ -23,8 +29,8 @@ const lcp = await getImage({ ...heroImage, format: 'avif' });
   path="/"
   onHome
   noindex={import.meta.env['PUBLIC_REVIEWS_FIXTURE'] === 'true'}
-  preloadImage={{ href: lcp.src, type: 'image/avif' }}
   structuredData={homeStructuredData(Astro.site)}
+  preloadImage={{ srcset: lcp.srcSet.attribute, sizes: robotImage.sizes, type: 'image/avif' }}
 >
   <Hero />
   <About />

@@ -1,42 +1,21 @@
 ---
-import { Picture } from 'astro:assets';
-
 import { primaryNav, sectionHref } from '../../content/nav';
 import { hero } from '../../content/site';
-import { heroImage } from '../../lib/hero-image';
-import AgentOrb from '../hero/AgentOrb.astro';
+import AgentFlow from '../hero/AgentFlow.astro';
+import CertBadge from '../hero/CertBadge.astro';
 import Icon from '../ui/Icon.astro';
 
 /**
- * Hero (#top). At >= 1024px the design's 1600x1067 composition is kept intact and scaled
- * by a single unitless factor (--hero-scale) derived from the container width, so every
- * orb, connector and travelling object stays aligned. Below 1024px the copy re-flows and
- * the agent illustration becomes its own scaled block. Coordinates below are the design's.
+ * Hero (#top). Two columns at >= 1024px (copy | agent flow) sized to fit the viewport
+ * height, so the flow can never overlap the copy; a single column below that.
+ * The headline is sized to its column, the flow stage is a square scaled to its width.
  */
-
-/** Connector paths in the agent canvas's coordinate system (design coords minus 640,140). */
-const CONNECTORS = [
-  { id: 'user', d: 'M 150 90 C 200 -20, 420 -20, 410 120 S 290 330, 365 460', tone: 'blue', delay: 0.04 },
-  { id: 'llm', d: 'M 715 115 C 800 220, 650 290, 580 220 S 340 220, 365 460', tone: 'red', delay: 0.15 },
-  { id: 'tools', d: 'M 105 460 C 30 570, 220 650, 280 560 S 440 420, 365 460', tone: 'blue', delay: 0.26 },
-  { id: 'rag', d: 'M 725 515 C 810 450, 730 360, 630 405 S 450 510, 365 460', tone: 'rag', delay: 0.58 },
-] as const;
-
-const PARTICLES = ['a', 'b', 'c', 'd', 'e', 'f', 'g'] as const;
-const POWER = ['head', 'neck', 'shoulder', 'hand', 'hip'] as const;
-const WAVE =
-  'M0 12 Q12.5 6 25 12 T50 12 T75 12 T100 12 T125 12 T150 12 T175 12 T200 12 T225 12 T250 12 T275 12 T300 12 T325 12 T350 12 T375 12 T400 12 T425 12 T450 12 T475 12 T500 12';
 ---
 
 <section id="top" class="hero" aria-labelledby="hero-title" data-hero data-intro>
   <div class="hero__fields" aria-hidden="true"></div>
-  <div class="hero__frame">
-    <div class="hero__canvas">
-      <div class="hero__panel" aria-hidden="true"></div>
-      <div class="hero__lines" aria-hidden="true"></div>
-      <div class="hero__shimmer" aria-hidden="true"></div>
-      <div class="hero__halo" aria-hidden="true"></div>
-
+  <div class="hero__inner">
+    <div class="hero__bar">
       <nav class="hero__nav" aria-label="Primary">
         <ul role="list" class="hero__nav-list">
           {primaryNav.map((item) => (
@@ -57,211 +36,43 @@ const WAVE =
         {hero.navCta}
         <Icon name="arrow-right" size={18} strokeWidth={1.8} class="hero-pill__icon" />
       </a>
+    </div>
 
-      <h1 id="hero-title" class="hero__title">
-        {hero.titleLines.map((line) => (
-          <span class="hero__title-line">
-            {line.map((word, i) => (
-              <>
-                {i > 0 && ' '}
-                <span class:list={['hero__word', { 'hero__word--dim': word.dim }]}>{word.text}</span>
-              </>
-            ))}
-          </span>
-        ))}
-      </h1>
-
-      <p class="hero__sub">
-        {hero.subheading.line1}
-        <br class="hero__br" /> {hero.subheading.line2}{' '}
-        <span class="hero__grad hero__grad--red">{hero.subheading.accentRed}</span>
-        <br class="hero__br" /> {hero.subheading.line3}{' '}
-        <span class="hero__grad hero__grad--blue">{hero.subheading.accentBlue}</span>
-      </p>
-      <p class="hero__body">
-        {hero.body[0]}
-        <br class="hero__br" /> {hero.body[1]}
-      </p>
-      <a class="hero-pill hero-pill--cta" href="#contact">
-        {hero.cta}
-        <Icon name="arrow-right-long" size={22} strokeWidth={1.6} class="hero-pill__icon" />
-      </a>
-
-      <div class="hero__trust">
-        <svg class="hero__trust-ring" width="80" height="80" viewBox="0 0 80 80" aria-hidden="true" focusable="false">
-          <defs>
-            <linearGradient id="hero-ring-g" x1="0" y1="1" x2="1" y2="0">
-              <stop offset="0" stop-color="#2F7BFF"></stop>
-              <stop offset=".5" stop-color="#8A6BE0"></stop>
-              <stop offset="1" stop-color="#FF3B4E"></stop>
-            </linearGradient>
-          </defs>
-          <circle
-            cx="40"
-            cy="40"
-            r="36"
-            fill="none"
-            stroke="url(#hero-ring-g)"
-            stroke-width="7"
-            stroke-dasharray="1.6 5.9"
-          ></circle>
-        </svg>
-        <svg class="hero__trust-plus" width="80" height="80" viewBox="0 0 80 80" aria-hidden="true" focusable="false">
-          <path d="M40 33v14M33 40h14" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="round" fill="none"></path>
-        </svg>
-        <p class="hero__trust-text">
-          {hero.trust[0]}
-          <br class="hero__br" /> {hero.trust[1]}
-        </p>
-      </div>
-
-      <div class="agent-frame">
-        <div class="agent">
-          <div class="agent__bob" aria-hidden="true">
-            <div class="agent__ring agent__ring--back"></div>
-            <Picture
-              src={heroImage.src}
-              width={heroImage.width}
-              height={heroImage.height}
-              quality={heroImage.quality}
-              formats={['avif', 'webp']}
-              alt=""
-              loading="eager"
-              decoding="async"
-              fetchpriority="high"
-              class="agent__img"
-            />
-            <div class="agent__mask agent__tint"></div>
-            <div class="agent__mask agent__fill">
-              <div class="agent__level"></div>
-              <svg class="agent__crest" viewBox="0 0 300 24" preserveAspectRatio="none" focusable="false">
-                <g class="agent__wave">
-                  <path d={`${WAVE} V24 H0 Z`} class="agent__wave-fill"></path>
-                </g>
-              </svg>
-            </div>
-            <div class="agent__mask agent__glow">
-              <div class="agent__surface"></div>
-              <svg class="agent__crest" viewBox="0 0 300 24" preserveAspectRatio="none" focusable="false">
-                <g class="agent__wave">
-                  <path
-                    d={WAVE}
-                    fill="none"
-                    stroke="#CFF1FF"
-                    stroke-width="1.6"
-                    vector-effect="non-scaling-stroke"
-                  ></path>
-                </g>
-              </svg>
-              <div class="agent__particles">
-                {PARTICLES.map((p) => (
-                  <span class:list={['agent__particle', `agent__particle--${p}`]} />
-                ))}
-              </div>
-              <div class="agent__bloom"></div>
-            </div>
-            {POWER.map((p) => (
-              <div class:list={['agent__power', `agent__power--${p}`]} />
-            ))}
-            <div class="agent__ring agent__ring--front"></div>
-          </div>
-
-          <button class="agent__replay" type="button" data-hero-replay>
-            <span class="visually-hidden">{hero.replayLabel}</span>
-          </button>
-
-          {hero.orbs.map((orb) => (
-            <AgentOrb {...orb} />
-          ))}
-
-          <div class="agent__overlay" aria-hidden="true">
-            <div class="agent__pulse agent__pulse--user"></div>
-            <div class="agent__pulse agent__pulse--llm"></div>
-            <div class="agent__pulse agent__pulse--tools"></div>
-            <div class="agent__pulse agent__pulse--rag"></div>
-
-            <svg class="agent__connectors" viewBox="0 0 880 900" focusable="false">
-              <defs>
-                <filter id="hero-connector-blur">
-                  <feGaussianBlur stdDeviation="5"></feGaussianBlur>
-                </filter>
-                <filter id="hero-connector-blur-lg">
-                  <feGaussianBlur stdDeviation="6"></feGaussianBlur>
-                </filter>
-              </defs>
-              {CONNECTORS.map((c) => (
-                <g class:list={['agent__connector', `agent__connector--${c.id}`, `agent__connector--${c.tone}`]}>
-                  <path
-                    class="agent__trail agent__trail--glow"
-                    d={c.d}
-                    pathLength="1"
-                    filter={c.tone === 'rag' ? 'url(#hero-connector-blur-lg)' : 'url(#hero-connector-blur)'}
-                  />
-                  <path class="agent__trail agent__trail--core" d={c.d} pathLength="1" />
-                  <path class="agent__trail agent__trail--head" d={c.d} pathLength="1" />
-                </g>
+    <div class="hero__body">
+      <div class="hero__copy">
+        <h1 id="hero-title" class="hero__title">
+          {hero.titleLines.map((line) => (
+            <span class="hero__title-line">
+              {line.map((word, i) => (
+                <>
+                  {i > 0 && ' '}
+                  <span class:list={['hero__word', { 'hero__word--dim': word.dim }]}>{word.text}</span>
+                </>
               ))}
-            </svg>
-
-            <div class="agent__flyer agent__flyer--user">
-              <svg width="44" height="44" viewBox="0 0 100 100" focusable="false">
-                <defs>
-                  <linearGradient id="hero-msg-g" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0" stop-color="#F2F8FF"></stop>
-                    <stop offset="1" stop-color="#8CC0FF"></stop>
-                  </linearGradient>
-                </defs>
-                <path
-                  d="M16 22c0-6 4-10 10-10h48c6 0 10 4 10 10v34c0 6-4 10-10 10H44L28 82V66h-2c-6 0-10-4-10-10z"
-                  fill="url(#hero-msg-g)"
-                ></path>
-                <circle cx="36" cy="39" r="5" fill="#2A5BB0"></circle>
-                <circle cx="50" cy="39" r="5" fill="#2A5BB0"></circle>
-                <circle cx="64" cy="39" r="5" fill="#2A5BB0"></circle>
-              </svg>
-            </div>
-            <div class="agent__flyer agent__flyer--llm">
-              <svg width="46" height="46" viewBox="0 0 100 100" focusable="false">
-                <path
-                  d="M50 6 C54 34 66 46 94 50 C66 54 54 66 50 94 C46 66 34 54 6 50 C34 46 46 34 50 6 Z"
-                  fill="#FFD9DF"
-                ></path>
-                <circle cx="50" cy="50" r="7" fill="#FFFFFF"></circle>
-              </svg>
-            </div>
-            <div class="agent__flyer agent__flyer--tools">
-              <svg width="42" height="42" viewBox="0 0 100 100" focusable="false">
-                <defs>
-                  <linearGradient id="hero-gear-g" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0" stop-color="#E4F4FF"></stop>
-                    <stop offset="1" stop-color="#3B8CFF"></stop>
-                  </linearGradient>
-                </defs>
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="33"
-                  fill="none"
-                  stroke="url(#hero-gear-g)"
-                  stroke-width="13"
-                  stroke-dasharray="11.5 11.5"
-                ></circle>
-                <circle cx="50" cy="50" r="27" fill="url(#hero-gear-g)"></circle>
-                <circle cx="50" cy="50" r="10" fill="#0A0E18"></circle>
-              </svg>
-            </div>
-            {['fall', 'rag'].map((kind) => (
-              <div class:list={['agent__flyer', `agent__flyer--${kind}`]}>
-                <svg width="52" height="52" viewBox="0 0 100 100" focusable="false">
-                  <path d="M24 10h38l18 18v58c0 3-2 5-5 5H24c-3 0-5-2-5-5V15c0-3 2-5 5-5z" fill="#F4F8FF" />
-                  <path d="M62 10v14c0 2 2 4 4 4h14z" fill="#C9D9F2" />
-                  <path d="M30 44H68M30 56H68M30 68H56" stroke="#FF4D6A" stroke-width="5" stroke-linecap="round" />
-                </svg>
-              </div>
-            ))}
-          </div>
+            </span>
+          ))}
+        </h1>
+        <p class="hero__sub">
+          {hero.subheading.line1}
+          <br class="hero__br" /> {hero.subheading.line2}{' '}
+          <span class="hero__grad hero__grad--red">{hero.subheading.accentRed}</span>
+          <br class="hero__br" /> {hero.subheading.line3}{' '}
+          <span class="hero__grad hero__grad--blue">{hero.subheading.accentBlue}</span>
+        </p>
+        <p class="hero__text">
+          {hero.body[0]}
+          <br class="hero__br" /> {hero.body[1]}
+        </p>
+        <div class="hero__actions">
+          <a class="hero-pill hero-pill--cta" href="#contact">
+            {hero.cta}
+            <Icon name="arrow-right-long" size={22} strokeWidth={1.6} class="hero-pill__icon" />
+          </a>
+          <CertBadge />
         </div>
       </div>
+
+      <AgentFlow />
     </div>
   </div>
 </section>
@@ -273,43 +84,7 @@ const WAVE =
 </script>
 
 <style>
-  @property --lv {
-    syntax: '<length>';
-    inherits: true;
-    initial-value: 0;
-  }
-
-  @property --c1 {
-    syntax: '<color>';
-    inherits: true;
-    initial-value: rgb(130 195 255 / 50%);
-  }
-
-  @property --c2 {
-    syntax: '<color>';
-    inherits: true;
-    initial-value: rgb(70 130 255 / 60%);
-  }
-
-  @property --hero-scale {
-    syntax: '<number>';
-    inherits: true;
-    initial-value: 1;
-  }
-
-  @property --agent-scale {
-    syntax: '<number>';
-    inherits: true;
-    initial-value: 1;
-  }
-
-  /* ============================================================
-   * Section, colour fields and frame
-   * ============================================================ */
-
   .hero {
-    --T: 11s;
-
     position: relative;
     isolation: isolate;
     overflow: clip;
@@ -323,45 +98,37 @@ const WAVE =
     inset: 0;
     z-index: -1;
     background:
-      radial-gradient(42% 30% at 0% 55%, rgb(255 52 72 / 42%), transparent 72%),
-      radial-gradient(50% 24% at 100% 22%, rgb(40 100 255 / 32%), transparent 72%),
-      radial-gradient(60% 20% at 92% 100%, rgb(40 90 255 / 30%), transparent 72%);
+      radial-gradient(42% 34% at 0% 62%, rgb(255 52 72 / 38%), transparent 72%),
+      radial-gradient(40% 30% at 100% 26%, rgb(40 100 255 / 30%), transparent 72%),
+      radial-gradient(46% 24% at 88% 100%, rgb(40 90 255 / 26%), transparent 72%),
+      radial-gradient(50% 14% at 55% 0%, rgb(40 90 220 / 20%), transparent 75%);
   }
 
-  /* ============================================================
-   * Mobile-first: re-flowed hero
-   * ============================================================ */
-
-  .hero__frame {
-    padding-block: calc(var(--header-height) + 32px) 48px;
-    padding-inline: max(var(--gutter-min), env(safe-area-inset-left)) max(var(--gutter-min), env(safe-area-inset-right));
+  .hero__inner {
+    width: 100%;
+    max-width: calc(var(--container) + 2 * var(--gutter-min));
+    margin-inline: auto;
+    padding: calc(var(--header-height) + 28px) max(var(--gutter-min), env(safe-area-inset-right)) 48px
+      max(var(--gutter-min), env(safe-area-inset-left));
   }
 
-  .hero__canvas {
-    position: relative;
+  .hero__bar {
+    display: none;
+  }
+
+  .hero__body {
+    display: grid;
+    gap: 40px;
+  }
+
+  /* ---------- Copy ---------- */
+
+  .hero__copy {
+    container-type: inline-size;
     display: flex;
     flex-direction: column;
     gap: 20px;
-    max-width: 40rem;
-    margin-inline: auto;
-  }
-
-  .hero__panel {
-    position: absolute;
-    inset: -20px calc(var(--gutter-min) * -0.5) -24px;
-    z-index: -1;
-    border: 1px solid var(--color-panel-border);
-    border-radius: var(--radius-panel);
-    background:
-      radial-gradient(60% 40% at 74% 70%, rgb(30 100 255 / 30%), transparent 70%),
-      radial-gradient(50% 35% at 100% 90%, rgb(255 46 70 / 24%), transparent 70%), var(--gradient-panel);
-    box-shadow: var(--shadow-panel);
-  }
-
-  .hero__lines,
-  .hero__shimmer,
-  .hero__halo {
-    display: none;
+    max-width: 36rem;
   }
 
   .hero__title {
@@ -369,9 +136,10 @@ const WAVE =
     flex-direction: column;
     font-family: var(--font-display);
     font-weight: 400;
-    font-size: clamp(5.25rem, 26vw, 12rem);
     font-stretch: 81%;
+    font-size: min(42cqi, 12rem);
     line-height: 0.86;
+    word-spacing: 0.04em;
     text-transform: uppercase;
     color: var(--color-hero-headline);
   }
@@ -404,12 +172,22 @@ const WAVE =
     background-image: var(--gradient-text-blue);
   }
 
-  .hero__body {
+  .hero__text {
     max-width: 22rem;
     font-size: 0.9375rem;
     line-height: 1.4667;
     color: var(--color-hero-body);
   }
+
+  .hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px 24px;
+    margin-block-start: 6px;
+  }
+
+  /* ---------- Pills ---------- */
 
   .hero-pill {
     display: inline-flex;
@@ -442,18 +220,12 @@ const WAVE =
     font-size: 0.875rem;
   }
 
-  .hero__nav,
-  .hero-pill.hero-pill--nav {
-    display: none;
-  }
-
   .hero-pill--nav :global(.hero-pill__icon) {
     color: var(--color-red-350);
   }
 
   .hero-pill--cta {
-    align-self: flex-start;
-    width: min(299px, 100%);
+    gap: 24px;
     height: 60px;
     padding: 0 30px 0 40px;
     background:
@@ -468,168 +240,47 @@ const WAVE =
     color: var(--color-white);
   }
 
-  .hero__trust {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 17px;
-    min-height: 80px;
+  /* ---------- Flow stage (mobile) ---------- */
+
+  .hero__body :global(.flow) {
+    width: min(100%, 36rem);
+    justify-self: center;
   }
 
-  .hero__trust-ring,
-  .hero__trust-plus {
-    flex: none;
-    overflow: visible;
-  }
-
-  .hero__trust-plus {
-    position: absolute;
-    inset-inline-start: 0;
-    inset-block-start: 0;
-  }
-
-  .hero__trust-ring {
-    animation: hero-spin 30s linear infinite;
-    transform-origin: 50% 50%;
-  }
-
-  .hero__trust-text {
-    max-width: 180px;
-    font-size: 1rem;
-    line-height: 1.3125;
-    color: var(--color-hero-trust);
-  }
-
-  /* ---------- Agent illustration block (scaled canvas) ---------- */
-
-  .agent-frame {
-    position: relative;
-    container-type: inline-size;
-    width: min(100%, 34rem);
-    margin-inline: auto;
-    aspect-ratio: 880 / 900;
-  }
-
-  .agent {
-    --agent-scale: tan(atan2(100cqw, 880px));
-
-    position: absolute;
-    inset: 0 auto auto 0;
-    width: 880px;
-    height: 900px;
-    transform: scale(var(--agent-scale));
-    transform-origin: 0 0;
-  }
-
-  /* ============================================================
-   * Desktop: the design's scaled 1600x1067 composition
-   * ============================================================ */
+  /* ---------- Desktop: two columns sized to the viewport ---------- */
 
   @media (width >= 64rem) {
+    .hero {
+      display: flex;
+      min-height: clamp(640px, 100svh, 1000px);
+    }
+
     .hero__fields {
       background:
-        radial-gradient(
-          calc(420px * var(--hero-scale)) calc(520px * var(--hero-scale)) at max(0%, 50% - 720px) 62%,
-          rgb(255 52 72 / 42%),
-          transparent 72%
-        ),
-        radial-gradient(
-          calc(520px * var(--hero-scale)) calc(360px * var(--hero-scale)) at min(100%, 50% + 720px) 30%,
-          rgb(40 100 255 / 32%),
-          transparent 72%
-        ),
-        radial-gradient(
-          calc(620px * var(--hero-scale)) calc(300px * var(--hero-scale)) at min(92%, 50% + 604.8px) 100%,
-          rgb(40 90 255 / 30%),
-          transparent 72%
-        ),
-        radial-gradient(
-          calc(700px * var(--hero-scale)) calc(160px * var(--hero-scale)) at 50% 0%,
-          rgb(40 90 220 / 22%),
-          transparent 75%
-        );
+        radial-gradient(420px 520px at max(0%, 50% - 720px) 62%, rgb(255 52 72 / 40%), transparent 72%),
+        radial-gradient(520px 380px at min(100%, 50% + 720px) 26%, rgb(40 100 255 / 30%), transparent 72%),
+        radial-gradient(620px 300px at min(92%, 50% + 600px) 100%, rgb(40 90 255 / 26%), transparent 72%),
+        radial-gradient(700px 160px at 50% 0%, rgb(40 90 220 / 20%), transparent 75%);
     }
 
-    .hero {
-      --hero-scale: tan(atan2(min(100cqw, 1440px), 1600px));
+    .hero__inner {
+      display: flex;
+      flex-direction: column;
+      max-width: calc(var(--container) + 2 * var(--gutter));
+      padding: 0 var(--gutter);
     }
 
-    .hero__frame {
-      width: min(100%, 1440px);
-      margin-inline: auto;
-      padding: 0;
-      aspect-ratio: 1440 / 960;
-      overflow: hidden;
-    }
-
-    .hero__canvas {
-      display: block;
-      width: 1600px;
-      max-width: none;
-      height: 1067px;
-      margin: 0;
-      transform: scale(var(--hero-scale));
-      transform-origin: 0 0;
-    }
-
-    .hero__panel {
-      inset: 80px auto auto 70px;
-      width: 1462px;
-      height: 905px;
-      background:
-        radial-gradient(520px 640px at 74% 42%, rgb(30 100 255 / 30%), transparent 70%),
-        radial-gradient(420px 560px at 100% 82%, rgb(255 46 70 / 24%), transparent 70%),
-        radial-gradient(520px 420px at 0% 100%, rgb(255 46 70 / 7%), transparent 70%), var(--gradient-panel);
-    }
-
-    .hero__lines,
-    .hero__shimmer,
-    .hero__halo {
-      display: block;
-      position: absolute;
-    }
-
-    .hero__lines {
-      left: 230px;
-      top: 150px;
-      width: 1080px;
-      height: 800px;
-      background: repeating-linear-gradient(90deg, rgb(140 165 215 / 9%) 0 1px, transparent 1px 15px);
-      mask-image: linear-gradient(180deg, transparent 0%, #000 18%, #000 72%, transparent 100%);
-    }
-
-    .hero__shimmer {
-      left: 820px;
-      top: 160px;
-      width: 500px;
-      height: 780px;
-      background: repeating-linear-gradient(90deg, rgb(60 140 255 / 42%) 0 1px, transparent 1px 15px);
-      mask-image: radial-gradient(48% 50% at 50% 46%, #000 30%, transparent 100%);
-      animation: hero-shimmer 7s ease-in-out infinite alternate;
-    }
-
-    .hero__halo {
-      left: 700px;
-      top: 150px;
-      width: 640px;
-      height: 640px;
-      border-radius: 50%;
-      background:
-        radial-gradient(circle at 48% 44%, rgb(50 130 255 / 30%), transparent 58%),
-        radial-gradient(circle at 70% 70%, rgb(255 60 80 / 16%), transparent 60%);
-      animation: hero-halo var(--T) ease-in-out infinite both;
-    }
-
-    .hero__nav {
-      display: block;
-      position: absolute;
-      left: 200px;
-      top: 111px;
+    .hero__bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      padding-block: 26px 8px;
     }
 
     .hero__nav-list {
       display: flex;
-      gap: 0 56px;
+      gap: 0 clamp(28px, 3.6vw, 56px);
       margin: 0;
     }
 
@@ -663,1065 +314,38 @@ const WAVE =
       box-shadow: var(--glow-dot-red);
     }
 
-    .hero-pill.hero-pill--nav {
-      display: inline-flex;
-      position: absolute;
-      left: 1307px;
-      top: 117px;
+    .hero__body {
+      flex: 1;
+      grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+      align-items: center;
+      gap: clamp(32px, 4vw, 72px);
+      padding-block: 8px 32px;
+    }
+
+    .hero__copy {
+      max-width: none;
+      gap: clamp(14px, 2.4svh, 24px);
     }
 
     .hero__title {
-      position: absolute;
-      left: 200px;
-      top: 258px;
-      display: block;
-      font-size: 231px;
-      font-stretch: 81%;
-      line-height: 196px;
-      word-spacing: 10px;
-      pointer-events: none;
-    }
-
-    .hero__title-line {
-      display: block;
-    }
-
-    .hero__title-line + .hero__title-line {
-      margin-left: -4px;
+      font-size: min(42cqi, 19svh, 13rem);
     }
 
     .hero__sub {
-      position: absolute;
-      left: 203px;
-      top: 664px;
-      width: 460px;
-      font-size: 31px;
-      line-height: 39px;
+      font-size: min(clamp(1.375rem, 1.1458rem + 1.0185vw, 1.9375rem), 3.7svh);
     }
 
     .hero__br {
       display: inline;
     }
 
-    .hero__body {
-      position: absolute;
-      left: 203px;
-      top: 791px;
-      width: 330px;
-      max-width: none;
-      font-size: 15px;
-      line-height: 22px;
+    .hero__body :global(.flow) {
+      width: min(100%, calc(100svh - 150px), 760px);
+      min-width: 420px;
     }
-
-    .hero-pill--cta {
-      position: absolute;
-      left: 198px;
-      top: 858px;
-      width: 299px;
-    }
-
-    .hero__trust {
-      position: absolute;
-      left: 639px;
-      top: 849px;
-      gap: 17px;
-    }
-
-    .hero__trust-text {
-      width: 180px;
-      font-size: 16px;
-      line-height: 21px;
-    }
-
-    .agent-frame {
-      position: absolute;
-      left: 640px;
-      top: 140px;
-      width: 880px;
-      margin: 0;
-    }
-  }
-
-  /* ============================================================
-   * Agent canvas contents (coords = design coords - (640, 140))
-   * ============================================================ */
-
-  .agent__bob {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    animation: hero-bob 6s ease-in-out infinite;
-  }
-
-  .agent__ring {
-    position: absolute;
-    left: 79px;
-    top: calc(795px - var(--lv));
-    width: 600px;
-    height: 100px;
-    border-radius: 50%;
-    animation:
-      hero-lvl var(--T) cubic-bezier(0.35, 0, 0.25, 1) infinite both,
-      hero-vis var(--T) linear infinite both;
-  }
-
-  .agent__ring--back {
-    border: 1.5px solid rgb(150 215 255 / 55%);
-    box-shadow: 0 0 18px rgb(59 140 255 / 50%);
-    clip-path: inset(0 0 50% 0);
-  }
-
-  .agent__ring--front {
-    border: 2px solid rgb(190 232 255 / 90%);
-    box-shadow:
-      0 0 22px rgb(59 140 255 / 70%),
-      inset 0 0 14px rgb(59 140 255 / 40%);
-    clip-path: inset(50% 0 0 0);
-  }
-
-  .agent :global(.agent__img) {
-    position: absolute;
-    left: 130px;
-    top: 60px;
-    width: 498px;
-    height: 785px;
-    max-width: none;
-    mask-image: linear-gradient(#000 80%, transparent 98%);
-    filter: drop-shadow(0 30px 50px rgb(0 0 0 / 55%));
-  }
-
-  .agent__mask {
-    position: absolute;
-    left: 130px;
-    top: 60px;
-    width: 498px;
-    height: 785px;
-    mask-image: url('../../assets/hero/agent-mask.webp'), linear-gradient(#000 80%, transparent 98%);
-    mask-size: 100% 100%;
-    mask-repeat: no-repeat;
-    mask-composite: intersect;
-  }
-
-  .agent__tint {
-    mix-blend-mode: screen;
-    background: linear-gradient(90deg, transparent 52%, rgb(255 60 82 / 28%) 100%);
-  }
-
-  .agent__fill {
-    mix-blend-mode: multiply;
-    animation: hero-lvl var(--T) cubic-bezier(0.35, 0, 0.25, 1) infinite both;
-  }
-
-  .agent__glow {
-    mix-blend-mode: screen;
-    animation: hero-lvl var(--T) cubic-bezier(0.35, 0, 0.25, 1) infinite both;
-  }
-
-  .agent__level {
-    position: absolute;
-    left: 0;
-    bottom: 0;
-    width: 100%;
-    height: var(--lv);
-    background: linear-gradient(180deg, var(--c1), var(--c2));
-  }
-
-  .agent__crest {
-    position: absolute;
-    left: 0;
-    bottom: calc(var(--lv) - 12px);
-    width: 100%;
-    height: 24px;
-    overflow: hidden;
-    transform-origin: 50% 50%;
-    animation:
-      hero-surge var(--T) ease-in-out infinite both,
-      hero-vis var(--T) linear infinite both;
-  }
-
-  .agent__wave {
-    animation: hero-wave 2.4s linear infinite;
-  }
-
-  .agent__wave-fill {
-    fill: var(--c1);
-  }
-
-  .agent__surface {
-    position: absolute;
-    left: 0;
-    bottom: calc(var(--lv) - 34px);
-    width: 100%;
-    height: 68px;
-    background: linear-gradient(180deg, transparent, rgb(59 150 255 / 45%), transparent);
-    animation: hero-vis var(--T) linear infinite both;
-  }
-
-  .agent__particles {
-    position: absolute;
-    left: 0;
-    bottom: 0;
-    width: 100%;
-    height: var(--lv);
-    overflow: hidden;
-    animation: hero-vis var(--T) linear infinite both;
-  }
-
-  .agent__particle {
-    position: absolute;
-    bottom: -8px;
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-    background: #cff1ff;
-    animation: hero-rise 2.8s ease-in infinite;
-  }
-
-  .agent__particle--a {
-    left: 150px;
-    width: 5px;
-    height: 5px;
-  }
-
-  .agent__particle--b {
-    left: 212px;
-    width: 3px;
-    height: 3px;
-    border-radius: 1px;
-    animation-delay: 0.9s;
-  }
-
-  .agent__particle--c {
-    left: 268px;
-    background: #ffc9d2;
-    animation-delay: 1.6s;
-  }
-
-  .agent__particle--d {
-    left: 324px;
-    border-radius: 1px;
-    animation-delay: 0.4s;
-  }
-
-  .agent__particle--e {
-    left: 374px;
-    width: 3px;
-    height: 3px;
-    animation-delay: 2.1s;
-  }
-
-  .agent__particle--f {
-    left: 112px;
-    background: #ffc9d2;
-    animation-delay: 1.3s;
-  }
-
-  .agent__particle--g {
-    left: 424px;
-    width: 3px;
-    height: 3px;
-    animation-delay: 2.5s;
-  }
-
-  .agent__bloom {
-    position: absolute;
-    left: 38px;
-    top: 200px;
-    width: 400px;
-    height: 400px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgb(200 240 255 / 80%), rgb(59 150 255 / 35%) 40%, transparent 70%);
-    opacity: 0;
-    animation: hero-bloom var(--T) ease-out infinite both;
-  }
-
-  .agent__power {
-    position: absolute;
-    border-radius: 50%;
-    mix-blend-mode: screen;
-    background: radial-gradient(circle, rgb(170 225 255 / 90%), rgb(59 150 255 / 40%) 40%, transparent 70%);
-    animation: hero-power var(--T) ease-in-out infinite both;
-  }
-
-  .agent__power--head,
-  .agent__power--shoulder {
-    background: radial-gradient(circle, rgb(170 225 255 / 95%), rgb(59 150 255 / 45%) 38%, transparent 70%);
-  }
-
-  .agent__power--head {
-    left: 319px;
-    top: 130px;
-    width: 112px;
-    height: 112px;
-  }
-
-  .agent__power--neck {
-    left: 354px;
-    top: 348px;
-    width: 54px;
-    height: 54px;
-  }
-
-  .agent__power--shoulder {
-    left: 466px;
-    top: 401px;
-    width: 124px;
-    height: 124px;
-  }
-
-  .agent__power--hand {
-    left: 569px;
-    top: 733px;
-    width: 74px;
-    height: 74px;
-  }
-
-  .agent__power--hip {
-    left: 264px;
-    top: 684px;
-    width: 50px;
-    height: 50px;
-  }
-
-  .agent__replay {
-    position: absolute;
-    left: 220px;
-    top: 60px;
-    width: 380px;
-    height: 620px;
-    margin: 0;
-    padding: 0;
-    border: 0;
-    border-radius: 40px;
-    background: transparent;
-    cursor: pointer;
-  }
-
-  .agent__overlay {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-  }
-
-  .agent__pulse {
-    position: absolute;
-    width: 110px;
-    height: 110px;
-    border-radius: 50%;
-    border: 1.5px solid rgb(190 230 255 / 90%);
-    box-shadow:
-      0 0 32px rgb(59 140 255 / 70%),
-      inset 0 0 22px rgb(59 140 255 / 40%);
-    opacity: 0;
-    animation: hero-pulse var(--T) ease-out infinite both;
-  }
-
-  .agent__pulse--user {
-    left: 95px;
-    top: 35px;
-    animation-delay: calc(var(--T) * 0.04);
-  }
-
-  .agent__pulse--llm {
-    left: 660px;
-    top: 60px;
-    border-color: rgb(255 210 220 / 90%);
-    box-shadow:
-      0 0 32px rgb(255 59 78 / 70%),
-      inset 0 0 22px rgb(255 59 78 / 40%);
-    animation-delay: calc(var(--T) * 0.15);
-  }
-
-  .agent__pulse--tools {
-    left: 50px;
-    top: 405px;
-    animation-delay: calc(var(--T) * 0.26);
-  }
-
-  .agent__pulse--rag {
-    left: 670px;
-    top: 460px;
-    border-color: rgb(255 214 222 / 95%);
-    box-shadow:
-      0 0 42px rgb(255 59 78 / 70%),
-      inset 0 0 30px rgb(255 59 78 / 45%);
-    animation-name: hero-b4glow;
-    animation-timing-function: ease-in-out;
-  }
-
-  .agent__connectors {
-    position: absolute;
-    inset: 0;
-    width: 880px;
-    height: 900px;
-    max-width: none;
-    overflow: visible;
-  }
-
-  .agent__trail {
-    fill: none;
-    stroke-linecap: round;
-  }
-
-  .agent__trail--glow,
-  .agent__trail--core {
-    stroke-dasharray: 0.4 3;
-    stroke-dashoffset: 0.4;
-    animation: hero-tl var(--T) cubic-bezier(0.45, 0, 0.25, 1) infinite both;
-  }
-
-  .agent__trail--head {
-    stroke: #fff;
-    stroke-width: 4;
-    stroke-dasharray: 0.03 3;
-    stroke-dashoffset: 0.03;
-    animation: hero-hd var(--T) cubic-bezier(0.45, 0, 0.25, 1) infinite both;
-  }
-
-  .agent__connector--blue .agent__trail--glow {
-    stroke: var(--color-blue-450);
-    stroke-width: 9;
-    opacity: 0.9;
-  }
-
-  .agent__connector--blue .agent__trail--core {
-    stroke: #cdebff;
-    stroke-width: 2.2;
-  }
-
-  .agent__connector--red .agent__trail--glow {
-    stroke: var(--color-red-500);
-    stroke-width: 9;
-    opacity: 0.85;
-  }
-
-  .agent__connector--red .agent__trail--core {
-    stroke: #ffd3d9;
-    stroke-width: 2.2;
-  }
-
-  .agent__connector--rag .agent__trail--glow {
-    stroke: var(--color-red-500);
-    stroke-width: 11;
-    opacity: 0.9;
-  }
-
-  .agent__connector--rag .agent__trail--core {
-    stroke: #ffd9df;
-    stroke-width: 2.4;
-  }
-
-  .agent__connector--rag .agent__trail--head {
-    stroke-width: 4.5;
-  }
-
-  .agent__connector--user .agent__trail {
-    animation-delay: calc(var(--T) * 0.04);
-  }
-
-  .agent__connector--llm .agent__trail {
-    animation-delay: calc(var(--T) * 0.15);
-  }
-
-  .agent__connector--tools .agent__trail {
-    animation-delay: calc(var(--T) * 0.26);
-  }
-
-  .agent__connector--rag .agent__trail {
-    animation-delay: calc(var(--T) * 0.58);
-  }
-
-  .agent__flyer {
-    position: absolute;
-    left: 0;
-    top: 0;
-    offset-anchor: 50% 50%;
-    offset-rotate: 0deg;
-    offset-distance: 0%;
-    opacity: 0;
-    animation: hero-fly var(--T) cubic-bezier(0.45, 0, 0.25, 1) infinite both;
-  }
-
-  .agent__flyer svg {
-    overflow: visible;
-  }
-
-  .agent__flyer--user {
-    offset-path: path('M 150 90 C 200 -20, 420 -20, 410 120 S 290 330, 365 460');
-    animation-delay: calc(var(--T) * 0.04);
-  }
-
-  .agent__flyer--user svg {
-    filter: drop-shadow(0 0 10px rgb(59 150 255 / 80%));
-  }
-
-  .agent__flyer--llm {
-    offset-path: path('M 715 115 C 800 220, 650 290, 580 220 S 340 220, 365 460');
-    animation-delay: calc(var(--T) * 0.15);
-  }
-
-  .agent__flyer--llm svg,
-  .agent__flyer--rag svg {
-    filter: drop-shadow(0 0 12px rgb(255 77 94 / 85%));
-  }
-
-  .agent__flyer--tools {
-    offset-path: path('M 105 460 C 30 570, 220 650, 280 560 S 440 420, 365 460');
-    animation-delay: calc(var(--T) * 0.26);
-  }
-
-  .agent__flyer--tools svg {
-    filter: drop-shadow(0 0 10px rgb(59 150 255 / 80%));
-  }
-
-  .agent__flyer--fall {
-    offset-path: path('M 840 60 C 760 160, 860 280, 780 360 S 700 460, 725 515');
-    animation: hero-fall var(--T) ease-in-out infinite both;
-    animation-delay: calc(var(--T) * 0.4);
-  }
-
-  .agent__flyer--fall svg {
-    filter: drop-shadow(0 0 12px rgb(255 77 94 / 75%));
-  }
-
-  .agent__flyer--rag {
-    offset-path: path('M 725 515 C 810 450, 730 360, 630 405 S 450 510, 365 460');
-    animation-delay: calc(var(--T) * 0.58);
-  }
-
-  /* ============================================================
-   * Playback control: paused off-screen / hidden tab, replay
-   * ============================================================ */
-
-  /*
-   * data-intro: held until the page has loaded and gone idle (scripts/hero.ts) so the
-   * main-thread custom-property animations do not compete with the first render (LCP).
-   * data-paused: off-screen or hidden tab.
-   */
-  .hero[data-intro] :global(*),
-  .hero[data-paused] :global(*) {
-    animation-play-state: paused;
-  }
-
-  /*
-   * The masked fluid-fill layers, edge tint and power glows are the costliest layers to
-   * paint (mask compositing + blend modes) and are invisible or faint at the start of the
-   * cycle. Skipping them until the intro starts keeps the first render fast; the tint fades in.
-   */
-  @media (prefers-reduced-motion: no-preference) {
-    .hero[data-intro] .agent__mask,
-    .hero[data-intro] .agent__power {
-      display: none;
-    }
-
-    .agent__tint {
-      animation: hero-fade-in 0.8s ease-out both;
-    }
-  }
-
-  .hero[data-resetting] :global(*) {
-    animation: none;
-  }
-
-  /* ============================================================
-   * Keyframes (ported verbatim from Home-Hero.dc.html)
-   * ============================================================ */
-
-  @keyframes hero-lvl {
-    0%,
-    13.5% {
-      --lv: 0px;
-      --c1: rgb(130 195 255 / 50%);
-      --c2: rgb(70 130 255 / 60%);
-    }
-
-    16% {
-      --lv: 222px;
-    }
-
-    17.6%,
-    24.5% {
-      --lv: 200px;
-    }
-
-    27% {
-      --lv: 396px;
-    }
-
-    28.6%,
-    35.5% {
-      --lv: 374px;
-    }
-
-    38% {
-      --lv: 558px;
-    }
-
-    39.6%,
-    67.5% {
-      --lv: 535px;
-      --c1: rgb(130 195 255 / 56%);
-      --c2: rgb(70 130 255 / 66%);
-    }
-
-    71% {
-      --lv: 824px;
-    }
-
-    73.2% {
-      --lv: 766px;
-    }
-
-    75%,
-    91% {
-      --lv: 797px;
-      --c1: rgb(110 205 255 / 78%);
-      --c2: rgb(255 90 125 / 72%);
-    }
-
-    97%,
-    100% {
-      --lv: 0px;
-      --c1: rgb(130 195 255 / 50%);
-      --c2: rgb(70 130 255 / 60%);
-    }
-  }
-
-  @keyframes hero-surge {
-    0%,
-    13.5% {
-      transform: scaleY(0.5);
-    }
-
-    15% {
-      transform: scaleY(2.6);
-    }
-
-    17% {
-      transform: scaleY(0.7);
-    }
-
-    19% {
-      transform: scaleY(1.5);
-    }
-
-    22%,
-    24.5% {
-      transform: scaleY(0.5);
-    }
-
-    26% {
-      transform: scaleY(2.4);
-    }
-
-    28% {
-      transform: scaleY(0.7);
-    }
-
-    30% {
-      transform: scaleY(1.4);
-    }
-
-    33%,
-    35.5% {
-      transform: scaleY(0.5);
-    }
-
-    37% {
-      transform: scaleY(2.4);
-    }
-
-    39% {
-      transform: scaleY(0.7);
-    }
-
-    41% {
-      transform: scaleY(1.4);
-    }
-
-    44%,
-    67.5% {
-      transform: scaleY(0.5);
-    }
-
-    69.2% {
-      transform: scaleY(3);
-    }
-
-    71.6% {
-      transform: scaleY(0.6);
-    }
-
-    74% {
-      transform: scaleY(1.8);
-    }
-
-    77% {
-      transform: scaleY(0.8);
-    }
-
-    80%,
-    100% {
-      transform: scaleY(0.5);
-    }
-  }
-
-  @keyframes hero-vis {
-    0%,
-    13.6% {
-      opacity: 0;
-    }
-
-    14.6%,
-    93% {
-      opacity: 1;
-    }
-
-    97%,
-    100% {
-      opacity: 0;
-    }
-  }
-
-  @keyframes hero-wave {
-    to {
-      transform: translateX(-200px);
-    }
-  }
-
-  @keyframes hero-rise {
-    0% {
-      transform: translateY(0);
-      opacity: 0;
-    }
-
-    15% {
-      opacity: 0.95;
-    }
-
-    100% {
-      transform: translateY(-380px);
-      opacity: 0;
-    }
-  }
-
-  @keyframes hero-power {
-    0%,
-    14% {
-      opacity: 0.25;
-      transform: scale(0.85);
-    }
-
-    15.5%,
-    25% {
-      opacity: 0.5;
-      transform: scale(0.95);
-    }
-
-    26.5%,
-    36% {
-      opacity: 0.68;
-      transform: scale(1);
-    }
-
-    37.5%,
-    68% {
-      opacity: 0.8;
-      transform: scale(1.04);
-    }
-
-    70%,
-    91% {
-      opacity: 1;
-      transform: scale(1.18);
-    }
-
-    97%,
-    100% {
-      opacity: 0.25;
-      transform: scale(0.85);
-    }
-  }
-
-  @keyframes hero-bob {
-    0%,
-    100% {
-      transform: translateY(0);
-    }
-
-    50% {
-      transform: translateY(-8px);
-    }
-  }
-
-  @keyframes hero-spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  @keyframes hero-tl {
-    0% {
-      stroke-dashoffset: 0.4;
-    }
-
-    10% {
-      stroke-dashoffset: -0.63;
-    }
-
-    14%,
-    100% {
-      stroke-dashoffset: -1;
-    }
-  }
-
-  @keyframes hero-hd {
-    0% {
-      stroke-dashoffset: 0.03;
-    }
-
-    10%,
-    100% {
-      stroke-dashoffset: -1;
-    }
-  }
-
-  @keyframes hero-fly {
-    0% {
-      offset-distance: 0%;
-      opacity: 0;
-      scale: 0.9;
-    }
-
-    1.5% {
-      opacity: 1;
-      scale: 1;
-    }
-
-    8.5% {
-      opacity: 1;
-      scale: 0.72;
-    }
-
-    10% {
-      offset-distance: 100%;
-      opacity: 0;
-      scale: 0.3;
-    }
-
-    100% {
-      offset-distance: 100%;
-      opacity: 0;
-      scale: 0.3;
-    }
-  }
-
-  @keyframes hero-fall {
-    0% {
-      offset-distance: 0%;
-      opacity: 0;
-      rotate: -30deg;
-    }
-
-    2% {
-      opacity: 1;
-    }
-
-    5% {
-      rotate: 18deg;
-    }
-
-    9% {
-      rotate: -12deg;
-    }
-
-    14% {
-      offset-distance: 100%;
-      rotate: 4deg;
-      opacity: 1;
-    }
-
-    17.9% {
-      opacity: 1;
-      rotate: 0deg;
-    }
-
-    18%,
-    100% {
-      offset-distance: 100%;
-      opacity: 0;
-    }
-  }
-
-  @keyframes hero-pulse {
-    0% {
-      opacity: 0;
-      transform: scale(0.96);
-    }
-
-    1.2% {
-      opacity: 1;
-      transform: scale(1.04);
-    }
-
-    9%,
-    100% {
-      opacity: 0;
-      transform: scale(1.12);
-    }
-  }
-
-  @keyframes hero-b4glow {
-    0%,
-    52% {
-      opacity: 0;
-      transform: scale(0.96);
-    }
-
-    54.5% {
-      opacity: 1;
-      transform: scale(1.05);
-    }
-
-    59% {
-      opacity: 1;
-      transform: scale(1.02);
-    }
-
-    64%,
-    100% {
-      opacity: 0;
-      transform: scale(1.1);
-    }
-  }
-
-  @keyframes hero-bloom {
-    0%,
-    13% {
-      opacity: 0;
-    }
-
-    14.5% {
-      opacity: 0.85;
-    }
-
-    19%,
-    24% {
-      opacity: 0;
-    }
-
-    25.5% {
-      opacity: 0.85;
-    }
-
-    30%,
-    35% {
-      opacity: 0;
-    }
-
-    36.5% {
-      opacity: 0.85;
-    }
-
-    41%,
-    67% {
-      opacity: 0;
-    }
-
-    69% {
-      opacity: 1;
-    }
-
-    78%,
-    100% {
-      opacity: 0;
-    }
-  }
-
-  @keyframes hero-halo {
-    0%,
-    66% {
-      opacity: 0.5;
-    }
-
-    76%,
-    91% {
-      opacity: 1;
-    }
-
-    98%,
-    100% {
-      opacity: 0.5;
-    }
-  }
-
-  @keyframes hero-fade-in {
-    from {
-      opacity: 0;
-    }
-  }
-
-  @keyframes hero-shimmer {
-    from {
-      opacity: 0.55;
-    }
-
-    to {
-      opacity: 1;
-    }
   }
-
-  /* ============================================================
-   * Reduced motion: a designed, complete end-state frame
-   * (agent filled, orbs lit, connectors drawn), not a blank hero.
-   * ============================================================ */
 
   @media (prefers-reduced-motion: reduce) {
-    .hero :global(*) {
-      animation: none;
-    }
-
-    .hero {
-      --lv: 797px;
-      --c1: rgb(110 205 255 / 78%);
-      --c2: rgb(255 90 125 / 72%);
-    }
-
-    .hero__halo,
-    .hero__shimmer {
-      opacity: 1;
-    }
-
-    .agent__crest {
-      transform: scaleY(0.5);
-    }
-
-    .agent__power {
-      opacity: 1;
-      transform: scale(1.18);
-    }
-
-    .agent__pulse {
-      opacity: 0.55;
-    }
-
-    .agent__trail--glow,
-    .agent__trail--core {
-      stroke-dasharray: none;
-      stroke-dashoffset: 0;
-    }
-
-    .agent__trail--glow {
-      opacity: 0.45;
-    }
-
-    .agent__trail--head,
-    .agent__flyer,
-    .agent__particles,
-    .agent__bloom {
-      display: none;
-    }
-
     .hero-pill,
     .hero__nav-link {
       transition: none;
@@ -1729,19 +353,6 @@ const WAVE =
 
     .hero-pill:hover {
       transform: none;
-    }
-  }
-
-  /* Graceful fallbacks where advanced CSS is missing: show the static agent only. */
-  @supports not (offset-path: path('M 0 0')) {
-    .agent__flyer {
-      display: none;
-    }
-  }
-
-  @supports not ((mask-composite: intersect) or (-webkit-mask-composite: source-in)) {
-    .agent__mask {
-      display: none;
     }
   }
 

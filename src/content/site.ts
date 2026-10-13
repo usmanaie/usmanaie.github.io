@@ -81,16 +81,32 @@ export const hero = {
   body: ['I turn bold ideas into intelligent, intuitive', 'experiences that drive real-world impact.'],
   cta: 'Let’s build something',
   navCta: 'Let’s talk',
-  /** OWNER-CONFIRM: "Trusted by innovators worldwide". */
-  trust: ['Trusted by innovators', 'worldwide'],
-  replayLabel: 'Replay the agent animation',
-  orbs: [
-    { id: 'user', step: 1, label: 'USER', caption: 'intent · prompt', tone: 'blue' },
-    { id: 'llm', step: 2, label: 'LLM', caption: 'reasoning · planning', tone: 'red' },
-    { id: 'tools', step: 3, label: 'TOOLS', caption: 'actions · APIs', tone: 'blue' },
-    { id: 'rag', step: 4, label: 'RAG', caption: 'retrieval · grounding', tone: 'red' },
+  replayLabel: 'Replay the agent flow',
+  flowLabel: 'How an AI agent handles a request',
+  /**
+   * End-to-end agent loop, in order. The agent itself (step 2) is the robot; every other
+   * step is a bubble. The loop closes when the response returns to the user.
+   */
+  flow: [
+    { id: 'user', label: 'USER', caption: 'request · intent', tone: 'blue' },
+    { id: 'agent', label: 'AGENT', caption: 'plan · orchestrate', tone: 'blue' },
+    { id: 'llm', label: 'LLM', caption: 'reason · decide', tone: 'red' },
+    { id: 'rag', label: 'RAG', caption: 'retrieve · ground', tone: 'red' },
+    { id: 'tools', label: 'TOOLS', caption: 'call · execute', tone: 'blue' },
+    { id: 'guardrails', label: 'GUARDRAILS', caption: 'verify · comply', tone: 'red' },
+    { id: 'response', label: 'RESPONSE', caption: 'answer · deliver', tone: 'blue' },
   ],
 } as const;
+
+export type FlowStepId = (typeof hero.flow)[number]['id'];
+
+/** Shown under the hero CTA. The badge image is Google's official artwork, unmodified. */
+export const certification = {
+  issuer: 'Google Cloud Certified',
+  name: 'Professional Cloud Developer',
+  /** OWNER-CONFIRM: public verification link (Credly/Accredible). When set, the chip becomes a link. */
+  credentialUrl: undefined as string | undefined,
+};
 
 export const about = {
   heading: { lead: 'From Complex Requirements to', accent: 'Production-Grade AI' },

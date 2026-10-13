@@ -1,7 +1,9 @@
 import { expect, test } from '@playwright/test';
 
-test.describe('hero animation', () => {
-  test.use({ viewport: { width: 1440, height: 900 } });
+const STEPS = ['USER', 'AGENT', 'LLM', 'RAG', 'TOOLS', 'GUARDRAILS', 'RESPONSE'];
+
+test.describe('hero', () => {
+  test.use({ viewport: { width: 1280, height: 720 } });
 
   test('headline is real text with a single h1', async ({ page }) => {
     await page.goto('/');
@@ -9,27 +11,73 @@ test.describe('hero animation', () => {
     await expect(page.locator('h1 svg, h1 text')).toHaveCount(0);
   });
 
-  test('the replay control is a keyboard-operable button that restarts the cycle', async ({ page }) => {
+  test('fits one viewport and the flow never overlaps the copy', async ({ page }) => {
     await page.goto('/');
-    const replay = page.getByRole('button', { name: 'Replay the agent animation' });
-    await replay.focus();
-    await expect(replay).toBeFocused();
-    await page.evaluate(() => {
-      const hero = document.querySelector('[data-hero]')!;
-      new MutationObserver(() => {
-        if (hero.hasAttribute('data-resetting')) document.documentElement.dataset['restarted'] = 'yes';
-      }).observe(hero, { attributes: true });
-    });
-    await page.keyboard.press('Enter');
-    await expect(page.locator('html')).toHaveAttribute('data-restarted', 'yes');
-    await expect(page.locator('[data-hero]')).not.toHaveAttribute('data-resetting', '');
+    const hero = await page.locator('#top').boundingBox();
+    const copy = await page.locator('.hero__copy').boundingBox();
+    const flow = await page.locator('[data-flow]').boundingBox();
+    expect(hero!.height).toBeLessThanOrEqual(720);
+    expect(copy!.x + copy!.width).toBeLessThanOrEqual(flow!.x);
+    await expect(page.locator('.hero__panel')).toHaveCount(0);
   });
 
-  test('the replay hit area does not cover the orbs', async ({ page }) => {
+  test('exposes the agent loop to assistive tech as an ordered list of seven steps', async ({ page }) => {
+    await page.goto('/');
+    const list = page.getByRole('list', { name: 'How an AI agent handles a request' });
+    await expect(list.getByRole('listitem')).toHaveCount(7);
+    await expect(list.getByRole('listitem').first()).toHaveText(/^User: request, intent$/);
+    await expect(list.getByRole('listitem').nth(5)).toHaveText(/^Guardrails: verify, comply$/);
+  });
+
+  test('plays the steps in order, with the agent token travelling between them', async ({ page }) => {
+    await page.goto('/');
+    const flow = page.locator('[data-flow]');
+    await expect(flow).toHaveAttribute('data-live', '');
+    const visited = () => page.locator('[data-flow-node].is-visited').count();
+    await expect.poll(visited).toBe(1);
+    await expect(page.locator('[data-flow-node="1"]')).toHaveClass(/is-active/);
+    const distance = () => page.locator('[data-flow-token]').evaluate((el) => getComputedStyle(el).offsetDistance);
+    const start = await distance();
+    await expect.poll(visited, { timeout: 8000 }).toBeGreaterThanOrEqual(3);
+    expect(await distance()).not.toBe(start);
+    // Only steps already reached are shown; later steps stay hidden until the token arrives.
+    const hiddenLater = await page
+      .locator('[data-flow-node]:not(.is-visited)')
+      .first()
+      .evaluate((el) => getComputedStyle(el).opacity);
+    expect(Number(hiddenLater)).toBe(0);
+  });
+
+  test('step numbers sit in solid white circles overlapping their bubble by half', async ({ page }) => {
+    await page.goto('/');
+    const geometry = await page.locator('[data-flow-node="3"]').evaluate((node) => {
+      const chip = node.querySelector('.flow-node__chip') as SVGCircleElement;
+      const disc = node.querySelector('.flow-node__disc') as SVGCircleElement;
+      const c = { x: chip.cx.baseVal.value, y: chip.cy.baseVal.value };
+      const d = { x: disc.cx.baseVal.value, y: disc.cy.baseVal.value, r: disc.r.baseVal.value };
+      return { fill: getComputedStyle(chip).fill, distance: Math.hypot(c.x - d.x, c.y - d.y), radius: d.r };
+    });
+    expect(geometry.fill).toBe('rgb(255, 255, 255)');
+    // The chip centre lies on the bubble's edge, so half the chip overlaps the bubble.
+    expect(Math.abs(geometry.distance - geometry.radius)).toBeLessThan(1.5);
+  });
+
+  test('the replay control is a keyboard-operable button that restarts from step 1', async ({ page }) => {
+    await page.goto('/');
+    await expect
+      .poll(() => page.locator('[data-flow-node].is-visited').count(), { timeout: 8000 })
+      .toBeGreaterThanOrEqual(3);
+    const replay = page.getByRole('button', { name: 'Replay the agent flow' });
+    await replay.focus();
+    await page.keyboard.press('Enter');
+    await expect.poll(() => page.locator('[data-flow-node].is-visited').count()).toBeLessThanOrEqual(1);
+  });
+
+  test('the replay hit area does not cover any step bubble', async ({ page }) => {
     await page.goto('/');
     const button = await page.locator('[data-hero-replay]').boundingBox();
-    for (const orb of await page.locator('.orb__bubble').all()) {
-      const box = await orb.boundingBox();
+    for (const bubble of await page.locator('.flow-node__disc').all()) {
+      const box = await bubble.boundingBox();
       const overlaps =
         box &&
         button &&
@@ -39,6 +87,15 @@ test.describe('hero animation', () => {
         box.y + box.height > button.y;
       expect(overlaps).toBeFalsy();
     }
+  });
+
+  test('the Google Cloud certification badge replaces the unverified trust claim', async ({ page }) => {
+    await page.goto('/');
+    const cert = page.locator('#top .cert');
+    await expect(cert).toContainText('Google Cloud Certified');
+    await expect(cert).toContainText('Professional Cloud Developer');
+    await expect(cert.locator('img')).toHaveAttribute('alt', '');
+    await expect(page.getByText('Trusted by innovators')).toHaveCount(0);
   });
 
   test('animations pause once the hero is scrolled out of view', async ({ page }) => {
@@ -53,27 +110,23 @@ test.describe('hero animation', () => {
 });
 
 test.describe('reduced motion', () => {
-  test.use({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' });
+  test.use({ viewport: { width: 1280, height: 720 }, reducedMotion: 'reduce' });
 
-  test('shows the static, complete end-state frame', async ({ page }) => {
+  test('shows the complete flow, static: every step, every connector, robot fully charged', async ({ page }) => {
     await page.goto('/');
-    const state = await page.evaluate(() => {
-      const fill = document.querySelector('.agent__level')!;
-      const trail = document.querySelector('.agent__trail--core')!;
-      const pulse = document.querySelector('.agent__pulse')!;
-      return {
-        animation: getComputedStyle(document.querySelector('.agent__fill')!).animationName,
-        level: getComputedStyle(fill).height,
-        dash: getComputedStyle(trail).strokeDasharray,
-        pulse: Number(getComputedStyle(pulse).opacity),
-        spin: getComputedStyle(document.querySelector('.hero__trust-ring')!).animationName,
-      };
-    });
-    expect(state.animation).toBe('none');
-    expect(state.spin).toBe('none');
-    expect(parseFloat(state.level)).toBeCloseTo(797, 0);
-    expect(state.dash).toBe('none');
-    expect(state.pulse).toBeGreaterThan(0);
+    await page.waitForTimeout(1500);
+    const flow = page.locator('[data-flow]');
+    await expect(flow).not.toHaveAttribute('data-live', '');
+    for (const label of STEPS)
+      await expect(page.locator('.flow__diagram').getByText(label, { exact: true })).toBeVisible();
+    const state = await page.evaluate(() => ({
+      dash: getComputedStyle(document.querySelector('.flow__seg-core')!).strokeDashoffset,
+      level: getComputedStyle(document.querySelector('[data-flow]')!).getPropertyValue('--level').trim(),
+      bob: getComputedStyle(document.querySelector('.flow__robot')!).animationName,
+    }));
+    expect(parseFloat(state.dash)).toBe(0);
+    expect(Number(state.level)).toBe(1);
+    expect(state.bob).toBe('none');
   });
 
   test('anchor navigation jumps instantly', async ({ page }) => {
@@ -85,11 +138,13 @@ test.describe('reduced motion', () => {
 test.describe('mobile hero', () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
-  test('re-flows into a stacked layout instead of a shrunken canvas', async ({ page }) => {
+  test('stacks copy, badge, then the flow, instead of shrinking a desktop canvas', async ({ page }) => {
     await page.goto('/');
     const title = await page.locator('h1').boundingBox();
-    const agent = await page.locator('.agent-frame').boundingBox();
-    expect(title && agent && agent.y > title.y + title.height).toBeTruthy();
+    const cert = await page.locator('#top .cert').boundingBox();
+    const flow = await page.locator('[data-flow]').boundingBox();
+    expect(cert!.y).toBeGreaterThan(title!.y + title!.height);
+    expect(flow!.y).toBeGreaterThan(cert!.y + cert!.height);
     expect(title!.width).toBeGreaterThan(200);
   });
 });

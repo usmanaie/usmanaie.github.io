@@ -9,9 +9,12 @@ test.describe('without JavaScript', () => {
     for (const id of ['about', 'education', 'expertise', 'projects', 'experience', 'contact']) {
       await expect(page.locator(`#${id} h2`)).toBeVisible();
     }
-    await page.getByRole('navigation', { name: 'Primary' }).getByRole('link', { name: 'Projects' }).click();
+    // The always-visible header takes over from the hero's nav row (no duplicate, no overlap).
+    await expect(page.getByRole('navigation', { name: 'Primary' })).toBeHidden();
+    const site = page.getByRole('navigation', { name: 'Site' });
+    await expect(site).toBeVisible();
+    await site.getByRole('link', { name: 'Projects' }).click();
     await expect(page.locator('#projects')).toBeInViewport();
-    await expect(page.getByRole('navigation', { name: 'Site' })).toBeVisible();
   });
 
   test('mobile: the useless menu button is hidden and the footer nav remains', async ({ page }) => {

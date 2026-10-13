@@ -14,7 +14,8 @@ interface Props {
   path: string;
   onHome?: boolean;
   noindex?: boolean;
-  preloadImage?: { href: string; type: string };
+  /** Responsive LCP image to preload (must match the rendered <picture>). */
+  preloadImage?: { srcset: string; sizes: string; type: string };
   /** JSON-LD objects rendered as application/ld+json data blocks (not executed). */
   structuredData?: object[];
 }
@@ -49,7 +50,14 @@ const ogImage = new URL('/og.jpg', Astro.site).href;
     <link rel="preload" href={leagueGothic} as="font" type="font/woff2" crossorigin />
     <link rel="preload" href={manrope} as="font" type="font/woff2" crossorigin />
     {preloadImage && (
-      <link rel="preload" href={preloadImage.href} as="image" type={preloadImage.type} fetchpriority="high" />
+      <link
+        rel="preload"
+        as="image"
+        imagesrcset={preloadImage.srcset}
+        imagesizes={preloadImage.sizes}
+        type={preloadImage.type}
+        fetchpriority="high"
+      />
     )}
 
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />

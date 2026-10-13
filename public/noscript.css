@@ -11,13 +11,9 @@ html .site-header .site-header__toggle {
   display: none;
 }
 
-html body .hero[data-intro] * {
-  animation-play-state: running;
-}
-
-html body .hero[data-intro] .agent__mask,
-html body .hero[data-intro] .agent__power {
-  display: block;
+/* The always-visible header replaces the hero's own nav row (which keeps its space). */
+html body .hero .hero__bar {
+  visibility: hidden;
 }
 
 html main > section {

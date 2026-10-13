@@ -25,7 +25,7 @@ const page = await browser.newPage({
 await page.goto(base, { waitUntil: 'networkidle' });
 await page.evaluate(() => document.fonts.ready);
 await page.waitForTimeout(300);
-const png = await page.screenshot({ clip: { x: 0, y: 85, width: 1200, height: 630 } });
+const png = await page.screenshot({ clip: { x: 0, y: 60, width: 1200, height: 630 } });
 await browser.close();
 
 await sharp(png).jpeg({ quality: 86, mozjpeg: true }).toFile(path.join(root, 'public/og.jpg'));
