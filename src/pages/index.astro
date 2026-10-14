@@ -2,6 +2,7 @@
 import { getImage } from 'astro:assets';
 
 import About from '../components/sections/About.astro';
+import Certifications from '../components/sections/Certifications.astro';
 import Contact from '../components/sections/Contact.astro';
 import Education from '../components/sections/Education.astro';
 import Experience from '../components/sections/Experience.astro';
@@ -38,6 +39,7 @@ const lcp = await getImage({
   <Expertise />
   <Projects />
   <Experience />
+  <Certifications />
   {reviewsEnabled && <Reviews content={reviewsContent} />}
   <Contact />
 </BaseLayout>

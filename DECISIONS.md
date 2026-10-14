@@ -96,6 +96,23 @@ Owner-facing items are also tracked in [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md
   case study sets the story (intro, highlights, next step) beside the project image, centred against it, on
   desktop (phones keep the reading order); Privacy and Terms are one centred reading column; the 404 is centred;
   the projects list keeps the home section's alternating rows.
+- **Certifications section (owner request).** After Experience, in the menu as "Certifications": "My Google Cloud
+  Profile", from the owner's public Google Skills profile (`src/content/credentials.ts`). The Professional Cloud
+  Developer certification comes first, as a compact card (max 400px) beside the heading and four icon stat tiles
+  (2×2 below 1280px). Then the 7 skill badges as a gallery (4 across, legible at full size, the last slot linking to
+  the profile) and the completion badges as a carousel: a native scroll-snap track (touch, trackpad,
+  keyboard and no-JS work) whose scrollbar gives way, once enhanced, to arrow buttons and a progress line below the
+  rail (owner: the standard place), edge fades and polite announcements. It reuses the Reviews carousel script,
+  which now steps a page at a time where asked and re-measures when its track is laid out. The badge images are Google's own artwork, resized;
+  every badge links to its public page so it can be verified. Badge types were confirmed from the artwork ("SKILL
+  BADGE · ADVANCED" vs "COMPLETION BADGE"). Three completion badges for courses Google has retired are kept in the
+  content but not shown (25 of 28). Chosen over a "ledger" variant (certification banner + year-grouped list).
+- **External links open in a new tab (owner request).** Links to other sites (Google Skills badges and profile)
+  use `target="_blank"` with `rel="noopener noreferrer"` and say "(opens in a new tab)" to screen readers
+  (`Pill` has a `newTab` option). In-page and same-site links keep the normal behaviour.
+- **Section top glow (owner request).** Sections on the plain black field (About, Education, Expertise, Projects,
+  Certifications, Contact) carry `.section-glow`: a hairline in the accent gradient and a soft blue glow at the top
+  edge, so the sticky menu (the same near-black) no longer blends into the section under it.
 - **Hero robot (owner request).** The owner asked for AI-generated, high-resolution, full-body art and approved
   candidate "A, presenting" (`design-candidates/`, git-ignored).
   - The final art was produced with **Gemini 3 Pro Image on Vertex AI**, at

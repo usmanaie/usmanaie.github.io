@@ -18,20 +18,34 @@ interface Props {
    * Multi-Agent AI Platform". It must start with the visible text (WCAG 2.5.3 label in name).
    */
   label?: string;
+  /** Another site: open in a new tab (announced to screen readers). */
+  newTab?: boolean;
   class?: string;
 }
 
-const { href, variant = 'outline', icon = 'arrow-up-right', size = 'default', label, class: className } = Astro.props;
+const {
+  href,
+  variant = 'outline',
+  icon = 'arrow-up-right',
+  size = 'default',
+  label,
+  newTab = false,
+  class: className,
+} = Astro.props;
+const external = newTab ? { target: '_blank', rel: 'noopener noreferrer' } : {};
+const name = label && newTab ? `${label} (opens in a new tab)` : label;
 ---
 
 <a
   class:list={['pill', `pill--${variant}`, { 'pill--compact': size === 'compact' }, className]}
   href={href}
-  aria-label={label}
+  aria-label={name}
+  {...external}
 >
   <span class="pill__label">
     <slot />
   </span>
+  {newTab && !label && <span class="visually-hidden"> (opens in a new tab)</span>}
   {icon !== 'none' && <Icon name={icon} size={11} />}
 </a>
 

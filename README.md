@@ -137,7 +137,10 @@ artifact, review the screenshots, and commit them to `tests/visual/__screenshots
 <A-rest.png> <head-RH.png>` (needs Python with `opencv-python-headless` and `numpy` for the in-betweens), then
   `pnpm images`. The prompts in the script are the provenance record; commercial-use sign-off is launch
   checklist item 13.
-- **Certification seal** in the hero is original vector artwork (no Google badge artwork is used).
+- **Certification seal** in the hero is original vector artwork.
+- **Certifications section:** the Professional Cloud Developer badge and the skill/completion badge images
+  (`src/assets/credentials/`) are Google's artwork for credentials the owner earned, shown unmodified (resized)
+  and linked to their public verification pages on Google Skills.
 - Project illustrations, the agent portraits and the Expertise ring are original vector artwork from the design
   export, rendered to raster at build time.
 - Fonts are all under the SIL Open Font License: Manrope, Hanken Grotesk, League Gothic, Instrument Serif,

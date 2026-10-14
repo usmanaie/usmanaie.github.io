@@ -39,7 +39,10 @@ export const site = {
   locale: 'en',
   themeColor: '#05060B',
   /** OWNER-CONFIRM: add LinkedIn and any other profiles. */
-  sameAs: ['https://github.com/usmanaie'],
+  sameAs: [
+    'https://github.com/usmanaie',
+    'https://www.skills.google/public_profiles/4a128489-ec43-4c60-af5a-13ac83f6b549',
+  ],
   knowsAbout: [
     'Agentic AI',
     'Multi-agent systems',

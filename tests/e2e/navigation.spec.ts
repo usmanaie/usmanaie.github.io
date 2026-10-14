@@ -51,7 +51,7 @@ test.describe('desktop navigation', () => {
             })
             .toBeLessThanOrEqual(headerHeight + 2),
         );
-    for (const id of ['about', 'education', 'expertise', 'projects', 'experience']) {
+    for (const id of ['about', 'education', 'expertise', 'projects', 'experience', 'certifications']) {
       // From the hero's own menu (top of the page)...
       await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
       await page.locator(`.hero__nav-link[href="#${id}"]`).click();

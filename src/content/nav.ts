@@ -13,6 +13,7 @@ const primary: NavItem[] = [
   { label: 'Expertise', id: 'expertise' },
   { label: 'Projects', id: 'projects' },
   { label: 'Experience', id: 'experience' },
+  { label: 'Certifications', id: 'certifications' },
   { label: 'Reviews', id: 'reviews' },
 ];
 
