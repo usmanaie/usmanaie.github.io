@@ -1,0 +1,548 @@
+<!doctype html>
+<!--
+  Intelligent Load Planning's project illustration, made in code (rendered by scripts/render-project-art.mjs at 2x to
+  src/assets/projects/load-planning.png). A stylised planning console, not a screenshot: the load a shipper created,
+  the planning agents assigning its carrier, vehicle and driver, the planner's approval, the route tracked live, and
+  the driver's app taking the load. Sized at the cards' 603 x 464 display box.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      @font-face {
+        font-family: 'Manrope';
+        src: url('../../node_modules/@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2')
+          format('woff2');
+        font-weight: 200 800;
+      }
+
+      :root {
+        --ink: #0b0c12;
+        --panel-2: #1b1e2a;
+        --line: rgb(255 255 255 / 8%);
+        --text: #eef0f5;
+        --muted: #8b90a1;
+        --accent: #2bb3c0;
+        --accent-soft: #8ce3ea;
+        --ok: #2fbf7a;
+        --ok-soft: #7fe0ae;
+        --amber: #e7b04a;
+        --violet: #8a5cd6;
+        --blue: #4c8bda;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+
+      html,
+      body {
+        width: 603px;
+        height: 464px;
+        background: var(--ink);
+        font-family: Manrope, sans-serif;
+        color: var(--text);
+        overflow: hidden;
+      }
+
+      .stage {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(270px 210px at 14% 12%, rgb(43 179 192 / 30%), transparent 70%),
+          radial-gradient(300px 240px at 92% 94%, rgb(120 26 74 / 48%), transparent 72%),
+          radial-gradient(220px 180px at 50% 56%, rgb(43 179 192 / 9%), transparent 70%),
+          linear-gradient(180deg, #0d0f17, #07080d);
+      }
+
+      .stage::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(rgb(255 255 255 / 7%) 1px, transparent 1.2px);
+        background-size: 14px 14px;
+        mask-image: radial-gradient(420px 300px at 50% 45%, #000 30%, transparent 80%);
+      }
+
+      .scene {
+        position: absolute;
+        inset: 0;
+        perspective: 1400px;
+      }
+
+      .window {
+        position: absolute;
+        left: 66px;
+        top: 50px;
+        width: 494px;
+        height: 330px;
+        border-radius: 14px;
+        background: linear-gradient(180deg, #171a25, #10121a);
+        border: 1px solid rgb(255 255 255 / 10%);
+        box-shadow:
+          0 40px 80px -20px rgb(0 0 0 / 80%),
+          0 0 0 1px rgb(0 0 0 / 40%),
+          0 0 60px -10px rgb(43 179 192 / 24%);
+        transform: rotateY(9deg) rotateX(4deg);
+        transform-origin: 70% 50%;
+        overflow: hidden;
+      }
+
+      .bar {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        height: 26px;
+        padding: 0 12px;
+        border-bottom: 1px solid var(--line);
+        background: rgb(255 255 255 / 2%);
+      }
+
+      .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #3a3e4c;
+      }
+
+      .title {
+        margin-left: 10px;
+        font-weight: 800;
+        font-size: 9.5px;
+      }
+
+      .live {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 6.6px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        color: var(--accent-soft);
+      }
+
+      .live::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 8px var(--accent);
+      }
+
+      .body {
+        display: grid;
+        grid-template-columns: 178px 1fr;
+        gap: 10px;
+        height: calc(100% - 26px);
+        padding: 11px;
+      }
+
+      .col {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+      }
+
+      .card {
+        border-radius: 10px;
+        background: var(--panel-2);
+        border: 1px solid var(--line);
+        padding: 9px;
+      }
+
+      h4 {
+        display: flex;
+        align-items: center;
+        font-size: 6.6px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        margin-bottom: 7px;
+      }
+
+      h4 span {
+        margin-left: auto;
+        padding: 1.5px 6px;
+        border-radius: 20px;
+        background: rgb(43 179 192 / 16%);
+        border: 1px solid rgb(140 227 234 / 45%);
+        color: var(--accent-soft);
+        font-size: 5.6px;
+      }
+
+      .lane {
+        display: grid;
+        grid-template-columns: 9px 1fr;
+        column-gap: 6px;
+        row-gap: 3px;
+        align-items: center;
+        font-size: 7.4px;
+        font-weight: 800;
+      }
+
+      .lane i {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        border: 2px solid var(--accent);
+      }
+
+      .lane i.to {
+        border-radius: 2px;
+        background: var(--accent);
+      }
+
+      .lane .stem {
+        width: 2px;
+        height: 8px;
+        margin-left: 2.5px;
+        background: rgb(140 227 234 / 40%);
+      }
+
+      .specs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-top: 8px;
+      }
+
+      .specs span {
+        padding: 2px 6px;
+        border-radius: 5px;
+        background: rgb(255 255 255 / 6%);
+        font-size: 5.8px;
+        font-weight: 700;
+        color: #cdd3e2;
+      }
+
+      /* the planning agents' assignments, one row each */
+      .assign {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 16px 1fr auto;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 6px;
+        border-radius: 8px;
+        background: rgb(255 255 255 / 3%);
+        border: 1px solid var(--line);
+      }
+
+      .row i {
+        display: grid;
+        place-items: center;
+        width: 16px;
+        height: 16px;
+        border-radius: 5px;
+        font-style: normal;
+        font-size: 6.5px;
+        font-weight: 800;
+        color: #fff;
+      }
+
+      .row b {
+        display: block;
+        font-size: 7px;
+        font-weight: 800;
+      }
+
+      .row small {
+        display: block;
+        margin-top: 1px;
+        font-size: 5.6px;
+        font-weight: 600;
+        color: var(--muted);
+      }
+
+      .row em {
+        display: grid;
+        place-items: center;
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        background: var(--ok);
+        font-style: normal;
+        font-size: 6.5px;
+        font-weight: 800;
+        color: #fff;
+      }
+
+      .map {
+        position: relative;
+        border-radius: 10px;
+        overflow: hidden;
+        background: radial-gradient(240px 200px at 55% 45%, #1a2232, #121722);
+        border: 1px solid var(--line);
+      }
+
+      .map svg {
+        position: absolute;
+        inset: 0;
+      }
+
+      .chip {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 8px;
+        border-radius: 20px;
+        background: rgb(11 12 18 / 80%);
+        border: 1px solid rgb(255 255 255 / 12%);
+        font-size: 6.4px;
+        font-weight: 800;
+      }
+
+      .chip small {
+        font-size: 5.8px;
+        font-weight: 700;
+        color: var(--muted);
+      }
+
+      .chip.ok {
+        color: var(--ok-soft);
+        border-color: rgb(127 224 174 / 45%);
+      }
+
+      .float {
+        position: absolute;
+        border-radius: 12px;
+        background: rgb(20 22 31 / 94%);
+        border: 1px solid rgb(255 255 255 / 12%);
+        box-shadow: 0 24px 48px -16px rgb(0 0 0 / 85%);
+      }
+
+      .review {
+        left: 20px;
+        bottom: 24px;
+        width: 178px;
+        padding: 9px 10px;
+        transform: rotate(-2.5deg);
+      }
+
+      .review h5 {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 7.4px;
+        font-weight: 800;
+      }
+
+      .review h5 i {
+        width: 14px;
+        height: 14px;
+        border-radius: 5px;
+        background: linear-gradient(135deg, #2bb3c0, #4c8bda);
+      }
+
+      .review p {
+        margin-top: 4px;
+        font-size: 5.8px;
+        font-weight: 600;
+        color: var(--muted);
+      }
+
+      .review .actions {
+        display: flex;
+        gap: 5px;
+        margin-top: 7px;
+      }
+
+      .review .actions span {
+        padding: 3px 9px;
+        border-radius: 20px;
+        font-size: 6px;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        border: 1px solid rgb(255 255 255 / 18%);
+        color: #cdd3e2;
+      }
+
+      .review .actions span.go {
+        background: var(--accent);
+        border-color: transparent;
+        color: #062226;
+      }
+
+      .phone {
+        right: 22px;
+        bottom: 20px;
+        width: 86px;
+        height: 150px;
+        padding: 6px;
+        border-radius: 16px;
+        transform: rotate(4deg);
+      }
+
+      .screen {
+        height: 100%;
+        border-radius: 11px;
+        padding: 9px 7px;
+        background: linear-gradient(180deg, #f2f6f7, #e1e9eb);
+        color: #142226;
+      }
+
+      .screen .notch {
+        width: 24px;
+        height: 4px;
+        margin: 0 auto 8px;
+        border-radius: 3px;
+        background: #c5d1d4;
+      }
+
+      .screen h5 {
+        font-size: 7px;
+        font-weight: 800;
+      }
+
+      .screen .mini {
+        height: 40px;
+        margin-top: 6px;
+        border-radius: 7px;
+        background: #d3e0e3;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .screen .mini svg {
+        position: absolute;
+        inset: 0;
+      }
+
+      .screen .meta {
+        margin-top: 6px;
+        font-size: 5.6px;
+        font-weight: 700;
+        color: #4f6166;
+      }
+
+      .screen .accept {
+        margin-top: 7px;
+        padding: 5px 0;
+        border-radius: 20px;
+        background: var(--accent);
+        color: #062226;
+        text-align: center;
+        font-size: 6.2px;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+      }
+
+      .screen .sync {
+        margin-top: 5px;
+        text-align: center;
+        font-size: 5.4px;
+        font-weight: 700;
+        color: #6b7d82;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stage"></div>
+    <div class="scene">
+      <div class="window">
+        <div class="bar">
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          <span class="title">Load planning</span>
+          <span class="live">AGENTS PLANNING</span>
+        </div>
+        <div class="body">
+          <div class="col">
+            <div class="card">
+              <h4>NEW LOAD <span>FROM SHIPPER</span></h4>
+              <div class="lane">
+                <i></i><span>Dallas, TX</span> <span class="stem"></span><span></span> <i class="to"></i
+                ><span>Atlanta, GA</span>
+              </div>
+              <div class="specs"><span>Dry van</span><span>26 pallets</span><span>Pickup Tue 08:00</span></div>
+            </div>
+            <div class="card">
+              <h4>ASSIGNMENTS <span>PROPOSED</span></h4>
+              <div class="assign">
+                <div class="row">
+                  <i style="background: var(--blue)">C</i>
+                  <div><b>Carrier</b><small>Matched on lane and equipment</small></div>
+                  <em>✓</em>
+                </div>
+                <div class="row">
+                  <i style="background: var(--violet)">V</i>
+                  <div><b>Vehicle</b><small>53 ft dry van, available</small></div>
+                  <em>✓</em>
+                </div>
+                <div class="row">
+                  <i style="background: var(--accent)">D</i>
+                  <div><b>Driver</b><small>Hours available for the run</small></div>
+                  <em>✓</em>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="map">
+            <svg viewBox="0 0 284 271" width="100%" height="100%" preserveAspectRatio="none" aria-hidden="true">
+              <g stroke="rgb(255 255 255 / 7%)" stroke-width="1" fill="none">
+                <path d="M0 40 L284 70" />
+                <path d="M0 120 L284 104" />
+                <path d="M0 200 L284 228" />
+                <path d="M40 0 L70 271" />
+                <path d="M150 0 L132 271" />
+                <path d="M236 0 L250 271" />
+                <path d="M0 160 C 90 150, 180 190, 284 170" />
+              </g>
+              <path
+                d="M42 72 C 90 70, 110 120, 150 140 S 190 160, 200 196"
+                fill="none"
+                stroke="#2bb3c0"
+                stroke-width="3"
+                stroke-linecap="round"
+              />
+              <path
+                d="M42 72 C 90 70, 110 120, 150 140 S 190 160, 200 196"
+                fill="none"
+                stroke="#2bb3c0"
+                stroke-width="10"
+                stroke-opacity="0.15"
+                stroke-linecap="round"
+              />
+              <circle cx="42" cy="72" r="5" fill="#0b0c12" stroke="#2bb3c0" stroke-width="2.5" />
+              <rect x="194" y="190" width="12" height="12" rx="3" fill="#2bb3c0" />
+              <circle cx="150" cy="140" r="9" fill="rgb(43 179 192 / 25%)" />
+              <circle cx="150" cy="140" r="5" fill="#fff" stroke="#2bb3c0" stroke-width="2.5" />
+            </svg>
+            <span class="chip" style="left: 158px; top: 104px">ETA 18:40 <small>· on time</small></span>
+            <span class="chip ok" style="left: 10px; top: 10px">LIVE GPS</span>
+            <span class="chip" style="right: 10px; top: 10px">Geofence <small>· delivery</small></span>
+          </div>
+        </div>
+      </div>
+      <div class="float review">
+        <h5><i></i>Plan ready for review</h5>
+        <p>Reasoning logged · the planner decides</p>
+        <div class="actions"><span class="go">APPROVE</span><span>ADJUST</span></div>
+      </div>
+      <div class="float phone">
+        <div class="screen">
+          <div class="notch"></div>
+          <h5>Load assigned</h5>
+          <div class="mini">
+            <svg viewBox="0 0 60 46" width="100%" height="100%" aria-hidden="true">
+              <path d="M8 12 C 22 12, 26 28, 38 30 S 50 36, 52 38" fill="none" stroke="#2bb3c0" stroke-width="2.4" />
+              <circle cx="8" cy="12" r="2.6" fill="#2bb3c0" />
+              <rect x="49" y="35" width="6" height="6" rx="1.5" fill="#142226" />
+            </svg>
+          </div>
+          <p class="meta">Dallas → Atlanta</p>
+          <div class="accept">ACCEPT</div>
+          <p class="sync">Works offline</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

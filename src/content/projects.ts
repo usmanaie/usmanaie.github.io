@@ -5,6 +5,7 @@ import governanceShot from '../assets/projects/ai-governance.png';
 import telehealthShot from '../assets/projects/telehealth.png';
 import dairectorShot from '../assets/projects/dairector.png';
 import satoriShot from '../assets/projects/satori.png';
+import loadPlanningShot from '../assets/projects/load-planning.png';
 import palletShot from '../assets/projects/pallet-verification.png';
 
 export interface Project {
@@ -198,5 +199,36 @@ export const projects: Project[] = [
     image: palletShot,
     imageAlt:
       'Illustration of a dock verification console on a dark stage: a dock camera detecting the cartons on a pallet, one product line flagged short, the pallet checked line by line against its order, a packing list read from its paperwork, the pallet held on the dock, and the decision logged to the audit trail.',
+  },
+  {
+    slug: 'intelligent-load-planning',
+    eyebrow: 'FREIGHT & LOGISTICS',
+    tone: 'standard',
+    title: 'Intelligent Load Planning',
+    summary:
+      'A web and mobile freight platform where a shipper creates the load and AI agents plan it, assigning the carrier, vehicle and driver, with every recommendation logged for a planner’s approval. Live tracking, proof of delivery and invoicing follow each load from booking to payment.',
+    bullets: [
+      'Agents assign the carrier, vehicle and driver',
+      'Live GPS tracking with ETA and delay alerts',
+      'An offline-first app for drivers on the road',
+    ],
+    features: [
+      'Load intake & pricing',
+      'AI load planning (Google ADK)',
+      'Carrier, vehicle & driver assignment',
+      'Planner review & approval',
+      'Carrier & driver onboarding',
+      'Matching & dispatch',
+      'Delivery appointments',
+      'Live GPS tracking',
+      'ETA, delay, off-route & geofence alerts',
+      'Offline-first driver app (iOS & Android)',
+      'Proof of delivery',
+      'Invoicing',
+      'Shipper & carrier portals',
+    ],
+    image: loadPlanningShot,
+    imageAlt:
+      'Illustration of a load planning console on a dark stage: a new load from a shipper, planning agents proposing its carrier, vehicle and driver, the route tracked live on a map with its ETA, a plan ready for the planner’s approval, and the load arriving on the driver’s phone.',
   },
 ];

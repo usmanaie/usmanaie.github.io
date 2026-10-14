@@ -9,6 +9,7 @@ export const PAGES = [
   '/projects/enterprise-telehealth-platform',
   '/projects/responsible-ai-governance',
   '/projects/intelligent-pallet-verification',
+  '/projects/intelligent-load-planning',
   '/privacy',
   '/terms',
 ] as const;

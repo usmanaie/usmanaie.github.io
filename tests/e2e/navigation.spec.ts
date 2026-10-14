@@ -1,5 +1,11 @@
 import { expect, test } from '@playwright/test';
 
+/*
+ * How long a menu link's smooth scroll may take to land. The lower sections sit over 4,000px down,
+ * which takes about 1.3s on an idle machine and several times that with the suite's workers busy.
+ */
+const LANDING_TIMEOUT = 10_000;
+
 test.describe('desktop navigation', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
 
@@ -40,14 +46,14 @@ test.describe('desktop navigation', () => {
       expect
         .poll(() => page.locator(`#${id}`).evaluate((el) => Math.round(el.getBoundingClientRect().top)), {
           message: `${id} from the ${from}`,
-          timeout: 4000,
+          timeout: LANDING_TIMEOUT,
         })
         .toBeGreaterThanOrEqual(headerHeight - 2)
         .then(() =>
           expect
             .poll(() => page.locator(`#${id}`).evaluate((el) => Math.round(el.getBoundingClientRect().top)), {
               message: `${id} from the ${from}`,
-              timeout: 4000,
+              timeout: LANDING_TIMEOUT,
             })
             .toBeLessThanOrEqual(headerHeight + 2),
         );
@@ -69,7 +75,7 @@ test.describe('desktop navigation', () => {
     const lands = (id: string) =>
       expect
         .poll(() => page.locator(`#${id}`).evaluate((el) => Math.round(el.getBoundingClientRect().top)), {
-          timeout: 4000,
+          timeout: LANDING_TIMEOUT,
         })
         .toBeLessThanOrEqual(66)
         .then(() => expect(page.locator(`#${id}`)).toBeInViewport());
