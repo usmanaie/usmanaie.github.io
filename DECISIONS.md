@@ -129,6 +129,16 @@ Owner-facing items are also tracked in [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md
   folded in), Cloud (infrastructure, storage, networking, security, IAM), User Experience and Engineering (solution
   design). Each description is ~100 characters so every card wraps to the same three lines at 390-1440px
   (`text-wrap: pretty`); the intro is kept short enough to stay inside the inner ring at 1024px.
+- **Projects: consistent labels, copy and illustration palette (owner request, Oct 2026).**
+  - Labels follow one scheme, the industry, in standard terms: Media & Marketing, Business Intelligence, Mergers &
+    Acquisitions, Healthcare, Risk & Compliance, Supply Chain, Logistics (replacing a mix of industries,
+    technologies and coined terms such as "Warehouse AI").
+  - Every summary is one professional sentence of about the same length (three lines at 1440px) with three
+    parallel bullets; feature chips use sentence case and standard terms.
+  - The HTML illustrations (`scripts/art/*.html`, rendered by `scripts/render-project-art.mjs`) share one
+    brand-palette stage: blue on the outer top corner, crimson on the inner bottom corner, a faint violet centre,
+    mirrored for image-right rows. Each product's own colour stays inside its UI; before, each stage carried its own
+    accent glow (orange, teal, amber, green), so `/projects` read as seven colour schemes.
 - **Hero robot (owner request).** The owner asked for AI-generated, high-resolution, full-body art and approved
   candidate "A, presenting" (`design-candidates/`, git-ignored).
   - The final art was produced with **Gemini 3 Pro Image on Vertex AI**, at
