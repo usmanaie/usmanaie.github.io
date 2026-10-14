@@ -99,35 +99,6 @@ html:not([data-ready]) main > section:not(:first-child) {
 
 /* ---------- Utilities ---------- */
 
-/*
- * Sections on the plain black field: a soft blue glow and a hairline in the accent gradient at
- * the top edge, so the sticky menu (the same near-black) never blends into the section below it.
- */
-.section-glow {
-  position: relative;
-  isolation: isolate;
-}
-
-.section-glow::before {
-  content: '';
-  position: absolute;
-  inset: 0 0 auto;
-  z-index: -1;
-  height: 260px;
-  pointer-events: none;
-  background:
-    linear-gradient(
-        90deg,
-        rgb(47 107 255 / 0%),
-        rgb(47 107 255 / 50%) 22%,
-        rgb(138 107 224 / 50%) 50%,
-        rgb(255 59 78 / 50%) 78%,
-        rgb(255 59 78 / 0%)
-      )
-      top / 100% 1px no-repeat,
-    radial-gradient(60% 100% at 50% 0%, rgb(40 72 170 / 28%), transparent 72%);
-}
-
 .container {
   width: 100%;
   padding-inline: max(var(--gutter), env(safe-area-inset-left)) max(var(--gutter), env(safe-area-inset-right));

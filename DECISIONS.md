@@ -110,9 +110,12 @@ Owner-facing items are also tracked in [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md
 - **External links open in a new tab (owner request).** Links to other sites (Google Skills badges and profile)
   use `target="_blank"` with `rel="noopener noreferrer"` and say "(opens in a new tab)" to screen readers
   (`Pill` has a `newTab` option). In-page and same-site links keep the normal behaviour.
-- **Section top glow (owner request).** Sections on the plain black field (About, Education, Expertise, Projects,
-  Certifications, Contact) carry `.section-glow`: a hairline in the accent gradient and a soft blue glow at the top
-  edge, so the sticky menu (the same near-black) no longer blends into the section under it.
+- **Sticky menu separation (owner request).** The sticky menu shared the black sections' colour and blended into
+  them. A gradient line and then a blue wash on the sections were tried and dropped (the wash made every section
+  look alike, losing the black/blue rhythm). Instead the bar is frosted glass a shade lighter than the page (dark
+  navy, `rgb(44 50 74 / 76%)` to `rgb(31 36 56 / 72%)`, blur 18px) with a faint top highlight and a soft shadow
+  below, so it reads as its own layer over any section; the sections keep their original backgrounds. Chosen over a
+  lighter slate tone, which competed with the headings.
 - **Hero robot (owner request).** The owner asked for AI-generated, high-resolution, full-body art and approved
   candidate "A, presenting" (`design-candidates/`, git-ignored).
   - The final art was produced with **Gemini 3 Pro Image on Vertex AI**, at
