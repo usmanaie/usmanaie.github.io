@@ -362,7 +362,10 @@ const totalBadges = credentials.skillBadges.length + credentials.completionBadge
     color: var(--color-white);
   }
 
+  /* A 44px-tall hit area around the 20px line; the negative margin keeps the layout unchanged. */
   .creds__all {
+    padding-block: 12px;
+    margin-block: -12px;
     color: var(--color-text-soft);
     font-size: var(--fs-body-sm);
     text-underline-offset: 3px;
@@ -481,27 +484,51 @@ const totalBadges = credentials.skillBadges.length + credentials.completionBadge
     gap: 10px;
   }
 
+  /*
+   * A 44px hit area (touch-target minimum) around the 42px circle the design draws; the -1px
+   * margin keeps the layout as at 42px, and the circle is drawn by ::before.
+   */
   .rail-btn {
+    position: relative;
+    isolation: isolate;
     display: grid;
     place-items: center;
-    width: 42px;
-    height: 42px;
+    width: 44px;
+    height: 44px;
+    margin: -1px;
     padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    color: var(--color-white);
+    cursor: pointer;
+    transition:
+      transform var(--dur-pill) ease,
+      opacity var(--dur-pill) ease;
+  }
+
+  .rail-btn::before {
+    content: '';
+    position: absolute;
+    inset: 1px;
+    z-index: -1;
     border: 1px solid transparent;
     border-radius: 50%;
     background:
       linear-gradient(rgb(12 15 26), rgb(12 15 26)) padding-box,
       linear-gradient(135deg, var(--color-blue-450), #8a6be0, var(--color-red-500)) border-box;
-    color: var(--color-white);
-    cursor: pointer;
-    transition:
-      transform var(--dur-pill) ease,
-      box-shadow var(--dur-pill) ease,
-      opacity var(--dur-pill) ease;
+    transition: box-shadow var(--dur-pill) ease;
+  }
+
+  .rail-btn:focus-visible {
+    outline-offset: 3px;
   }
 
   .rail-btn:hover:not([aria-disabled='true']) {
     transform: translateY(-1px);
+  }
+
+  .rail-btn:hover:not([aria-disabled='true'])::before {
     box-shadow: 0 8px 22px rgb(66 133 244 / 28%);
   }
 
@@ -612,6 +639,7 @@ const totalBadges = credentials.skillBadges.length + credentials.completionBadge
     .badge-link,
     .badge-more,
     .rail-btn,
+    .rail-btn::before,
     .rail-progress__thumb {
       transition: none;
     }
