@@ -10,25 +10,25 @@ export const expertise: {
   items: ExpertiseItem[];
 } = {
   heading: { lead: 'Areas of', accent: 'Expertise' },
-  intro:
-    'Where I spend my days: designing agents, grounding them in real data, and shipping them safely on Google Cloud.',
+  intro: 'Where I spend my days: AI agents, the cloud they run on, and the experiences and engineering around them.',
   cta: 'GET STARTED',
+  /** Owner's four areas (Oct 2026): AI (agentic + generative, merged), Cloud, User Experience, Engineering. */
   items: [
     {
-      title: 'AGENTIC AI',
-      body: 'Autonomous multi-agent systems with Google ADK, MCP and Agent2Agent (A2A), built on the ReAct pattern.',
+      title: 'AI',
+      body: 'Multi-agent systems, RAG pipelines and LLM orchestration on Vertex AI, governed for HIPAA, SOC 2 and GDPR.',
     },
     {
-      title: 'GEN AI & RAG',
-      body: 'LLM orchestration, retrieval-augmented generation on Vertex AI, prompt engineering and tool use.',
+      title: 'CLOUD',
+      body: 'Secure, scalable Google Cloud foundations across infrastructure, storage, networking, security and IAM.',
     },
     {
-      title: 'CLOUD & BACKEND',
-      body: 'Scalable APIs, ETL and multi-tenant services on Google Cloud with Java, Python and Spring Boot.',
+      title: 'USER EXPERIENCE',
+      body: 'Intuitive, accessible interfaces that turn complex AI workflows into clear, effortless experiences.',
     },
     {
-      title: 'AI GOVERNANCE',
-      body: 'HIPAA, SOC 2 and GDPR-aligned policy controls that let regulated teams adopt AI responsibly.',
+      title: 'ENGINEERING',
+      body: 'End-to-end solution design: modular architectures, scalable APIs and robust backends in Java and Python.',
     },
   ],
 };

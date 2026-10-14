@@ -125,6 +125,10 @@ Owner-facing items are also tracked in [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md
 - **Education section removed (owner request, Oct 2026).** The section, its content and its menu item are gone; the
   Professional Cloud Developer certification it featured lives in Certifications. About's "Scroll down" ring now leads
   to Expertise.
+- **Expertise cards (owner request, Oct 2026).** Four areas: AI (agentic and generative merged; the governance point
+  folded in), Cloud (infrastructure, storage, networking, security, IAM), User Experience and Engineering (solution
+  design). Each description is ~100 characters so every card wraps to the same three lines at 390-1440px
+  (`text-wrap: pretty`); the intro is kept short enough to stay inside the inner ring at 1024px.
 - **Hero robot (owner request).** The owner asked for AI-generated, high-resolution, full-body art and approved
   candidate "A, presenting" (`design-candidates/`, git-ignored).
   - The final art was produced with **Gemini 3 Pro Image on Vertex AI**, at
