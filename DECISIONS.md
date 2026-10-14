@@ -252,6 +252,27 @@ All token changes are minimal and documented in `tokens.css`:
   the tick marks rotate, as a transformed `<img>`, and the glow layer animates opacity. Both pause off-screen.
 - **Graceful degradation.** Without `offset-path`, the flyers are hidden. Without `mask-composite`, the fill
   overlays are hidden. Without `@property`, the fill steps instead of tweening. In every case the layout is intact.
+- **Page weight on `/`** (LHCI budget 512 KB, mobile). It had crept to ~512–515 KB, which left no headroom.
+  Three fixes bring it to **368 KB** (515 KB in the same local run before), with no change to the design:
+  - **The phone layout viewport was 4× too wide.** The Certifications rail's visually-hidden "(opens in a new
+    tab)" spans were positioned against the section, outside the rail's scroller. They overflowed the page to
+    ~4400px, and phone Chrome grew the layout viewport to 1648×3292 CSS px. The fixed header widened with it,
+    so its menu button sat off-screen. Lazy images also measured their distance from that huge viewport, so
+    everything down to Projects loaded on first visit. `.badge-link` is now positioned to keep them inside.
+    An e2e test asserts `innerWidth` equals the device width on phones.
+  - **The Expertise ring layers (~85 KB) load only once the section is within 1250px** (Chrome's 4G lazy
+    distance). Native `loading="lazy"` still fetched them in Lighthouse, ~2600px below the fold. The two
+    `<Picture>`s sit in a `<noscript data-defer>`: without JS they render as before (lazy images). With JS,
+    `scripts/defer.ts` parses the noscript's text into their place when the ring nears the viewport. They are
+    absolutely positioned, so insertion causes no layout shift.
+  - **Only one charge mask is fetched.** The charge layer stays `display: none` (so its mask is not requested)
+    until `scripts/hero.ts` needs it, i.e. when the first hop starts. By then the head canvas is normally live,
+    so only the body mask loads. The whole-robot mask loads only if the sprite is not ready yet, or under
+    reduced motion. This saves 16 KB. Level 0 is invisible, so showing the layer later looks identical.
+
+  The head sprite (175 KB) is unchanged. Re-encoding it was not needed, and head-turn artefacts are
+  owner-sensitive.
+
 - **Lighthouse CI, local, mobile, simulated throttling** (median of 3):
 
   | Page                                | Perf | A11y | BP  | SEO | LCP   | CLS | TBT  | Transfer |

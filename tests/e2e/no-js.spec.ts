@@ -17,6 +17,17 @@ test.describe('without JavaScript', () => {
     await expect(page.locator('#projects')).toBeInViewport();
   });
 
+  test('the Expertise ring art still loads (deferred with JS, plain lazy images without)', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/');
+    await page.locator('#expertise').scrollIntoViewIfNeeded();
+    const layers = page.locator('#expertise .expertise__layer');
+    await expect(layers).toHaveCount(2);
+    await expect
+      .poll(() => layers.evaluateAll((imgs) => imgs.every((i) => (i as HTMLImageElement).naturalWidth > 0)))
+      .toBe(true);
+  });
+
   test('mobile: the useless menu button is hidden and the footer nav remains', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/');

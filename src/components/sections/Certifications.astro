@@ -372,7 +372,14 @@ const totalBadges = credentials.skillBadges.length + credentials.completionBadge
     color: var(--color-white);
   }
 
+  /*
+   * Positioned so the link's visually-hidden "(opens in a new tab)" stays inside it, and so
+   * inside the rail's scroller: positioned against the section instead, the hidden text of the
+   * off-screen badges widened the page (on phones Chrome then grew the layout viewport to
+   * 4x, pushing the fixed header's menu button off-screen).
+   */
   .badge-link {
+    position: relative;
     display: block;
     overflow: hidden;
     border-radius: 12px;

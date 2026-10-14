@@ -318,18 +318,29 @@ const hopData = JSON.stringify(
     mask-composite: exclude;
   }
 
-  /* Energy charge: a tint that rises inside the robot's silhouette as the steps complete. */
+  /*
+   * Energy charge: a tint that rises inside the robot's silhouette as the steps complete.
+   * Hidden (and its mask not fetched) until scripts/hero.ts needs it: with the whole-robot mask
+   * (data-charge-full) only if the head canvas is not live by then, so a visit normally fetches
+   * just one of the two masks.
+   */
   .flow__charge {
     position: absolute;
     inset: 0;
-    mask-image: url('../../assets/hero/robot-agent-mask.webp');
+    display: none;
     mask-size: 100% 100%;
     mask-repeat: no-repeat;
     mix-blend-mode: multiply;
   }
 
+  .flow[data-charge-full] .flow__charge {
+    display: block;
+    mask-image: url('../../assets/hero/robot-agent-mask.webp');
+  }
+
   /* While the head turns on its canvas, the fill there is drawn on the canvas (scripts/hero.ts). */
   .flow[data-head-live] .flow__charge {
+    display: block;
     mask-image: url('../../assets/hero/robot-agent-mask-body.webp');
   }
 
