@@ -14,6 +14,8 @@ export interface Project {
   title: string;
   summary: string;
   bullets: string[];
+  /** The case study's feature chips. */
+  features: string[];
   image: ImageMetadata;
   imageAlt: string;
 }
@@ -39,6 +41,21 @@ export const projects: Project[] = [
       'On brand, every spend held to a budget',
       'Presenter videos from a single photo',
     ],
+    features: [
+      'AI crew of agents',
+      'Guided & Express modes',
+      'Scriptwriting',
+      'Voice-over',
+      'Motion design',
+      'Video editing',
+      'AI review',
+      'Brand on every video',
+      'Budgets & spend caps',
+      'Presenter from one photo',
+      '16:9 · 9:16 · 1:1',
+      'Invite-only workspaces',
+      'Google sign-in',
+    ],
     image: dairectorShot,
     imageAlt:
       'Illustration of the Dairector studio on a dark stage: a brief in the conversation, the crew of AI agents ticking off their steps, a video frame reading Your team’s favourite blend with its scenes, voice and budget below, a brand palette card, and a presenter drawn on camera from one photo.',
@@ -55,6 +72,16 @@ export const projects: Project[] = [
       'Row-level access down to a single district',
       'An AI assistant that never writes its own SQL',
     ],
+    features: [
+      'User management',
+      'Role-based access (RBAC)',
+      'Organisation management',
+      'AI Report Builder',
+      'AI Dashboard Builder',
+      'Q&A assistant',
+      'Broadcasting',
+      'Row-level security',
+    ],
     image: satoriShot,
     imageAlt:
       'Illustration of the Satori console on a dark stage: a report sheet with a trend chart and a figures table, a panel scheduling that sheet to a list of recipients, and an assistant answering a typed question with a figure drawn from the same report.',
@@ -67,9 +94,22 @@ export const projects: Project[] = [
     summary:
       'Autonomous, tool-using agents built with Google ADK, MCP and the Agent2Agent protocol, integrating securely with live enterprise infrastructure.',
     bullets: ['Autonomous, tool-using agents', 'Secure MCP integrations', 'Agent-to-agent collaboration (A2A)'],
+    features: [
+      'Persona orchestration',
+      'Business discovery',
+      'Profile builder',
+      'Due diligence',
+      'Document summariser',
+      'Document management',
+      'Multi-tenancy',
+      'User management',
+      'In-app chat',
+      'MCP integrations',
+      'Agent-to-agent (A2A)',
+    ],
     image: agenticShot,
     imageAlt:
-      'Illustration of a laptop on a dark perforated wall, its screen showing an orange agent graph: a central orchestrator node connected to several tool nodes.',
+      'Illustration of a deal room console on a dark stage: a persona orchestrator agent directing business discovery, profile maker and due diligence agents over A2A, beside the buyer persona, the businesses found and a due diligence checklist, with MCP tools and a deal memo ready for review.',
   },
   {
     slug: 'enterprise-telehealth-platform',
@@ -79,9 +119,17 @@ export const projects: Project[] = [
     summary:
       'A multi-stakeholder platform for patients, providers, pharmacies and labs, with e-prescriptions, payments and real-time secure communication.',
     bullets: ['e-Prescriptions via DoseSpot', 'Payments with 1Merchant', 'Real-time chat with TalkJS & Twilio'],
+    features: [
+      'Patients, providers, pharmacies & labs',
+      'Appointments',
+      'e-Prescriptions (DoseSpot)',
+      'Lab orders',
+      'Payments (1Merchant)',
+      'Real-time chat (TalkJS & Twilio)',
+    ],
     image: telehealthShot,
     imageAlt:
-      'Illustration of a laptop on a light studio set showing a Telehealth Operations dashboard with appointment, e-prescription, lab order and payment tiles, a visit analytics chart and a live care-team gauge.',
+      'Illustration of a telehealth operations console on a dark stage: appointment, e-prescription, lab order and payment tiles, a secure video visit beside its secure chat, a prescription sent to the pharmacy and a lab order, with a payment received and the patient’s confirmed visit on a phone.',
   },
   {
     slug: 'responsible-ai-governance',
@@ -89,10 +137,25 @@ export const projects: Project[] = [
     tone: 'standard',
     title: 'Responsible AI Governance',
     summary:
-      'HIPAA, SOC 2 and GDPR-aligned policy control frameworks that let regulated organisations adopt generative AI responsibly and at scale.',
-    bullets: ['HIPAA · SOC 2 · GDPR controls', 'RAG pipelines on Vertex AI', 'Production-ready by design'],
+      'Policy control frameworks that let regulated organisations adopt generative AI responsibly and at scale: custom policies set by zone and region and enforced by every department, on top of HIPAA, SOC 1, SOC 2 and GDPR controls.',
+    bullets: [
+      'Custom policies per zone, region and department',
+      'HIPAA · SOC 1 & 2 · GDPR controls',
+      'RAG pipelines on Vertex AI, production-ready',
+    ],
+    features: [
+      'SOC 1 & SOC 2',
+      'HIPAA',
+      'GDPR',
+      'Custom policy enforcement',
+      'Zone, region & department policies',
+      'User management',
+      'Dictation',
+      'Multi-model queries',
+      'RAG on Vertex AI',
+    ],
     image: governanceShot,
     imageAlt:
-      'Illustration of a phone resting on grey stone, showing a governance app with a Policy checks passing status and enabled HIPAA, SOC 2 and GDPR toggles.',
+      'Illustration of an AI governance console on a dark stage: HIPAA, SOC 1, SOC 2 and GDPR controls passing, a custom policy tree from zone to region to departments each enforcing its own policy, a RAG pipeline on Vertex AI gated by the department policy, and an audit trail, with a declined request and a grounded answer.',
   },
 ];

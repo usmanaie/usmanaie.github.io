@@ -1,0 +1,621 @@
+<!doctype html>
+<!--
+  The Enterprise Telehealth Platform's project illustration, made in code (rendered by scripts/render-project-art.mjs
+  at 2x to src/assets/projects/telehealth.png). A stylised operations console, not a screenshot: patients, providers,
+  pharmacies and labs on one platform, a secure visit with its chat, the prescription and the lab order it sends, and
+  the payment. Sized at the cards' 603 x 464 display box.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      @font-face {
+        font-family: 'Manrope';
+        src: url('../../node_modules/@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2')
+          format('woff2');
+        font-weight: 200 800;
+      }
+
+      :root {
+        --ink: #0b0c12;
+        --panel-2: #1b1e2a;
+        --line: rgb(255 255 255 / 8%);
+        --text: #eef0f5;
+        --muted: #8b90a1;
+        --accent: #2fbf7a;
+        --accent-soft: #7fe0ae;
+        --amber: #e7b04a;
+        --blue: #4c8bda;
+        --violet: #8a5cd6;
+        --rose: #e0566c;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+
+      html,
+      body {
+        width: 603px;
+        height: 464px;
+        background: var(--ink);
+        font-family: Manrope, sans-serif;
+        color: var(--text);
+        overflow: hidden;
+      }
+
+      .stage {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(260px 200px at 84% 14%, rgb(47 191 122 / 30%), transparent 70%),
+          radial-gradient(300px 240px at 10% 94%, rgb(40 72 200 / 40%), transparent 72%),
+          radial-gradient(220px 180px at 50% 56%, rgb(47 191 122 / 10%), transparent 70%),
+          linear-gradient(180deg, #0d0f17, #07080d);
+      }
+
+      .stage::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(rgb(255 255 255 / 7%) 1px, transparent 1.2px);
+        background-size: 14px 14px;
+        mask-image: radial-gradient(420px 300px at 50% 45%, #000 30%, transparent 80%);
+      }
+
+      .scene {
+        position: absolute;
+        inset: 0;
+        perspective: 1400px;
+      }
+
+      .window {
+        position: absolute;
+        left: 46px;
+        top: 50px;
+        width: 486px;
+        height: 340px;
+        border-radius: 14px;
+        background: linear-gradient(180deg, #171a25, #10121a);
+        border: 1px solid rgb(255 255 255 / 10%);
+        box-shadow:
+          0 40px 80px -20px rgb(0 0 0 / 80%),
+          0 0 0 1px rgb(0 0 0 / 40%),
+          0 0 60px -10px rgb(47 191 122 / 22%);
+        transform: rotateY(-9deg) rotateX(4deg);
+        transform-origin: 30% 50%;
+        overflow: hidden;
+      }
+
+      .bar {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        height: 26px;
+        padding: 0 12px;
+        border-bottom: 1px solid var(--line);
+        background: rgb(255 255 255 / 2%);
+      }
+
+      .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #3a3e4c;
+      }
+
+      .title {
+        margin-left: 10px;
+        font-weight: 800;
+        font-size: 9.5px;
+      }
+
+      .secure {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 6.6px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        color: var(--accent-soft);
+      }
+
+      .secure::before {
+        content: '';
+        width: 6px;
+        height: 7px;
+        border-radius: 2px 2px 1.5px 1.5px;
+        background: var(--accent);
+      }
+
+      .body {
+        display: grid;
+        grid-template-columns: 34px 1fr;
+        height: calc(100% - 26px);
+      }
+
+      .nav {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        padding-top: 12px;
+        border-right: 1px solid var(--line);
+      }
+
+      .nav span {
+        width: 14px;
+        height: 14px;
+        border-radius: 5px;
+        background: rgb(255 255 255 / 8%);
+      }
+
+      .nav span.on {
+        background: var(--accent);
+        box-shadow: 0 0 12px rgb(47 191 122 / 60%);
+      }
+
+      .main {
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        gap: 9px;
+        padding: 11px;
+      }
+
+      .tiles {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 7px;
+      }
+
+      .tile {
+        padding: 7px;
+        border-radius: 9px;
+        background: var(--panel-2);
+        border: 1px solid var(--line);
+      }
+
+      .tile p {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 6.8px;
+        font-weight: 700;
+      }
+
+      .tile i {
+        display: grid;
+        place-items: center;
+        width: 13px;
+        height: 13px;
+        border-radius: 4px;
+        font-style: normal;
+        font-size: 6.5px;
+        font-weight: 800;
+        color: #fff;
+      }
+
+      .spark {
+        display: flex;
+        align-items: flex-end;
+        gap: 2px;
+        height: 16px;
+        margin-top: 7px;
+      }
+
+      .spark b {
+        flex: 1;
+        border-radius: 1.5px;
+        opacity: 0.85;
+      }
+
+      .visit {
+        display: grid;
+        grid-template-columns: 1fr 128px;
+        gap: 9px;
+      }
+
+      .video {
+        position: relative;
+        border-radius: 10px;
+        overflow: hidden;
+        background: radial-gradient(160px 120px at 40% 40%, #2a3a52, #141b28);
+      }
+
+      .person {
+        position: absolute;
+        left: 50%;
+      }
+
+      .person .head {
+        position: absolute;
+        left: 50%;
+        border-radius: 46% 46% 44% 44% / 42% 42% 58% 58%;
+      }
+
+      .person .hair {
+        position: absolute;
+        left: 50%;
+        border-radius: 14px 14px 4px 4px;
+      }
+
+      .person .torso {
+        position: absolute;
+        left: 50%;
+        border-radius: 30px 30px 0 0;
+      }
+
+      .pip {
+        position: absolute;
+        right: 8px;
+        bottom: 26px;
+        width: 46px;
+        height: 54px;
+        border-radius: 7px;
+        overflow: hidden;
+        background: linear-gradient(180deg, #e9e4db, #d3cdc2);
+        border: 1.5px solid rgb(255 255 255 / 85%);
+      }
+
+      .controls {
+        position: absolute;
+        left: 50%;
+        bottom: 7px;
+        display: flex;
+        gap: 5px;
+        transform: translateX(-50%);
+      }
+
+      .controls span {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: rgb(255 255 255 / 16%);
+      }
+
+      .controls span.end {
+        background: var(--rose);
+      }
+
+      .tag {
+        position: absolute;
+        left: 8px;
+        top: 8px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 7px;
+        border-radius: 20px;
+        background: rgb(0 0 0 / 45%);
+        font-size: 6.2px;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+      }
+
+      .tag::before {
+        content: '';
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--accent);
+      }
+
+      .chat {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        padding: 8px;
+        border-radius: 10px;
+        background: var(--panel-2);
+        border: 1px solid var(--line);
+      }
+
+      .chat h4 {
+        font-size: 6.8px;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+      }
+
+      .bubble {
+        padding: 5px 6px;
+        border-radius: 8px;
+        background: rgb(255 255 255 / 6%);
+      }
+
+      .bubble.me {
+        align-self: flex-end;
+        background: rgb(47 191 122 / 22%);
+      }
+
+      .bubble span {
+        display: block;
+        height: 3px;
+        margin: 2px 0;
+        border-radius: 2px;
+        background: rgb(255 255 255 / 30%);
+      }
+
+      .flow {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 7px;
+        padding-right: 66px;
+      }
+
+      .order {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 7px 8px;
+        border-radius: 9px;
+        background: var(--panel-2);
+        border: 1px solid var(--line);
+        font-size: 7px;
+        font-weight: 700;
+      }
+
+      .order small {
+        display: block;
+        margin-top: 2px;
+        font-size: 5.8px;
+        font-weight: 600;
+        color: var(--muted);
+      }
+
+      .order .ok {
+        margin-left: auto;
+        padding: 2px 6px;
+        border-radius: 20px;
+        background: rgb(47 191 122 / 18%);
+        border: 1px solid rgb(127 224 174 / 50%);
+        color: var(--accent-soft);
+        font-size: 5.8px;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+      }
+
+      .float {
+        position: absolute;
+        border-radius: 12px;
+        background: rgb(20 22 31 / 92%);
+        border: 1px solid rgb(255 255 255 / 12%);
+        box-shadow: 0 24px 48px -16px rgb(0 0 0 / 85%);
+      }
+
+      .phone {
+        right: 30px;
+        bottom: 30px;
+        width: 86px;
+        height: 150px;
+        padding: 6px;
+        border-radius: 16px;
+        transform: rotate(4deg);
+      }
+
+      .screen {
+        height: 100%;
+        border-radius: 11px;
+        padding: 9px 7px;
+        background: linear-gradient(180deg, #f3f5f4, #e3e8e5);
+        color: #17221c;
+      }
+
+      .screen .notch {
+        width: 24px;
+        height: 4px;
+        margin: 0 auto 9px;
+        border-radius: 3px;
+        background: #c9d1cc;
+      }
+
+      .screen h5 {
+        font-size: 7px;
+        font-weight: 800;
+      }
+
+      .screen .confirm {
+        display: grid;
+        place-items: center;
+        width: 30px;
+        height: 30px;
+        margin: 10px auto 6px;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 0 5px rgb(47 191 122 / 18%);
+      }
+
+      .screen .confirm::after {
+        content: '';
+        width: 6px;
+        height: 11px;
+        margin-top: -3px;
+        border: solid #fff;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+      }
+
+      .screen p {
+        font-size: 6.2px;
+        font-weight: 700;
+        text-align: center;
+      }
+
+      .screen .sk {
+        height: 3px;
+        margin: 5px auto 0;
+        border-radius: 2px;
+        background: #c9d1cc;
+      }
+
+      .paid {
+        left: 24px;
+        bottom: 30px;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 8px 10px;
+        font-size: 7px;
+        font-weight: 800;
+        transform: rotate(-2.5deg);
+      }
+
+      .paid i {
+        display: grid;
+        place-items: center;
+        width: 16px;
+        height: 16px;
+        border-radius: 5px;
+        background: var(--amber);
+        color: #1b1b1f;
+        font-style: normal;
+        font-size: 8px;
+        font-weight: 800;
+      }
+
+      .paid small {
+        display: block;
+        margin-top: 2px;
+        font-size: 5.8px;
+        font-weight: 600;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stage"></div>
+    <div class="scene">
+      <div class="window">
+        <div class="bar">
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          <span class="title">Telehealth operations</span>
+          <span class="secure">END-TO-END SECURE</span>
+        </div>
+        <div class="body">
+          <div class="nav"><span class="on"></span><span></span><span></span><span></span><span></span></div>
+          <div class="main">
+            <div class="tiles">
+              <div class="tile">
+                <p><i style="background: var(--blue)">◷</i>Appointments</p>
+                <div class="spark" id="s1"></div>
+              </div>
+              <div class="tile">
+                <p><i style="background: var(--accent)">Rx</i>e-Prescriptions</p>
+                <div class="spark" id="s2"></div>
+              </div>
+              <div class="tile">
+                <p><i style="background: var(--violet)">L</i>Lab orders</p>
+                <div class="spark" id="s3"></div>
+              </div>
+              <div class="tile">
+                <p><i style="background: var(--amber); color: #1b1b1f">$</i>Payments</p>
+                <div class="spark" id="s4"></div>
+              </div>
+            </div>
+            <div class="visit">
+              <div class="video">
+                <div class="person" style="top: 20px">
+                  <span
+                    class="torso"
+                    style="top: 58px; width: 104px; height: 70px; margin-left: -52px; background: #eef1f4"
+                  ></span>
+                  <span
+                    class="torso"
+                    style="
+                      top: 58px;
+                      width: 20px;
+                      height: 26px;
+                      margin-left: -10px;
+                      background: #3b6f91;
+                      border-radius: 0 0 10px 10px;
+                    "
+                  ></span>
+                  <span
+                    class="head"
+                    style="
+                      top: 12px;
+                      width: 32px;
+                      height: 40px;
+                      margin-left: -16px;
+                      background: linear-gradient(160deg, #c9926e, #a9724f);
+                    "
+                  ></span>
+                  <span
+                    class="hair"
+                    style="top: 8px; width: 36px; height: 16px; margin-left: -18px; background: #1f1b19"
+                  ></span>
+                </div>
+                <span class="tag">SECURE VIDEO VISIT</span>
+                <div class="pip">
+                  <div class="person" style="top: 6px">
+                    <span
+                      class="torso"
+                      style="top: 28px; width: 40px; height: 30px; margin-left: -20px; background: #6a4c93"
+                    ></span>
+                    <span
+                      class="head"
+                      style="top: 6px; width: 16px; height: 20px; margin-left: -8px; background: #d9b08f"
+                    ></span>
+                    <span
+                      class="hair"
+                      style="top: 3px; width: 19px; height: 10px; margin-left: -9.5px; background: #6b4a33"
+                    ></span>
+                  </div>
+                </div>
+                <div class="controls"><span></span><span></span><span class="end"></span></div>
+              </div>
+              <div class="chat">
+                <h4>CHAT · TALKJS &amp; TWILIO</h4>
+                <div class="bubble"><span style="width: 70px"></span><span style="width: 52px"></span></div>
+                <div class="bubble me"><span style="width: 58px"></span></div>
+                <div class="bubble"><span style="width: 74px"></span><span style="width: 40px"></span></div>
+                <div class="bubble me"><span style="width: 46px"></span><span style="width: 30px"></span></div>
+              </div>
+            </div>
+            <div class="flow">
+              <div class="order">
+                <i style="font-style: normal; font-size: 9px">💊</i>
+                <div>e-Prescription<small>DoseSpot, to the pharmacy</small></div>
+                <span class="ok">SENT</span>
+              </div>
+              <div class="order">
+                <i style="font-style: normal; font-size: 9px">🧪</i>
+                <div>Lab order<small>To the lab</small></div>
+                <span class="ok">RESULTS IN</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="float paid">
+        <i>$</i>
+        <div>Payment received<small>1Merchant · visit settled</small></div>
+      </div>
+      <div class="float phone">
+        <div class="screen">
+          <div class="notch"></div>
+          <h5>Your visit</h5>
+          <div class="confirm"></div>
+          <p>Confirmed</p>
+          <div class="sk" style="width: 80%"></div>
+          <div class="sk" style="width: 60%"></div>
+        </div>
+      </div>
+    </div>
+    <script>
+      // each tile's week: a fixed shape, so every render is the same
+      const colours = ['#4c8bda', '#2fbf7a', '#8a5cd6', '#e7b04a'];
+      for (let t = 1; t <= 4; t += 1) {
+        const spark = document.getElementById(`s${t}`);
+        for (let i = 0; i < 9; i += 1) {
+          const bar = document.createElement('b');
+          bar.style.height = `${30 + Math.round(60 * Math.abs(Math.sin(i * 0.9 + t)))}%`;
+          bar.style.background = colours[t - 1];
+          spark.append(bar);
+        }
+      }
+    </script>
+  </body>
+</html>

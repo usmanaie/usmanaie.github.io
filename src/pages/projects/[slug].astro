@@ -8,7 +8,7 @@ import { site } from '../../content/site';
 import SubPageLayout from '../../layouts/SubPageLayout.astro';
 
 /**
- * Case study page built only from content already in the design (summary + highlights),
+ * Case study page built only from content already in the design (summary + features),
  * so the "View case study" buttons never lead nowhere. Longer write-ups can be added to
  * content/projects.ts later without changing this template.
  */
@@ -51,13 +51,13 @@ const { project } = Astro.props;
         decoding="async"
       />
     </figure>
-    <section class="case__section case__section--highlights" aria-labelledby="case-highlights">
-      <h2 id="case-highlights" class="case__heading">
-        Highlights
+    <section class="case__section case__section--features" aria-labelledby="case-features">
+      <h2 id="case-features" class="case__heading">
+        Features
       </h2>
-      <ul role="list" class="case__bullets">
-        {project.bullets.map((bullet) => (
-          <li class="case__bullet">{bullet}</li>
+      <ul role="list" class="case__features">
+        {project.features.map((feature) => (
+          <li class="case__feature">{feature}</li>
         ))}
       </ul>
     </section>
@@ -84,16 +84,16 @@ const { project } = Astro.props;
   }
 
   /*
-   * Desktop: two balanced columns, the story (intro, highlights, next step) on the left and the
+   * Desktop: two balanced columns, the story (intro, features, next step) on the left and the
    * project image on the right, centred against it. Phones keep the reading order: intro,
-   * image, highlights, next step.
+   * image, features, next step.
    */
   @media (width >= 64rem) {
     .case {
       grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
       grid-template-areas:
         'intro media'
-        'highlights media'
+        'features media'
         'next media';
       align-content: center;
       gap: 40px 72px;
@@ -110,8 +110,8 @@ const { project } = Astro.props;
       align-self: center;
     }
 
-    .case__section--highlights {
-      grid-area: highlights;
+    .case__section--features {
+      grid-area: features;
     }
 
     .case__section--next {
@@ -134,27 +134,43 @@ const { project } = Astro.props;
     color: var(--color-heading);
   }
 
-  .case__bullets {
-    display: grid;
+  /* Feature chips: the pills' signature border, quietened, with the bullets' red diamond. */
+  .case__features {
+    display: flex;
+    flex-wrap: wrap;
     gap: 10px;
     margin: 18px 0 0;
+  }
+
+  .case__feature {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 15px 8px 13px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-pill);
+    background:
+      linear-gradient(var(--color-pill-fill-alt), var(--color-pill-fill-alt)) padding-box,
+      linear-gradient(90deg, rgb(47 107 255 / 55%), rgb(106 91 216 / 55%), rgb(255 59 78 / 55%)) border-box;
+    font-size: var(--fs-body-xs);
     font-weight: 600;
+    line-height: 1.2;
     color: var(--color-heading);
   }
 
-  .case__bullet {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .case__bullet::before {
+  .case__feature::before {
     content: '';
     flex: none;
-    width: 7px;
-    height: 7px;
+    width: 6px;
+    height: 6px;
     background: var(--color-red-450);
     transform: rotate(45deg);
+  }
+
+  @media (forced-colors: active) {
+    .case__feature {
+      border-color: CanvasText;
+    }
   }
 
   .case__text {

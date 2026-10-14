@@ -37,10 +37,10 @@ test.describe('sub-page balance (desktop)', () => {
 test.describe('sub-page reading order (mobile)', () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
-  test('a case study stacks intro, image, highlights, then the next step', async ({ page }) => {
+  test('a case study stacks intro, image, features, then the next step', async ({ page }) => {
     await page.goto('/projects/multi-agent-ai-platform');
     const ys = await Promise.all(
-      ['.case__intro', '.case__media', '.case__section--highlights', '.case__section--next'].map(async (s) => {
+      ['.case__intro', '.case__media', '.case__section--features', '.case__section--next'].map(async (s) => {
         const box = await page.locator(s).boundingBox();
         return box!.y;
       }),

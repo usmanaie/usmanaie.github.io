@@ -1,0 +1,498 @@
+<!doctype html>
+<!--
+  The Multi-Agent AI Platform's project illustration, made in code (rendered by scripts/render-project-art.mjs at 2x
+  to src/assets/projects/agentic-ai.png). A stylised deal room for business acquisition, not a screenshot: a persona
+  orchestrator directing its agents (discovery, profiles, due diligence) over MCP tools and A2A. Sized at the cards'
+  603 x 464 display box.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      @font-face {
+        font-family: 'Manrope';
+        src: url('../../node_modules/@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2')
+          format('woff2');
+        font-weight: 200 800;
+      }
+
+      :root {
+        --ink: #0b0c12;
+        --panel-2: #1b1e2a;
+        --line: rgb(255 255 255 / 8%);
+        --text: #eef0f5;
+        --muted: #8b90a1;
+        --accent: #f07c2e;
+        --accent-soft: #f8a35f;
+        --green: #6fd39b;
+        --violet: #8a5cd6;
+        --blue: #4c8bda;
+        --teal: #2f9c8a;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+
+      html,
+      body {
+        width: 603px;
+        height: 464px;
+        background: var(--ink);
+        font-family: Manrope, sans-serif;
+        color: var(--text);
+        overflow: hidden;
+      }
+
+      .stage {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(260px 200px at 18% 16%, rgb(240 124 46 / 34%), transparent 70%),
+          radial-gradient(300px 240px at 92% 92%, rgb(120 26 74 / 50%), transparent 72%),
+          radial-gradient(220px 180px at 56% 52%, rgb(76 139 218 / 12%), transparent 70%),
+          linear-gradient(180deg, #0d0f17, #07080d);
+      }
+
+      .stage::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(rgb(255 255 255 / 7%) 1px, transparent 1.2px);
+        background-size: 14px 14px;
+        mask-image: radial-gradient(420px 300px at 50% 45%, #000 30%, transparent 80%);
+      }
+
+      .scene {
+        position: absolute;
+        inset: 0;
+        perspective: 1400px;
+      }
+
+      .window {
+        position: absolute;
+        left: 70px;
+        top: 52px;
+        width: 476px;
+        height: 336px;
+        border-radius: 14px;
+        background: linear-gradient(180deg, #171a25, #10121a);
+        border: 1px solid rgb(255 255 255 / 10%);
+        box-shadow:
+          0 40px 80px -20px rgb(0 0 0 / 80%),
+          0 0 0 1px rgb(0 0 0 / 40%),
+          0 0 60px -10px rgb(240 124 46 / 24%);
+        transform: rotateY(9deg) rotateX(4deg);
+        transform-origin: 70% 50%;
+        overflow: hidden;
+      }
+
+      .bar {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        height: 26px;
+        padding: 0 12px;
+        border-bottom: 1px solid var(--line);
+        background: rgb(255 255 255 / 2%);
+      }
+
+      .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #3a3e4c;
+      }
+
+      .title {
+        margin-left: 10px;
+        font-weight: 800;
+        font-size: 9.5px;
+      }
+
+      .live {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 6.6px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        color: var(--green);
+      }
+
+      .live::before {
+        content: '';
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--green);
+        box-shadow: 0 0 6px var(--green);
+      }
+
+      .body {
+        display: grid;
+        grid-template-columns: 1fr 168px;
+        height: calc(100% - 26px);
+      }
+
+      /* the agents: an orchestrator directing its crew, messages passing between them */
+      .graph {
+        position: relative;
+        border-right: 1px solid var(--line);
+      }
+
+      .graph svg {
+        position: absolute;
+        inset: 0;
+      }
+
+      .node {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 8px 6px 6px;
+        border-radius: 9px;
+        background: var(--panel-2);
+        border: 1px solid var(--line);
+        font-size: 7.2px;
+        font-weight: 700;
+        white-space: nowrap;
+        box-shadow: 0 8px 18px -8px rgb(0 0 0 / 70%);
+      }
+
+      .node small {
+        display: block;
+        margin-top: 2px;
+        font-size: 5.8px;
+        font-weight: 600;
+        color: var(--muted);
+      }
+
+      .icon {
+        display: grid;
+        place-items: center;
+        width: 18px;
+        height: 18px;
+        border-radius: 6px;
+        font-size: 7px;
+        font-weight: 800;
+        color: #fff;
+      }
+
+      .hub {
+        left: 50%;
+        top: 46%;
+        transform: translate(-50%, -50%);
+        padding: 9px 12px 9px 9px;
+        background: linear-gradient(135deg, rgb(240 124 46 / 26%), rgb(240 124 46 / 8%));
+        border-color: rgb(240 124 46 / 55%);
+        box-shadow:
+          0 0 0 6px rgb(240 124 46 / 8%),
+          0 0 40px rgb(240 124 46 / 35%);
+        font-size: 8px;
+      }
+
+      .hub .icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 8px;
+        background: var(--accent);
+        font-size: 9px;
+      }
+
+      .a2a {
+        position: absolute;
+        padding: 2px 6px;
+        border-radius: 20px;
+        background: #10121a;
+        border: 1px solid rgb(240 124 46 / 45%);
+        color: var(--accent-soft);
+        font-size: 5.8px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+      }
+
+      /* the deal: the persona, the businesses found, and the diligence on the one chosen */
+      .deal {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 11px 10px;
+      }
+
+      .label {
+        font-size: 6.4px;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        color: var(--muted);
+      }
+
+      .persona {
+        padding: 8px;
+        border-radius: 9px;
+        background: var(--panel-2);
+        border: 1px solid var(--line);
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-top: 6px;
+      }
+
+      .chips span {
+        padding: 2px 6px;
+        border-radius: 20px;
+        border: 1px solid rgb(255 255 255 / 14%);
+        font-size: 6.2px;
+        font-weight: 700;
+      }
+
+      .match {
+        display: grid;
+        grid-template-columns: 14px 1fr 36px;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 6px;
+        border-radius: 7px;
+        background: rgb(255 255 255 / 3%);
+      }
+
+      .match .co {
+        width: 14px;
+        height: 14px;
+        border-radius: 4px;
+      }
+
+      .match .name {
+        height: 4px;
+        border-radius: 2px;
+        background: rgb(255 255 255 / 22%);
+      }
+
+      .match .fit {
+        height: 4px;
+        border-radius: 2px;
+        background: rgb(255 255 255 / 8%);
+        overflow: hidden;
+      }
+
+      .match .fit i {
+        display: block;
+        height: 100%;
+        border-radius: 2px;
+        background: linear-gradient(90deg, var(--accent), var(--accent-soft));
+      }
+
+      .match.picked {
+        outline: 1px solid rgb(240 124 46 / 60%);
+        background: rgb(240 124 46 / 8%);
+      }
+
+      .check {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 6.8px;
+        font-weight: 700;
+      }
+
+      .tick {
+        flex: none;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: rgb(76 175 120 / 20%);
+        border: 1px solid rgb(110 200 150 / 60%);
+        position: relative;
+      }
+
+      .tick::after {
+        content: '';
+        position: absolute;
+        left: 2.6px;
+        top: 1.3px;
+        width: 2.4px;
+        height: 4.6px;
+        border: solid #8fe0b0;
+        border-width: 0 1.2px 1.2px 0;
+        transform: rotate(45deg);
+      }
+
+      .spin {
+        flex: none;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        border: 1.5px solid rgb(240 124 46 / 30%);
+        border-top-color: var(--accent);
+      }
+
+      /* floating: the tools the agents reach over MCP */
+      .float {
+        position: absolute;
+        border-radius: 12px;
+        background: rgb(20 22 31 / 92%);
+        border: 1px solid rgb(255 255 255 / 12%);
+        box-shadow: 0 24px 48px -16px rgb(0 0 0 / 85%);
+      }
+
+      .tools {
+        left: 22px;
+        bottom: 30px;
+        padding: 8px 10px;
+        transform: rotate(-2.5deg);
+      }
+
+      .tools .row {
+        display: flex;
+        gap: 5px;
+        margin-top: 6px;
+      }
+
+      .tool {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 6px 3px 3px;
+        border-radius: 6px;
+        background: rgb(255 255 255 / 5%);
+        font-size: 6.4px;
+        font-weight: 700;
+      }
+
+      .tool b {
+        width: 11px;
+        height: 11px;
+        border-radius: 3px;
+      }
+
+      .memo {
+        right: 18px;
+        bottom: 22px;
+        width: 128px;
+        padding: 9px;
+        transform: rotate(3deg);
+      }
+
+      .memo h4 {
+        font-size: 7.6px;
+        font-weight: 800;
+      }
+
+      .memo .line {
+        height: 3.5px;
+        margin-top: 5px;
+        border-radius: 2px;
+        background: rgb(255 255 255 / 14%);
+      }
+
+      .memo .stamp {
+        display: inline-block;
+        margin-top: 8px;
+        padding: 3px 7px;
+        border-radius: 20px;
+        background: rgb(76 175 120 / 18%);
+        border: 1px solid rgb(110 200 150 / 50%);
+        color: #8fe0b0;
+        font-size: 6.2px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stage"></div>
+    <div class="scene">
+      <div class="window">
+        <div class="bar">
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          <span class="title">Deal room</span>
+          <span class="live">AGENTS AT WORK</span>
+        </div>
+        <div class="body">
+          <div class="graph">
+            <svg viewBox="0 0 308 310" preserveAspectRatio="none" aria-hidden="true">
+              <defs>
+                <linearGradient id="wire" x1="0" x2="1">
+                  <stop offset="0" stop-color="#f07c2e" stop-opacity="0.9" />
+                  <stop offset="1" stop-color="#f8a35f" stop-opacity="0.25" />
+                </linearGradient>
+              </defs>
+              <g fill="none" stroke="url(#wire)" stroke-width="1.4" stroke-linecap="round">
+                <path d="M118 122 C 118 96, 72 86, 72 58" />
+                <path d="M190 122 C 190 96, 236 86, 236 58" />
+                <path d="M154 166 L 154 244" stroke="#f07c2e" stroke-opacity="0.7" />
+              </g>
+              <g fill="#f8a35f">
+                <circle cx="97" cy="88" r="2.4" />
+                <circle cx="213" cy="88" r="2" opacity="0.6" />
+                <circle cx="154" cy="206" r="2.4" />
+              </g>
+            </svg>
+            <div class="node hub">
+              <span class="icon">◆</span>
+              <div>Persona orchestrator<small>Directs the deal</small></div>
+            </div>
+            <div class="node" style="left: 18px; top: 22px">
+              <span class="icon" style="background: var(--blue)">D</span>
+              <div>Business discovery<small>By the persona</small></div>
+            </div>
+            <div class="node" style="right: 16px; top: 22px">
+              <span class="icon" style="background: var(--violet)">P</span>
+              <div>Profile maker<small>Each business</small></div>
+            </div>
+            <div class="node" style="left: 50%; bottom: 30px; transform: translateX(-50%)">
+              <span class="icon" style="background: var(--teal)">DD</span>
+              <div>Due diligence<small>The deal</small></div>
+            </div>
+            <span class="a2a" style="left: 46px; top: 86px">A2A</span>
+            <span class="a2a" style="left: 164px; top: 200px">A2A</span>
+          </div>
+          <div class="deal">
+            <p class="label">BUYER PERSONA</p>
+            <div class="persona">
+              <div class="chips"><span>Sector</span><span>Region</span><span>Size</span><span>Growth</span></div>
+            </div>
+            <p class="label">BUSINESSES FOUND</p>
+            <div class="match picked">
+              <span class="co" style="background: var(--accent)"></span><span class="name"></span
+              ><span class="fit"><i style="width: 92%"></i></span>
+            </div>
+            <div class="match">
+              <span class="co" style="background: var(--blue)"></span><span class="name" style="width: 80%"></span
+              ><span class="fit"><i style="width: 74%"></i></span>
+            </div>
+            <div class="match">
+              <span class="co" style="background: var(--violet)"></span><span class="name" style="width: 66%"></span
+              ><span class="fit"><i style="width: 58%"></i></span>
+            </div>
+            <p class="label">DUE DILIGENCE</p>
+            <div class="check"><span class="tick"></span>Financials</div>
+            <div class="check"><span class="tick"></span>Legal</div>
+            <div class="check"><span class="spin"></span>Operations</div>
+          </div>
+        </div>
+      </div>
+      <div class="float tools">
+        <p class="label">MCP TOOLS</p>
+        <div class="row">
+          <span class="tool"><b style="background: var(--blue)"></b>CRM</span>
+          <span class="tool"><b style="background: var(--teal)"></b>Filings</span>
+          <span class="tool"><b style="background: var(--violet)"></b>Web</span>
+        </div>
+      </div>
+      <div class="float memo">
+        <h4>Deal memo</h4>
+        <div class="line"></div>
+        <div class="line" style="width: 82%"></div>
+        <div class="line" style="width: 64%"></div>
+        <span class="stamp">READY FOR REVIEW</span>
+      </div>
+    </div>
+  </body>
+</html>
