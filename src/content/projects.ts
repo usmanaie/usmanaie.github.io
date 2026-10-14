@@ -3,6 +3,7 @@ import type { ImageMetadata } from 'astro';
 import agenticShot from '../assets/projects/agentic-ai.png';
 import governanceShot from '../assets/projects/ai-governance.png';
 import telehealthShot from '../assets/projects/telehealth.png';
+import dairectorShot from '../assets/projects/dairector.png';
 
 export interface Project {
   slug: string;
@@ -25,6 +26,22 @@ export const projectsSection = {
 };
 
 export const projects: Project[] = [
+  {
+    slug: 'dairector',
+    eyebrow: 'AI VIDEO STUDIO',
+    tone: 'standard',
+    title: 'Dairector',
+    summary:
+      'An AI studio in a box: describe a video in a few plain lines, and a crew of AI agents writes, voices, designs, edits and reviews it in one conversation, on brand and within budget.',
+    bullets: [
+      'A crew of AI agents in one conversation',
+      'On brand, every spend held to a budget',
+      'Presenter videos from a single photo',
+    ],
+    image: dairectorShot,
+    imageAlt:
+      'Illustration of the Dairector studio on a dark stage: a brief in the conversation, the crew of AI agents ticking off their steps, a video frame reading Your team’s favourite blend with its scenes, voice and budget below, a brand palette card, and a presenter drawn on camera from one photo.',
+  },
   {
     slug: 'multi-agent-ai-platform',
     eyebrow: 'AGENTIC AI',

@@ -3,6 +3,7 @@ import { expect, type Page } from '@playwright/test';
 export const PAGES = [
   '/',
   '/projects',
+  '/projects/dairector',
   '/projects/multi-agent-ai-platform',
   '/projects/enterprise-telehealth-platform',
   '/projects/responsible-ai-governance',

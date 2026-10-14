@@ -1,0 +1,684 @@
+<!doctype html>
+<!--
+  Dairector's project illustration, made in code (rendered by scripts/render-dairector-art.mjs at 2x to
+  src/assets/projects/dairector.png). A stylised studio, not a screenshot: one brief becomes a crew's work in one
+  conversation, cut into a video. Sized at the cards' 603 x 464 display box.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      @font-face {
+        font-family: 'Manrope';
+        src: url('../../node_modules/@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2')
+          format('woff2');
+        font-weight: 200 800;
+      }
+      @font-face {
+        font-family: 'Instrument Serif';
+        src: url('../../node_modules/@fontsource/instrument-serif/files/instrument-serif-latin-400-normal.woff2')
+          format('woff2');
+      }
+
+      :root {
+        --ink: #0b0c12;
+        --panel: #14161f;
+        --panel-2: #1b1e2a;
+        --line: rgb(255 255 255 / 8%);
+        --text: #eef0f5;
+        --muted: #8b90a1;
+        --coral: #e8603c;
+        --coral-soft: #f08a6c;
+        --cream: #f2ede4;
+        --green: #2f5d4a;
+        --mustard: #e7b04a;
+        --rose: #e0566c;
+        --blue: #4c8bda;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+
+      html,
+      body {
+        width: 603px;
+        height: 464px;
+        background: var(--ink);
+        font-family: Manrope, sans-serif;
+        color: var(--text);
+        overflow: hidden;
+      }
+
+      /* the stage: the portfolio's red and violet fields, a floor line, and a faint dot grid */
+      .stage {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(260px 200px at 82% 18%, rgb(232 96 60 / 38%), transparent 70%),
+          radial-gradient(300px 240px at 12% 92%, rgb(120 26 74 / 55%), transparent 72%),
+          radial-gradient(220px 180px at 50% 60%, rgb(76 139 218 / 14%), transparent 70%),
+          linear-gradient(180deg, #0d0f17, #07080d);
+      }
+
+      .stage::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(rgb(255 255 255 / 7%) 1px, transparent 1.2px);
+        background-size: 14px 14px;
+        mask-image: radial-gradient(420px 300px at 50% 45%, #000 30%, transparent 80%);
+      }
+
+      /* the studio window, tilted a touch toward the viewer */
+      .scene {
+        position: absolute;
+        inset: 0;
+        perspective: 1400px;
+      }
+
+      .window {
+        position: absolute;
+        left: 52px;
+        top: 58px;
+        width: 470px;
+        height: 330px;
+        border-radius: 14px;
+        background: linear-gradient(180deg, #171a25, #10121a);
+        border: 1px solid rgb(255 255 255 / 10%);
+        box-shadow:
+          0 40px 80px -20px rgb(0 0 0 / 80%),
+          0 0 0 1px rgb(0 0 0 / 40%),
+          0 0 60px -10px rgb(232 96 60 / 25%);
+        transform: rotateY(-9deg) rotateX(4deg);
+        transform-origin: 30% 50%;
+        overflow: hidden;
+      }
+
+      .bar {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        height: 26px;
+        padding: 0 12px;
+        border-bottom: 1px solid var(--line);
+        background: rgb(255 255 255 / 2%);
+      }
+
+      .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #3a3e4c;
+      }
+
+      .brand {
+        margin-left: 10px;
+        font-weight: 800;
+        font-size: 10.5px;
+        letter-spacing: -0.01em;
+      }
+
+      .brand i {
+        font-style: normal;
+        display: inline-block;
+        padding: 0 2px;
+        border-radius: 3px;
+        background: var(--coral);
+        color: #fff;
+      }
+
+      .body {
+        display: grid;
+        grid-template-columns: 196px 1fr;
+        height: calc(100% - 26px);
+      }
+
+      /* the conversation: the crew at work, one after another */
+      .chat {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+        padding: 12px 10px 12px 12px;
+        border-right: 1px solid var(--line);
+      }
+
+      .brief {
+        align-self: flex-end;
+        max-width: 160px;
+        padding: 7px 9px;
+        border-radius: 10px 10px 3px 10px;
+        background: var(--coral);
+        color: #fff;
+        font-size: 7.6px;
+        line-height: 1.35;
+        font-weight: 600;
+      }
+
+      .step {
+        display: grid;
+        grid-template-columns: 18px 1fr auto;
+        align-items: center;
+        gap: 7px;
+        padding: 6px 7px;
+        border-radius: 8px;
+        background: var(--panel-2);
+        border: 1px solid var(--line);
+      }
+
+      .who {
+        display: grid;
+        place-items: center;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        font-size: 6.5px;
+        font-weight: 800;
+        color: #fff;
+      }
+
+      .role {
+        font-size: 7.2px;
+        font-weight: 700;
+      }
+
+      .what {
+        margin-top: 2px;
+        height: 3px;
+        border-radius: 2px;
+        background: rgb(255 255 255 / 12%);
+      }
+
+      .tick {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        background: rgb(76 175 120 / 20%);
+        border: 1px solid rgb(110 200 150 / 60%);
+        position: relative;
+      }
+
+      .tick::after {
+        content: '';
+        position: absolute;
+        left: 3px;
+        top: 1.6px;
+        width: 2.5px;
+        height: 5px;
+        border: solid #8fe0b0;
+        border-width: 0 1.3px 1.3px 0;
+        transform: rotate(45deg);
+      }
+
+      .waiting {
+        opacity: 0.55;
+      }
+
+      .next {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        border: 1.5px dashed rgb(255 255 255 / 30%);
+      }
+
+      .working {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        border: 1.5px solid rgb(232 96 60 / 30%);
+        border-top-color: var(--coral);
+      }
+
+      .gate {
+        margin-top: auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 7px 8px;
+        border-radius: 9px;
+        background: linear-gradient(135deg, rgb(232 96 60 / 16%), rgb(232 96 60 / 4%));
+        border: 1px solid rgb(232 96 60 / 35%);
+        font-size: 7px;
+        font-weight: 700;
+      }
+
+      .gate b {
+        padding: 3px 7px;
+        border-radius: 20px;
+        background: var(--coral);
+        color: #fff;
+        font-size: 6.4px;
+        letter-spacing: 0.04em;
+      }
+
+      /* the cut: the video, its scenes and its sound, and what it spends */
+      .cut {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+        padding: 12px;
+      }
+
+      .player {
+        position: relative;
+        aspect-ratio: 16 / 9;
+        border-radius: 9px;
+        overflow: hidden;
+        background: var(--cream);
+        box-shadow: 0 10px 30px -10px rgb(0 0 0 / 70%);
+      }
+
+      .player .lead {
+        position: absolute;
+        left: 16px;
+        top: 20px;
+        width: 24px;
+        height: 4px;
+        border-radius: 2px;
+        background: var(--coral);
+      }
+
+      .player h3 {
+        position: absolute;
+        left: 16px;
+        top: 32px;
+        width: 150px;
+        font-family: 'Instrument Serif', serif;
+        font-weight: 400;
+        font-size: 24px;
+        line-height: 0.98;
+        letter-spacing: -0.01em;
+        color: #1b1b1f;
+      }
+
+      .player .cup {
+        position: absolute;
+        right: 22px;
+        bottom: -14px;
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 40% 38%, #c98a5c, #7a4424 62%, #4a2615);
+        box-shadow:
+          inset 0 0 0 7px #efe6d6,
+          0 6px 16px rgb(0 0 0 / 15%);
+      }
+
+      .player .play {
+        position: absolute;
+        right: 12px;
+        top: 12px;
+        display: grid;
+        place-items: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: rgb(27 27 31 / 85%);
+      }
+
+      .player .play::after {
+        content: '';
+        margin-left: 2px;
+        border-style: solid;
+        border-width: 5px 0 5px 8px;
+        border-color: transparent transparent transparent #fff;
+      }
+
+      .scrub {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 3px;
+        background: rgb(27 27 31 / 15%);
+      }
+
+      .scrub::after {
+        content: '';
+        position: absolute;
+        inset: 0 58% 0 0;
+        background: var(--coral);
+      }
+
+      .strip {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 4px;
+      }
+
+      .shot {
+        height: 26px;
+        border-radius: 4px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .shot::after {
+        content: '';
+        position: absolute;
+        left: 5px;
+        bottom: 5px;
+        width: 40%;
+        height: 3px;
+        border-radius: 2px;
+        background: rgb(255 255 255 / 70%);
+      }
+
+      .shot.on {
+        outline: 1.5px solid var(--coral);
+        outline-offset: 1px;
+      }
+
+      .wave {
+        display: flex;
+        align-items: center;
+        gap: 1.5px;
+        height: 22px;
+        padding: 0 2px;
+      }
+
+      .wave span {
+        flex: 1;
+        border-radius: 1px;
+        background: linear-gradient(180deg, var(--coral-soft), var(--rose));
+        opacity: 0.85;
+      }
+
+      .meter {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 7px;
+        font-weight: 700;
+        color: var(--muted);
+        letter-spacing: 0.08em;
+      }
+
+      .meter .track {
+        display: block;
+        flex: 1;
+        height: 5px;
+        border-radius: 3px;
+        background: rgb(255 255 255 / 8%);
+        overflow: hidden;
+      }
+
+      .meter .fill {
+        display: block;
+        width: 46%;
+        height: 100%;
+        border-radius: 3px;
+        background: linear-gradient(90deg, var(--blue), #7fb0ee);
+      }
+
+      .formats {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 6.8px;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+      }
+
+      .formats span {
+        padding: 3px 7px;
+        border-radius: 20px;
+        border: 1px solid rgb(255 255 255 / 14%);
+        color: var(--text);
+      }
+
+      .formats em {
+        margin-right: 6px;
+        font-style: normal;
+        font-weight: 700;
+        color: var(--muted);
+        letter-spacing: 0.08em;
+      }
+
+      /* a card floating off the window: the presenter, drawn, framed on a studio backdrop */
+      .float {
+        position: absolute;
+        border-radius: 12px;
+        background: rgb(20 22 31 / 92%);
+        border: 1px solid rgb(255 255 255 / 12%);
+        box-shadow: 0 24px 48px -16px rgb(0 0 0 / 85%);
+        backdrop-filter: blur(6px);
+      }
+
+      .presenter {
+        right: 34px;
+        bottom: 46px;
+        width: 92px;
+        padding: 6px;
+        transform: rotate(3deg);
+      }
+
+      .frame {
+        position: relative;
+        height: 118px;
+        border-radius: 7px;
+        overflow: hidden;
+        background: radial-gradient(70px 60px at 50% 36%, #e9e4db, #c9c3b8 90%);
+      }
+
+      .frame span {
+        position: absolute;
+        left: 50%;
+      }
+
+      .frame .body {
+        bottom: -34px;
+        width: 80px;
+        height: 72px;
+        margin-left: -40px;
+        border-radius: 40px 40px 0 0;
+        background: linear-gradient(180deg, #2f4563, #22344c);
+      }
+
+      .frame .collar {
+        bottom: 26px;
+        width: 22px;
+        height: 14px;
+        margin-left: -11px;
+        background: #e9e6df;
+        clip-path: polygon(0 0, 50% 100%, 100% 0);
+      }
+
+      .frame .neck {
+        top: 50px;
+        width: 14px;
+        height: 18px;
+        margin-left: -7px;
+        border-radius: 0 0 6px 6px;
+        background: #b78365;
+      }
+
+      .frame .ear {
+        top: 36px;
+        width: 7px;
+        height: 11px;
+        border-radius: 50%;
+        background: #bd8a6c;
+      }
+
+      .frame .head {
+        top: 20px;
+        width: 28px;
+        height: 36px;
+        margin-left: -14px;
+        border-radius: 46% 46% 44% 44% / 42% 42% 58% 58%;
+        background: linear-gradient(160deg, #d6a585, #c08b6b);
+      }
+
+      .frame .hair {
+        top: 15px;
+        width: 32px;
+        height: 17px;
+        margin-left: -16px;
+        border-radius: 16px 16px 4px 10px / 14px 14px 4px 8px;
+        background: #2a2421;
+      }
+
+      .frame .rec {
+        position: absolute;
+        left: 6px;
+        top: 6px;
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        font-size: 5.6px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        color: #1b1b1f;
+      }
+
+      .frame .rec::before {
+        content: '';
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--rose);
+      }
+
+      .caption {
+        margin-top: 6px;
+        font-size: 6.6px;
+        font-weight: 700;
+        color: var(--muted);
+        text-align: center;
+        letter-spacing: 0.06em;
+      }
+
+      .brandkit {
+        left: 26px;
+        bottom: 34px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 9px;
+        transform: rotate(-2.5deg);
+      }
+
+      .swatch {
+        width: 13px;
+        height: 13px;
+        border-radius: 4px;
+        box-shadow: inset 0 0 0 1px rgb(255 255 255 / 15%);
+      }
+
+      .brandkit em {
+        margin-left: 3px;
+        font-style: normal;
+        font-size: 7px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stage"></div>
+    <div class="scene">
+      <div class="window">
+        <div class="bar">
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          <span class="brand">D<i>ai</i>rector</span>
+        </div>
+        <div class="body">
+          <div class="chat">
+            <p class="brief">A 30-second ad for our office tea subscription, warm and friendly.</p>
+            <div class="step">
+              <span class="who" style="background: #4c8bda">AD</span>
+              <div>
+                <p class="role">Account director</p>
+                <div class="what" style="width: 80%"></div>
+              </div>
+              <span class="tick"></span>
+            </div>
+            <div class="step">
+              <span class="who" style="background: #8a5cd6">SW</span>
+              <div>
+                <p class="role">Scriptwriter</p>
+                <div class="what" style="width: 64%"></div>
+              </div>
+              <span class="tick"></span>
+            </div>
+            <div class="step">
+              <span class="who" style="background: #2f8f6a">VD</span>
+              <div>
+                <p class="role">Voice director</p>
+                <div class="what" style="width: 72%"></div>
+              </div>
+              <span class="tick"></span>
+            </div>
+            <div class="step">
+              <span class="who" style="background: var(--coral)">MD</span>
+              <div>
+                <p class="role">Motion designer</p>
+                <div class="what" style="width: 56%"></div>
+              </div>
+              <span class="working"></span>
+            </div>
+            <div class="step waiting">
+              <span class="who" style="background: #3a3e4c">ED</span>
+              <div>
+                <p class="role">Editor</p>
+                <div class="what" style="width: 48%"></div>
+              </div>
+              <span class="next"></span>
+            </div>
+            <div class="gate"><span>The script and the look</span><b>APPROVE</b></div>
+          </div>
+          <div class="cut">
+            <div class="player">
+              <span class="lead"></span>
+              <h3>Your team’s favourite blend.</h3>
+              <span class="cup"></span>
+              <span class="play"></span>
+              <span class="scrub"></span>
+            </div>
+            <div class="strip">
+              <span class="shot" style="background: var(--cream)"></span>
+              <span class="shot on" style="background: var(--coral)"></span>
+              <span class="shot" style="background: var(--green)"></span>
+              <span class="shot" style="background: var(--mustard)"></span>
+              <span class="shot" style="background: #2a2d3a"></span>
+            </div>
+            <div class="wave" id="wave"></div>
+            <div class="meter">
+              <span>BUDGET</span><span class="track"><span class="fill"></span></span>
+            </div>
+            <div class="formats"><em>FORMATS</em><span>16:9</span><span>9:16</span><span>1:1</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="float brandkit">
+        <span class="swatch" style="background: var(--coral)"></span>
+        <span class="swatch" style="background: var(--cream)"></span>
+        <span class="swatch" style="background: var(--green)"></span>
+        <span class="swatch" style="background: #1b1b1f"></span>
+        <em>ON BRAND</em>
+      </div>
+      <div class="float presenter">
+        <div class="frame">
+          <span class="rec">ON CAMERA</span>
+          <span class="body"></span><span class="collar"></span><span class="neck"></span>
+          <span class="ear" style="margin-left: -18px"></span><span class="ear" style="margin-left: 11px"></span>
+          <span class="head"></span><span class="hair"></span>
+        </div>
+        <p class="caption">FROM ONE PHOTO</p>
+      </div>
+    </div>
+    <script>
+      // a voice's wave: a fixed shape, so every render is the same
+      const wave = document.getElementById('wave');
+      for (let i = 0; i < 64; i += 1) {
+        const v = 0.25 + 0.75 * Math.abs(Math.sin(i * 0.55) * Math.cos(i * 0.17));
+        const bar = document.createElement('span');
+        bar.style.height = `${Math.round(v * 100)}%`;
+        wave.append(bar);
+      }
+    </script>
+  </body>
+</html>
