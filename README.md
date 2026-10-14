@@ -29,20 +29,26 @@ uipro init --ai claude
 
 ## Scripts
 
-| Script                       | What it does                                                                                                               |
-| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm dev`                   | Astro dev server                                                                                                           |
-| `pnpm build`                 | Production build → `dist/`, then prune unused artefacts and run the production gate (`scripts/check-dist.mjs`)             |
-| `pnpm build:fixture`         | Test-only build with placeholder reviews → `dist-fixture/` (never deployed)                                                |
-| `pnpm preview`               | Serve `dist/` with the production headers from `firebase.json` (port 4173)                                                 |
-| `pnpm lint`                  | ESLint (astro + jsx-a11y + typescript), Stylelint, Prettier check                                                          |
-| `pnpm typecheck`             | `astro check` (strict TypeScript)                                                                                          |
-| `pnpm test`                  | Vitest unit tests (carousel, scroll-spy, menu, utilities)                                                                  |
-| `pnpm test:e2e`              | Playwright: e2e + axe in Chromium, Firefox and WebKit, carousel on the fixture build, visual regression (build both first) |
-| `pnpm lhci`                  | Lighthouse CI with the performance budgets (mobile, throttled)                                                             |
-| `pnpm fidelity`              | Pixel comparison against the design references at 1440px (needs `pnpm preview:fixture`)                                    |
-| `pnpm fonts` / `pnpm images` | Regenerate subset fonts / derived images and icons                                                                         |
-| `pnpm design:render <dir>`   | Re-render illustrations, ring layers and references from the unzipped design export                                        |
+| Script                                          | What it does                                                                                                               |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm dev`                                      | Astro dev server                                                                                                           |
+| `pnpm build`                                    | Production build → `dist/`, then prune unused artefacts and run the production gate (`scripts/check-dist.mjs`)             |
+| `pnpm build:fixture`                            | Test-only build with placeholder reviews → `dist-fixture/` (never deployed)                                                |
+| `pnpm preview`                                  | Serve `dist/` with the production headers from `firebase.json` (port 4173)                                                 |
+| `pnpm preview:fixture`                          | Serve `dist-fixture/` the same way (port 4174)                                                                             |
+| `pnpm lint`                                     | ESLint (astro + jsx-a11y + typescript), Stylelint, Prettier check                                                          |
+| `pnpm typecheck`                                | `astro check` (strict TypeScript)                                                                                          |
+| `pnpm test`                                     | Vitest unit tests (carousel, scroll-spy, menu, hero flow, experience dates, utilities)                                     |
+| `pnpm test:e2e`                                 | Playwright: e2e + axe in Chromium, Firefox and WebKit, carousel on the fixture build, visual regression (build both first) |
+| `pnpm lhci`                                     | Lighthouse CI with the performance budgets (mobile, throttled)                                                             |
+| `pnpm fidelity`                                 | Pixel comparison against the design references at 1440px (needs `pnpm preview:fixture`)                                    |
+| `pnpm fonts` / `pnpm images`                    | Regenerate subset fonts / derived images and icons                                                                         |
+| `node scripts/render-project-art.mjs [name...]` | Render project illustrations from `scripts/art/<name>.html` (all of them when no name is given)                            |
+| `pnpm design:render <dir>`                      | Re-render the Expertise ring layers and fidelity references from the unzipped design export (see below)                    |
+
+`pnpm design:render` also overwrites `agentic-ai.png`, `telehealth.png` and `ai-governance.png` in
+`src/assets/projects/` with the design export's original illustrations. Those images now come from
+`scripts/art/`, so run `node scripts/render-project-art.mjs` afterwards to restore them.
 
 ## Architecture
 
@@ -55,19 +61,26 @@ src/
     sections/     one component per section: Hero, About, Expertise, Projects, Experience, Certifications, Reviews, Contact
     layout/       SiteHeader (sticky + mobile menu), SiteFooter, PageIntro, LegalPage
     ui/           primitives: Pill, Eyebrow, SectionHeading, Icon, AgentPortrait, RotatingRingLink
-    hero/         AgentOrb
-    projects/     ProjectRow
-  scripts/        client TS: hero, header, menu, scroll-spy, carousel, visibility
+    hero/         AgentFlow (the agent loop and robot), RingBadge (trust and certification badges)
+    projects/     ProjectList, ProjectRow
+  lib/            build-time helpers: hero-flow geometry, hero image, email encoding, experience dates, JSON-LD
+  scripts/        client TS: hero, header, menu, scroll-spy, carousel, visibility, defer, ready
   pages/          index, projects/, projects/[slug], privacy, terms, 404, robots.txt, sitemap.xml
-  assets/         fonts, hero art + mask, project illustrations, Expertise ring layers, brand icon
-scripts/          build tooling (fonts, images, design renders, OG image, serve, prune, check-dist, fidelity)
+  assets/         fonts, hero art + masks, About portrait, project illustrations, Expertise ring layers,
+                  credential badges, employer logos, brand icon
+scripts/          build tooling (fonts, images, design and project-art renders, robot art, OG image, serve, prune,
+                  check-dist, fidelity); art/ holds the project illustrations' HTML sources
 tests/            unit/ (Vitest), e2e/ (Playwright + axe), visual/ (baselines + design references), fixtures/
 ```
 
 - **Zero JS by default.** Each interactive piece is a small module loaded only by the component that needs it.
   There's no framework runtime.
-- **The hero** keeps the design's 1600×1067 composition at ≥ 1024px, scaled by a CSS-only unitless factor. Below
-  that it re-flows. Animations pause off-screen, and reduced motion gets a designed end-state frame.
+- **The hero** is a two-column grid, sized so the whole hero fits the window: the copy on the left, and on the
+  right an agent loop in which a robot routes every message between the user, the LLM, RAG, tools and
+  guardrails. The flow's 720×880 stage is scaled by one CSS-only unitless factor, so its bubbles, connectors and
+  moving token stay aligned. Below 1024px the hero stacks. Animations pause off-screen, and reduced motion gets a
+  designed end-state frame. The hop sequence is in `src/content/site.ts` and the geometry in
+  `src/lib/hero-flow.ts`. DECISIONS.md → Fidelity decisions explains the layout.
 - **Production gate.** `check-dist` fails the build on any of: inline scripts or styles (CSP), placeholder text,
   the plain-text email, dead links or anchors, third-party resources, unreferenced assets, or JS over 30 KB.
 
@@ -78,8 +91,12 @@ All copy lives in `src/content/*.ts`; components contain no hard-coded copy.
 - **Job title:** `site.jobTitle` in `site.ts`. It feeds the `<title>`, footer tagline and JSON-LD.
 - **Years of experience:** derived from `CAREER_START` in `site.ts`, which updates the About stat, the
   Experience numeral and the intro sentence.
-- **Stats, credentials, expertise, experience, projects:** their respective files. Project illustrations are in
-  `src/assets/projects/`. Case-study pages are generated from `projects.ts`.
+- **Stats, credentials, expertise, experience, projects:** their respective files. Case-study pages are generated
+  from `projects.ts`.
+- **Projects:** `featured: 1`–`3` puts a project in one of the home page's three rows. Projects without it appear
+  only on `/projects`, which lists every project. Each illustration is an HTML file in `scripts/art/`, rendered to
+  `src/assets/projects/` with `node scripts/render-project-art.mjs <name>`. Add every new case-study route to
+  `PAGES` in `tests/e2e/helpers.ts`, so the e2e and axe suites cover it.
 - **Reviews:** add real, permitted quotes to `items` in `reviews.ts` and set `enabled: true`. The section and its
   nav links then appear automatically.
 - **Privacy / Terms:** `legal.ts`; update `lastUpdated` when the text changes.
@@ -141,7 +158,12 @@ artifact, review the screenshots, and commit them to `tests/visual/__screenshots
 - **Certifications section:** the Professional Cloud Developer badge and the skill/completion badge images
   (`src/assets/credentials/`) are Google's artwork for credentials the owner earned, shown unmodified (resized)
   and linked to their public verification pages on Google Skills.
-- Project illustrations, the agent portraits and the Expertise ring are original vector artwork from the design
-  export, rendered to raster at build time.
+- **About portrait** (`src/assets/about/usman-portrait.png`) is the owner's own photo.
+- **Project illustrations** are original artwork made in code (HTML in `scripts/art/`, no screenshots or
+  generated images). `scripts/render-project-art.mjs` renders them to `src/assets/projects/`, and the PNGs are
+  committed.
+- **The agent portraits** (Experience, Contact) and the **Expertise ring** are original vector artwork from the
+  design export. The portraits ship as inline SVG. `pnpm design:render` pre-renders the ring's glow layers to PNG,
+  and those files are committed.
 - Fonts are all under the SIL Open Font License: Manrope, Hanken Grotesk, League Gothic, Instrument Serif,
   JetBrains Mono. They're subset from the `@fontsource` packages.
