@@ -1,0 +1,571 @@
+<!doctype html>
+<!--
+  Intelligent Pallet Verification's project illustration, made in code (rendered by scripts/render-project-art.mjs at
+  2x to src/assets/projects/pallet-verification.png). A stylised dock console, not a screenshot: a camera on the dock
+  door detecting the cartons on a pallet, the pallet checked line by line against its order, the packing list read
+  from its paperwork, and the pallet held for a mismatch with the decision on the audit trail. Sized at the cards'
+  603 x 464 display box.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      @font-face {
+        font-family: 'Manrope';
+        src: url('../../node_modules/@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2')
+          format('woff2');
+        font-weight: 200 800;
+      }
+
+      :root {
+        --ink: #0b0c12;
+        --panel-2: #1b1e2a;
+        --line: rgb(255 255 255 / 8%);
+        --text: #eef0f5;
+        --muted: #8b90a1;
+        --accent: #e7b04a;
+        --accent-soft: #f3cf86;
+        --ok: #2fbf7a;
+        --ok-soft: #7fe0ae;
+        --bad: #e0566c;
+        --bad-soft: #f29aa8;
+        --kraft: #c8955c;
+        --kraft-dark: #a9763f;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+
+      html,
+      body {
+        width: 603px;
+        height: 464px;
+        background: var(--ink);
+        font-family: Manrope, sans-serif;
+        color: var(--text);
+        overflow: hidden;
+      }
+
+      .stage {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(270px 210px at 86% 12%, rgb(231 176 74 / 28%), transparent 70%),
+          radial-gradient(300px 240px at 8% 94%, rgb(40 72 200 / 40%), transparent 72%),
+          radial-gradient(220px 180px at 50% 56%, rgb(231 176 74 / 9%), transparent 70%),
+          linear-gradient(180deg, #0d0f17, #07080d);
+      }
+
+      .stage::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(rgb(255 255 255 / 7%) 1px, transparent 1.2px);
+        background-size: 14px 14px;
+        mask-image: radial-gradient(420px 300px at 50% 45%, #000 30%, transparent 80%);
+      }
+
+      .scene {
+        position: absolute;
+        inset: 0;
+        perspective: 1400px;
+      }
+
+      .window {
+        position: absolute;
+        left: 44px;
+        top: 52px;
+        width: 494px;
+        height: 330px;
+        border-radius: 14px;
+        background: linear-gradient(180deg, #171a25, #10121a);
+        border: 1px solid rgb(255 255 255 / 10%);
+        box-shadow:
+          0 40px 80px -20px rgb(0 0 0 / 80%),
+          0 0 0 1px rgb(0 0 0 / 40%),
+          0 0 60px -10px rgb(231 176 74 / 22%);
+        transform: rotateY(-9deg) rotateX(4deg);
+        transform-origin: 30% 50%;
+        overflow: hidden;
+      }
+
+      .bar {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        height: 26px;
+        padding: 0 12px;
+        border-bottom: 1px solid var(--line);
+        background: rgb(255 255 255 / 2%);
+      }
+
+      .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #3a3e4c;
+      }
+
+      .title {
+        margin-left: 10px;
+        font-weight: 800;
+        font-size: 9.5px;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 7px;
+        border-radius: 20px;
+        font-size: 6.2px;
+        font-weight: 800;
+        letter-spacing: 0.07em;
+        white-space: nowrap;
+      }
+
+      .pill.amber {
+        background: rgb(231 176 74 / 16%);
+        border: 1px solid rgb(243 207 134 / 50%);
+        color: var(--accent-soft);
+      }
+
+      .pill.bad {
+        background: rgb(224 86 108 / 18%);
+        border: 1px solid rgb(242 154 168 / 55%);
+        color: var(--bad-soft);
+      }
+
+      .pill.ok {
+        background: rgb(47 191 122 / 16%);
+        border: 1px solid rgb(127 224 174 / 45%);
+        color: var(--ok-soft);
+      }
+
+      .bar .pill.amber {
+        margin-left: 8px;
+      }
+
+      .bar .pill.bad {
+        margin-left: auto;
+      }
+
+      .body {
+        display: grid;
+        grid-template-columns: 1fr 176px;
+        gap: 10px;
+        height: calc(100% - 26px);
+        padding: 11px;
+      }
+
+      /* the dock camera: a pallet of cartons, each one found and labelled */
+      .camera {
+        position: relative;
+        border-radius: 10px;
+        overflow: hidden;
+        background:
+          linear-gradient(180deg, transparent 72%, rgb(0 0 0 / 35%) 72%),
+          repeating-linear-gradient(90deg, #232838 0 38px, #1f2433 38px 40px), #1c2030;
+      }
+
+      .camera .floor {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 28%;
+        background: linear-gradient(180deg, #2a2d36, #1a1c22);
+      }
+
+      .camera .hazard {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 7px;
+        background: repeating-linear-gradient(135deg, var(--accent) 0 8px, #15161b 8px 16px);
+        opacity: 0.85;
+      }
+
+      .tag {
+        position: absolute;
+        left: 8px;
+        top: 8px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 7px;
+        border-radius: 20px;
+        background: rgb(0 0 0 / 50%);
+        font-size: 6.2px;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+      }
+
+      .tag::before {
+        content: '';
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--bad);
+      }
+
+      .tag.right {
+        left: auto;
+        right: 8px;
+      }
+
+      .tag.right::before {
+        background: var(--accent);
+      }
+
+      .pallet {
+        position: absolute;
+        left: 50%;
+        bottom: 26px;
+        width: 186px;
+        transform: translateX(-50%);
+      }
+
+      .stack {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 3px;
+      }
+
+      .carton {
+        position: relative;
+        height: 34px;
+        border-radius: 2px;
+        background: linear-gradient(180deg, var(--kraft), var(--kraft-dark));
+      }
+
+      .carton::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 0;
+        bottom: 0;
+        width: 5px;
+        margin-left: -2.5px;
+        background: rgb(255 240 210 / 35%);
+      }
+
+      .carton.b {
+        background: linear-gradient(180deg, #b9a07e, #95805f);
+      }
+
+      .base {
+        height: 9px;
+        margin-top: 3px;
+        background: repeating-linear-gradient(90deg, #8a6a45 0 26px, #2a2015 26px 34px);
+        border-radius: 1px;
+      }
+
+      .box {
+        position: absolute;
+        border: 1.5px solid var(--ok);
+        border-radius: 3px;
+        box-shadow: 0 0 10px rgb(47 191 122 / 35%);
+      }
+
+      .box.bad {
+        border-color: var(--bad);
+        box-shadow: 0 0 12px rgb(224 86 108 / 55%);
+      }
+
+      .box span {
+        position: absolute;
+        left: -1.5px;
+        top: -12px;
+        padding: 1.5px 5px;
+        border-radius: 3px 3px 3px 0;
+        background: var(--ok);
+        color: #08140e;
+        font-size: 5.8px;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+
+      .box.bad span {
+        background: var(--bad);
+        color: #fff;
+      }
+
+      .side {
+        display: grid;
+        grid-template-rows: 1fr auto;
+        gap: 10px;
+      }
+
+      .card {
+        display: flex;
+        flex-direction: column;
+        border-radius: 10px;
+        background: var(--panel-2);
+        border: 1px solid var(--line);
+        padding: 9px;
+      }
+
+      h4 {
+        display: flex;
+        align-items: center;
+        font-size: 6.6px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        margin-bottom: 7px;
+      }
+
+      .lines {
+        display: grid;
+        grid-template-columns: 1fr 24px 24px 12px;
+        align-items: center;
+        row-gap: 5px;
+        column-gap: 4px;
+        font-size: 6.6px;
+        font-weight: 700;
+      }
+
+      .lines .head {
+        font-size: 5.6px;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+      }
+
+      .lines .num {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .lines .miss {
+        color: var(--bad-soft);
+      }
+
+      .mark {
+        display: grid;
+        place-items: center;
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        font-size: 6.5px;
+        font-weight: 800;
+        color: #fff;
+        background: var(--ok);
+      }
+
+      .mark.bad {
+        background: var(--bad);
+      }
+
+      .rule {
+        grid-column: 1 / -1;
+        height: 1px;
+        background: var(--line);
+      }
+
+      .decision {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 8px 9px;
+        border-radius: 10px;
+        background: rgb(224 86 108 / 12%);
+        border: 1px solid rgb(242 154 168 / 45%);
+        font-size: 7.2px;
+        font-weight: 800;
+      }
+
+      .decision small {
+        display: block;
+        margin-top: 2px;
+        font-size: 5.8px;
+        font-weight: 600;
+        color: var(--muted);
+      }
+
+      .decision i {
+        display: grid;
+        place-items: center;
+        width: 18px;
+        height: 18px;
+        border-radius: 6px;
+        background: var(--bad);
+        font-style: normal;
+        font-size: 9px;
+        font-weight: 800;
+      }
+
+      .float {
+        position: absolute;
+        border-radius: 12px;
+        background: rgb(20 22 31 / 94%);
+        border: 1px solid rgb(255 255 255 / 12%);
+        box-shadow: 0 24px 48px -16px rgb(0 0 0 / 85%);
+      }
+
+      .paper {
+        right: 14px;
+        top: 212px;
+        width: 128px;
+        padding: 9px 10px;
+        border-radius: 8px;
+        background: linear-gradient(180deg, #f5f3ee, #e6e2d8);
+        color: #1d1c19;
+        transform: rotate(4deg);
+      }
+
+      .paper h5 {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 7px;
+        font-weight: 800;
+      }
+
+      .paper h5 span {
+        padding: 1.5px 5px;
+        border-radius: 4px;
+        background: #2b2a26;
+        color: var(--accent-soft);
+        font-size: 5.4px;
+        letter-spacing: 0.06em;
+      }
+
+      .field {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-top: 5px;
+        font-size: 5.8px;
+        font-weight: 700;
+        color: #6b675e;
+      }
+
+      .field b {
+        flex: 1;
+        height: 5px;
+        border-radius: 2px;
+        background: rgb(231 176 74 / 45%);
+        outline: 1px solid rgb(169 118 63 / 70%);
+      }
+
+      .barcode {
+        height: 14px;
+        margin-top: 7px;
+        background: repeating-linear-gradient(
+          90deg,
+          #1d1c19 0 1px,
+          transparent 1px 3px,
+          #1d1c19 3px 5px,
+          transparent 5px 6px,
+          #1d1c19 6px 7px,
+          transparent 7px 10px
+        );
+      }
+
+      .audit {
+        left: 22px;
+        bottom: 26px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 11px;
+        font-size: 7px;
+        font-weight: 800;
+        transform: rotate(-2.5deg);
+      }
+
+      .audit i {
+        display: grid;
+        place-items: center;
+        width: 16px;
+        height: 16px;
+        border-radius: 5px;
+        background: var(--accent);
+        color: #1b1b1f;
+        font-style: normal;
+        font-size: 8px;
+        font-weight: 800;
+      }
+
+      .audit small {
+        display: block;
+        margin-top: 2px;
+        font-size: 5.8px;
+        font-weight: 600;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stage"></div>
+    <div class="scene">
+      <div class="window">
+        <div class="bar">
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          <span class="title">Dock verification</span>
+          <span class="pill amber">DOCK 4</span>
+          <span class="pill bad">HOLD · 1 MISMATCH</span>
+        </div>
+        <div class="body">
+          <div class="camera">
+            <div class="floor"></div>
+            <div class="hazard"></div>
+            <span class="tag">LIVE · DOCK CAMERA</span>
+            <span class="tag right">VISION + AGENTS</span>
+            <div class="pallet">
+              <div class="stack">
+                <span class="carton"></span><span class="carton"></span><span class="carton"></span
+                ><span class="carton"></span> <span class="carton"></span><span class="carton"></span
+                ><span class="carton b"></span><span class="carton b"></span> <span class="carton"></span
+                ><span class="carton"></span><span class="carton b"></span><span class="carton b"></span>
+              </div>
+              <div class="base"></div>
+              <span class="box" style="left: -4px; top: -4px; width: 194px; height: 39px"
+                ><span>SKU A · 8 of 8 cartons</span></span
+              >
+              <span class="box" style="left: -4px; top: 33px; width: 96px; height: 76px"></span>
+              <span class="box bad" style="left: 90px; top: 33px; width: 100px; height: 76px"
+                ><span>SKU B · 4 of 6</span></span
+              >
+            </div>
+          </div>
+          <div class="side">
+            <div class="card">
+              <h4>ORDER VS PALLET</h4>
+              <div class="lines">
+                <span class="head">LINE</span><span class="head num">ORDER</span><span class="head num">SEEN</span
+                ><span></span>
+                <span class="rule"></span>
+                <span>SKU A · Cartons</span><span class="num">8</span><span class="num">8</span
+                ><span class="mark">✓</span> <span class="miss">SKU B · Cartons</span><span class="num">6</span
+                ><span class="num miss">4</span><span class="mark bad">!</span> <span>Shipping label</span
+                ><span class="num">1</span><span class="num">1</span><span class="mark">✓</span> <span>Pallet ID</span
+                ><span class="num">1</span><span class="num">1</span><span class="mark">✓</span>
+              </div>
+            </div>
+            <div class="decision">
+              <i>!</i>
+              <div>Held on the dock<small>Two SKU B cartons short</small></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="float paper">
+        <h5>Packing list <span>EXTRACTED</span></h5>
+        <div class="field">Order <b></b></div>
+        <div class="field">SKU A <b style="flex: 0.6"></b></div>
+        <div class="field">SKU B <b style="flex: 0.5"></b></div>
+        <div class="barcode"></div>
+      </div>
+      <div class="float audit">
+        <i>✓</i>
+        <div>Decision logged<small>Audit trail · what was checked, what was found</small></div>
+      </div>
+    </div>
+  </body>
+</html>

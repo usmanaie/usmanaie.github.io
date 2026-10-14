@@ -8,6 +8,7 @@ export const PAGES = [
   '/projects/multi-agent-ai-platform',
   '/projects/enterprise-telehealth-platform',
   '/projects/responsible-ai-governance',
+  '/projects/intelligent-pallet-verification',
   '/privacy',
   '/terms',
 ] as const;

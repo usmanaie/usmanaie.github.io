@@ -5,6 +5,7 @@ import governanceShot from '../assets/projects/ai-governance.png';
 import telehealthShot from '../assets/projects/telehealth.png';
 import dairectorShot from '../assets/projects/dairector.png';
 import satoriShot from '../assets/projects/satori.png';
+import palletShot from '../assets/projects/pallet-verification.png';
 
 export interface Project {
   slug: string;
@@ -171,5 +172,31 @@ export const projects: Project[] = [
     image: governanceShot,
     imageAlt:
       'Illustration of an AI governance console on a dark stage: HIPAA, SOC 1, SOC 2 and GDPR controls passing, a custom policy tree from zone to region to departments each enforcing its own policy, a RAG pipeline on Vertex AI gated by the department policy, and an audit trail, with a declined request and a grounded answer.',
+  },
+  {
+    slug: 'intelligent-pallet-verification',
+    eyebrow: 'WAREHOUSE AI',
+    tone: 'standard',
+    title: 'Intelligent Pallet Verification',
+    summary:
+      'A computer vision and AI agent system that verifies every pallet against its order on the loading dock, reads the shipping paperwork automatically and flags mismatches before the load leaves, with every decision recorded for review.',
+    bullets: [
+      'Pallets verified against orders on the dock',
+      'Shipping paperwork read, not re-keyed',
+      'Every decision on an audit trail',
+    ],
+    features: [
+      'Pallet verification against orders',
+      'Computer vision',
+      'AI agents (Google ADK)',
+      'Document data extraction',
+      'Mismatch alerts & reports',
+      'Warehouse hardware integration',
+      'Audit trail',
+      'Vertex AI on Google Cloud',
+    ],
+    image: palletShot,
+    imageAlt:
+      'Illustration of a dock verification console on a dark stage: a dock camera detecting the cartons on a pallet, one product line flagged short, the pallet checked line by line against its order, a packing list read from its paperwork, the pallet held on the dock, and the decision logged to the audit trail.',
   },
 ];
