@@ -1,12 +1,14 @@
 /**
- * Renders raster assets and visual-regression references from the design export.
+ * Renders the Expertise ring layers and visual-regression references from the design export.
  *
  *   node scripts/render-design-assets.mjs <path-to-unzipped-design>
  *
  * Produces (all committed):
- *   src/assets/projects/*.png          project illustrations (.shot elements) at 2x
  *   src/assets/expertise/ring-*.png    pre-rendered neon ring glow layers at 2x
  *   tests/visual/reference/*.png       1440px section references for fidelity checks
+ *
+ * Project illustrations are not rendered here: they are made in code (scripts/art/<name>.html)
+ * and rendered by render-project-art.mjs, so this script never writes to src/assets/projects/.
  *
  * The design tool runtime is only executed here, at build time, inside Playwright.
  * Nothing from the export is shipped.
@@ -59,20 +61,6 @@ async function open(file, { width, height, scale }) {
   return page;
 }
 
-/* ---------- Project illustrations ---------- */
-{
-  const out = path.join(root, 'src/assets/projects');
-  await mkdir(out, { recursive: true });
-  const page = await open('Projects.dc.html', { width: 1440, height: 1620, scale: 2 });
-  const names = ['agentic-ai', 'telehealth', 'ai-governance'];
-  const shots = page.locator('.shot');
-  for (let i = 0; i < names.length; i += 1) {
-    await shots.nth(i).screenshot({ path: path.join(out, `${names[i]}.png`) });
-  }
-  await page.close();
-  console.log('projects: rendered', names.length);
-}
-
 /* ---------- Expertise ring layers ---------- */
 {
   const out = path.join(root, 'src/assets/expertise');
@@ -113,7 +101,8 @@ async function open(file, { width, height, scale }) {
   const out = path.join(root, 'tests/visual/reference');
   await mkdir(out, { recursive: true });
   const page = await open('Portfolio.dc.html', { width: 1440, height: 7152, scale: 1 });
-  const sections = ['hero', 'about', 'education', 'expertise', 'projects', 'experience', 'reviews', 'contact'];
+  // The sections fidelity.mjs compares. The export still has #education, but the site doesn't.
+  const sections = ['hero', 'about', 'expertise', 'projects', 'experience', 'reviews', 'contact'];
   for (const id of sections) {
     const locator = id === 'hero' ? page.locator('main > div').first() : page.locator(`#${id}`);
     await locator.screenshot({ path: path.join(out, `${id}.png`) });
