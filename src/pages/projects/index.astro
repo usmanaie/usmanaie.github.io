@@ -1,6 +1,6 @@
 ---
 import PageIntro from '../../components/layout/PageIntro.astro';
-import ProjectRow from '../../components/projects/ProjectRow.astro';
+import ProjectList from '../../components/projects/ProjectList.astro';
 import { projects, projectsSection } from '../../content/projects';
 import { site } from '../../content/site';
 import SubPageLayout from '../../layouts/SubPageLayout.astro';
@@ -13,9 +13,7 @@ import SubPageLayout from '../../layouts/SubPageLayout.astro';
     back={{ href: '/', label: 'Back to home' }}
   />
   <div class="projects-page">
-    {projects.map((project, i) => (
-      <ProjectRow project={project} reverse={i % 2 === 1} headingLevel="h2" priority={i === 0} />
-    ))}
+    <ProjectList projects={projects} headingLevel="h2" priorityFirst />
   </div>
 </SubPageLayout>
 

@@ -1,19 +1,13 @@
 ---
 import { projects, projectsSection } from '../../content/projects';
-import ProjectRow from '../projects/ProjectRow.astro';
+import ProjectList from '../projects/ProjectList.astro';
 import Pill from '../ui/Pill.astro';
 import SectionHeading from '../ui/SectionHeading.astro';
 
-/**
- * Each row wears one of the design's three corner glows: (a) and (c) take turns on the standard rows, (b) is the
- * bright row's. A glow drawn for an image-left row is mirrored on an image-right one, and the other way about.
- */
-let standard = 0;
-const rows = projects.map((project, i) => {
-  const reverse = i % 2 === 1;
-  const glow = project.tone === 'bright' ? 'b' : standard++ % 2 === 0 ? 'a' : 'c';
-  return { project, reverse, glow, mirror: reverse !== (glow === 'b') };
-});
+/** The home page shows the featured projects, the design's three rows; /projects shows them all. */
+const featured = projects
+  .filter((project) => project.featured !== undefined)
+  .sort((a, b) => (a.featured ?? 0) - (b.featured ?? 0));
 ---
 
 <section id="projects" class="projects" aria-labelledby="projects-title">
@@ -26,15 +20,7 @@ const rows = projects.map((project, i) => {
       </Pill>
     </header>
     <div class="projects__list">
-      {rows.map(({ project, reverse, glow, mirror }) => (
-        <div class="projects__row">
-          <div
-            class:list={['projects__glow', `projects__glow--${glow}`, { 'projects__glow--mirror': mirror }]}
-            aria-hidden="true"
-          />
-          <ProjectRow project={project} reverse={reverse} />
-        </div>
-      ))}
+      <ProjectList projects={featured} />
     </div>
   </div>
 </section>
@@ -47,76 +33,6 @@ const rows = projects.map((project, i) => {
     overflow: clip;
     padding-block: 56px 64px;
     background: var(--color-bg);
-  }
-
-  .projects__row {
-    position: relative;
-  }
-
-  /*
-   * A row's glow: the section's full width (100cqw) and 320px beyond the row above and below, so a glow keeps the
-   * design's place against its card whatever the row's height. x: the design's offsets from the centre, the sign
-   * turned by --dir; y: a fraction of the row's height.
-   */
-  .projects__glow {
-    --dir: 1;
-    --over: 320px;
-
-    position: absolute;
-    inset-block: calc(-1 * var(--over));
-    inset-inline: calc(50% - 50cqw);
-    z-index: -1;
-    pointer-events: none;
-  }
-
-  .projects__glow--mirror {
-    --dir: -1;
-  }
-
-  .projects__glow--a {
-    background: radial-gradient(
-      760px 300px at calc(50% + var(--dir) * min(25%, 360px)) calc(var(--over) + (100% - 2 * var(--over)) * 0.904),
-      rgb(120 26 74 / 55%),
-      transparent 72%
-    );
-  }
-
-  .projects__glow--b {
-    background:
-      radial-gradient(
-        420px 420px at calc(50% - var(--dir) * min(34.03%, 490px)) calc(var(--over) + (100% - 2 * var(--over)) * 0.218),
-        rgb(176 52 74 / 85%),
-        transparent 72%
-      ),
-      radial-gradient(
-        520px 420px at calc(50% - var(--dir) * min(6.94%, 100px)) calc(var(--over) + (100% - 2 * var(--over)) * 0.847),
-        rgb(40 72 200 / 85%),
-        transparent 72%
-      ),
-      radial-gradient(
-        420px 380px at calc(50% - var(--dir) * min(20.83%, 300px)) calc(var(--over) + (100% - 2 * var(--over)) * 0.463),
-        rgb(110 52 140 / 70%),
-        transparent 72%
-      ),
-      radial-gradient(
-        260px 420px at calc(50% + var(--dir) * min(50%, 720px)) calc(var(--over) + (100% - 2 * var(--over)) * 0.533),
-        rgb(40 110 210 / 55%),
-        transparent 72%
-      );
-  }
-
-  .projects__glow--c {
-    background:
-      radial-gradient(
-        620px 360px at calc(50% + var(--dir) * min(16.67%, 240px)) calc(var(--over) + (100% - 2 * var(--over)) * 0.126),
-        rgb(36 86 190 / 55%),
-        transparent 72%
-      ),
-      radial-gradient(
-        260px 360px at calc(50% - var(--dir) * min(50%, 720px)) calc(var(--over) + (100% - 2 * var(--over)) * 0.126),
-        rgb(150 36 70 / 55%),
-        transparent 72%
-      );
   }
 
   .projects__header {
@@ -161,7 +77,7 @@ const rows = projects.map((project, i) => {
       gap: 0;
     }
 
-    .projects__row:first-child :global(.project) {
+    .projects__list > :global(.project-slot:first-child .project) {
       min-height: 464px;
     }
   }

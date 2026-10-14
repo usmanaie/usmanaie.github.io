@@ -13,6 +13,11 @@ export interface Project {
   eyebrow: string;
   /** "bright" is the design's middle row: lighter eyebrow, brighter copy, filled CTA. */
   tone: 'standard' | 'bright';
+  /**
+   * The project's place on the home page (1 to 3: the design's three rows, the bright one in the middle). Projects
+   * without one are on /projects only, which shows every project in list order.
+   */
+  featured?: number;
   title: string;
   summary: string;
   bullets: string[];
@@ -35,6 +40,7 @@ export const projects: Project[] = [
     slug: 'dairector',
     eyebrow: 'AI VIDEO STUDIO',
     tone: 'standard',
+    featured: 1,
     title: 'Dairector',
     summary:
       'An AI studio in a box: describe a video in a few plain lines, and a crew of AI agents writes, voices, designs, edits and reviews it in one conversation, on brand and within budget.',
@@ -64,7 +70,7 @@ export const projects: Project[] = [
   },
   {
     slug: 'satori',
-    eyebrow: 'ENTERPRISE ANALYTICS',
+    eyebrow: 'ENTERPRISE AI',
     tone: 'standard',
     title: 'Satori',
     summary:
@@ -92,6 +98,7 @@ export const projects: Project[] = [
     slug: 'multi-agent-ai-platform',
     eyebrow: 'BUSINESS ACQUISITION',
     tone: 'standard',
+    featured: 3,
     title: 'Multi-Agent AI Platform',
     summary:
       'A multi-agent platform for buying a business, built with Google ADK: a persona orchestrator directs agents that discover the businesses that fit the buyer, build each one’s profile and run due diligence on the deal, working together over A2A and reaching live data through MCP.',
@@ -121,6 +128,7 @@ export const projects: Project[] = [
     slug: 'enterprise-telehealth-platform',
     eyebrow: 'TELEHEALTH',
     tone: 'bright',
+    featured: 2,
     title: 'Enterprise Telehealth Platform',
     summary:
       'A multi-tenant telehealth platform connecting patients, providers, pharmacies, labs and administrators, so every virtual consultation leads to a prescription, a lab order and a documented care plan within one system.',

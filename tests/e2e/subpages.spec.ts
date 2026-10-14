@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+import { PAGES } from './helpers';
+
 test.describe('sub-page balance (desktop)', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
 
@@ -46,5 +48,22 @@ test.describe('sub-page reading order (mobile)', () => {
       }),
     );
     expect([...ys].sort((a, b) => a - b)).toEqual(ys);
+  });
+});
+
+test.describe('projects', () => {
+  test('the home page features three projects, the bright one in the middle; /projects lists every one', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    const featured = page.locator('#projects .project');
+    await expect(featured).toHaveCount(3);
+    await expect(featured.nth(1)).toHaveClass(/project--bright/);
+    await expect(page.locator('#projects .project-glow')).toHaveCount(3);
+
+    await page.goto('/projects');
+    const caseStudies = PAGES.filter((path) => path.startsWith('/projects/'));
+    await expect(page.locator('.project')).toHaveCount(caseStudies.length);
+    await expect(page.locator('.project-glow')).toHaveCount(caseStudies.length);
   });
 });

@@ -1,0 +1,108 @@
+---
+import type { Project } from '../../content/projects';
+import ProjectRow from './ProjectRow.astro';
+
+interface Props {
+  projects: Project[];
+  /** h3 inside the home page's Projects section, h2 on the /projects page. */
+  headingLevel?: 'h2' | 'h3';
+  /** Load the first row's image eagerly (the first row on /projects is the LCP element). */
+  priorityFirst?: boolean;
+}
+
+const { projects, headingLevel = 'h3', priorityFirst = false } = Astro.props;
+
+/**
+ * Each row wears one of the design's three corner glows: (a) and (c) take turns on the standard rows, (b) is the
+ * bright row's. A glow drawn for an image-left row is mirrored on an image-right one, and the other way about.
+ * The glow spans the nearest inline-size container (the home section, or the sub-page), which also clips it.
+ */
+let standard = 0;
+const rows = projects.map((project, i) => {
+  const reverse = i % 2 === 1;
+  const glow = project.tone === 'bright' ? 'b' : standard++ % 2 === 0 ? 'a' : 'c';
+  return { project, reverse, glow, mirror: reverse !== (glow === 'b') };
+});
+---
+
+{rows.map(({ project, reverse, glow, mirror }, i) => (
+  <div class="project-slot">
+    <div
+      class:list={['project-glow', `project-glow--${glow}`, { 'project-glow--mirror': mirror }]}
+      aria-hidden="true"
+    />
+    <ProjectRow project={project} reverse={reverse} headingLevel={headingLevel} priority={priorityFirst && i === 0} />
+  </div>
+))}
+
+<style>
+  .project-slot {
+    position: relative;
+  }
+
+  /*
+   * A row's glow: the container's full width (100cqw) and 320px beyond the row above and below, so a glow keeps the
+   * design's place against its card whatever the row's height. x: the design's offsets from the centre, the sign
+   * turned by --dir; y: a fraction of the row's height.
+   */
+  .project-glow {
+    --dir: 1;
+    --over: 320px;
+
+    position: absolute;
+    inset-block: calc(-1 * var(--over));
+    inset-inline: calc(50% - 50cqw);
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  .project-glow--mirror {
+    --dir: -1;
+  }
+
+  .project-glow--a {
+    background: radial-gradient(
+      760px 300px at calc(50% + var(--dir) * min(25%, 360px)) calc(var(--over) + (100% - 2 * var(--over)) * 0.904),
+      rgb(120 26 74 / 55%),
+      transparent 72%
+    );
+  }
+
+  .project-glow--b {
+    background:
+      radial-gradient(
+        420px 420px at calc(50% - var(--dir) * min(34.03%, 490px)) calc(var(--over) + (100% - 2 * var(--over)) * 0.218),
+        rgb(176 52 74 / 85%),
+        transparent 72%
+      ),
+      radial-gradient(
+        520px 420px at calc(50% - var(--dir) * min(6.94%, 100px)) calc(var(--over) + (100% - 2 * var(--over)) * 0.847),
+        rgb(40 72 200 / 85%),
+        transparent 72%
+      ),
+      radial-gradient(
+        420px 380px at calc(50% - var(--dir) * min(20.83%, 300px)) calc(var(--over) + (100% - 2 * var(--over)) * 0.463),
+        rgb(110 52 140 / 70%),
+        transparent 72%
+      ),
+      radial-gradient(
+        260px 420px at calc(50% + var(--dir) * min(50%, 720px)) calc(var(--over) + (100% - 2 * var(--over)) * 0.533),
+        rgb(40 110 210 / 55%),
+        transparent 72%
+      );
+  }
+
+  .project-glow--c {
+    background:
+      radial-gradient(
+        620px 360px at calc(50% + var(--dir) * min(16.67%, 240px)) calc(var(--over) + (100% - 2 * var(--over)) * 0.126),
+        rgb(36 86 190 / 55%),
+        transparent 72%
+      ),
+      radial-gradient(
+        260px 360px at calc(50% - var(--dir) * min(50%, 720px)) calc(var(--over) + (100% - 2 * var(--over)) * 0.126),
+        rgb(150 36 70 / 55%),
+        transparent 72%
+      );
+  }
+</style>

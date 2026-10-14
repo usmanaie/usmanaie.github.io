@@ -25,6 +25,8 @@ const { title, description, path, noindex = false } = Astro.props;
   .subpage {
     position: relative;
     isolation: isolate;
+    container-type: inline-size;
+    overflow: clip;
     min-height: 70svh;
     padding-block: calc(var(--header-height) + 64px) 96px;
   }
