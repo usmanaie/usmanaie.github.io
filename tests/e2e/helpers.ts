@@ -4,6 +4,7 @@ export const PAGES = [
   '/',
   '/projects',
   '/projects/dairector',
+  '/projects/satori',
   '/projects/multi-agent-ai-platform',
   '/projects/enterprise-telehealth-platform',
   '/projects/responsible-ai-governance',

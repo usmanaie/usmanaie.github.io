@@ -1,0 +1,572 @@
+<!doctype html>
+<!--
+  Satori's project illustration, made in code (rendered by scripts/render-satori-art.mjs at 2x to
+  src/assets/projects/satori.png). A stylised analytics console, not a screenshot: one report sheet, the same sheet
+  scheduled out to its readers, and an assistant answering from it. Sized at the cards' 603 x 464 display box.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      @font-face {
+        font-family: 'Manrope';
+        src: url('../../node_modules/@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2')
+          format('woff2');
+        font-weight: 200 800;
+      }
+
+      :root {
+        --ink: #0b0c12;
+        --panel: #14161f;
+        --panel-2: #1b1e2a;
+        --line: rgb(255 255 255 / 8%);
+        --text: #eef0f5;
+        --muted: #8b90a1;
+        --blue: #4c8bda;
+        --blue-soft: #7fb0ea;
+        --teal: #2f8f87;
+        --coral: #e8603c;
+        --mustard: #e7b04a;
+        --green: #4caf78;
+        --violet: #8a5cd6;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+
+      html,
+      body {
+        width: 603px;
+        height: 464px;
+        background: var(--ink);
+        font-family: Manrope, sans-serif;
+        color: var(--text);
+        overflow: hidden;
+      }
+
+      /* the stage: the portfolio's blue and violet fields, with a faint dot grid */
+      .stage {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(280px 210px at 84% 20%, rgb(40 110 210 / 42%), transparent 70%),
+          radial-gradient(300px 240px at 10% 90%, rgb(110 52 140 / 55%), transparent 72%),
+          radial-gradient(240px 190px at 46% 58%, rgb(47 143 135 / 16%), transparent 70%),
+          linear-gradient(180deg, #0d0f17, #07080d);
+      }
+
+      .stage::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(rgb(255 255 255 / 7%) 1px, transparent 1.2px);
+        background-size: 14px 14px;
+        mask-image: radial-gradient(430px 310px at 50% 45%, #000 30%, transparent 80%);
+      }
+
+      /* the console window, tilted a touch toward the viewer */
+      .scene {
+        position: absolute;
+        inset: 0;
+        perspective: 1400px;
+      }
+
+      .window {
+        position: absolute;
+        left: 48px;
+        top: 56px;
+        width: 478px;
+        height: 336px;
+        border-radius: 14px;
+        background: linear-gradient(180deg, #171a25, #10121a);
+        border: 1px solid rgb(255 255 255 / 10%);
+        box-shadow:
+          0 40px 80px -20px rgb(0 0 0 / 80%),
+          0 0 0 1px rgb(0 0 0 / 40%),
+          0 0 60px -10px rgb(76 139 218 / 28%);
+        transform: rotateY(-9deg) rotateX(4deg);
+        transform-origin: 30% 50%;
+        overflow: hidden;
+      }
+
+      .bar {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        height: 26px;
+        padding: 0 12px;
+        border-bottom: 1px solid var(--line);
+        background: rgb(255 255 255 / 2%);
+      }
+
+      .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #3a3e4c;
+      }
+
+      .brand {
+        margin-left: 10px;
+        font-weight: 800;
+        font-size: 10.5px;
+        letter-spacing: -0.01em;
+      }
+
+      .brand i {
+        font-style: normal;
+        display: inline-block;
+        padding: 0 2px;
+        border-radius: 3px;
+        background: var(--blue);
+        color: #fff;
+      }
+
+      .asof {
+        margin-left: auto;
+        font-size: 6.8px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        color: var(--muted);
+      }
+
+      .body {
+        display: grid;
+        grid-template-columns: 1fr 178px;
+        height: calc(100% - 26px);
+      }
+
+      /* ── the report sheet ──────────────────────────────────────────── */
+      .sheet {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+        padding: 12px;
+        border-right: 1px solid var(--line);
+      }
+
+      .sheet__band {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 5px 8px;
+        border-radius: 5px;
+        background: linear-gradient(90deg, rgb(76 139 218 / 26%), rgb(76 139 218 / 6%));
+        border: 1px solid rgb(76 139 218 / 30%);
+      }
+
+      .sheet__title {
+        font-size: 8.4px;
+        font-weight: 800;
+        letter-spacing: 0.01em;
+      }
+
+      .sheet__id {
+        font-size: 6.2px;
+        font-weight: 700;
+        color: var(--blue-soft);
+        letter-spacing: 0.06em;
+      }
+
+      /* the trend: monthly bars with a target line across them */
+      .chart {
+        position: relative;
+        display: flex;
+        align-items: flex-end;
+        gap: 6px;
+        height: 86px;
+        padding: 8px 8px 14px;
+        border-radius: 7px;
+        background: var(--panel-2);
+        border: 1px solid var(--line);
+      }
+
+      .chart .col {
+        position: relative;
+        flex: 1;
+        border-radius: 2px 2px 1px 1px;
+        background: linear-gradient(180deg, var(--blue), rgb(76 139 218 / 35%));
+      }
+
+      .chart .col.up {
+        background: linear-gradient(180deg, var(--teal), rgb(47 143 135 / 35%));
+      }
+
+      .chart .col::after {
+        content: '';
+        position: absolute;
+        inset-inline: 0;
+        bottom: -10px;
+        height: 3px;
+        border-radius: 2px;
+        background: rgb(255 255 255 / 10%);
+      }
+
+      .chart__target {
+        position: absolute;
+        left: 8px;
+        right: 8px;
+        bottom: 56px;
+        border-top: 1px dashed rgb(231 176 74 / 70%);
+      }
+
+      .chart__target span {
+        position: absolute;
+        right: 0;
+        top: -8px;
+        font-size: 5.6px;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        color: var(--mustard);
+      }
+
+      /* the figures underneath, as a report prints them */
+      .table {
+        display: grid;
+        gap: 3px;
+      }
+
+      .tr {
+        display: grid;
+        grid-template-columns: 1fr 34px 34px 26px;
+        align-items: center;
+        gap: 6px;
+        padding: 3.5px 7px;
+        border-radius: 4px;
+        background: rgb(255 255 255 / 3%);
+        font-size: 6.6px;
+      }
+
+      .tr.head {
+        background: none;
+        color: var(--muted);
+        font-weight: 800;
+        letter-spacing: 0.05em;
+        padding-bottom: 1px;
+      }
+
+      .tr.total {
+        background: rgb(76 139 218 / 14%);
+        border: 1px solid rgb(76 139 218 / 26%);
+        font-weight: 800;
+      }
+
+      .tr .n {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        font-weight: 700;
+      }
+
+      .tr .pc {
+        text-align: right;
+        font-weight: 800;
+        color: var(--green);
+      }
+
+      .tr .pc.down {
+        color: var(--coral);
+      }
+
+      /* ── the rail: who it goes to, and the assistant ───────────────── */
+      .rail {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+        padding: 12px 12px 12px 11px;
+      }
+
+      .card {
+        padding: 8px;
+        border-radius: 7px;
+        background: var(--panel-2);
+        border: 1px solid var(--line);
+      }
+
+      .card__head {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-bottom: 7px;
+        font-size: 6.4px;
+        font-weight: 800;
+        letter-spacing: 0.07em;
+        color: var(--muted);
+      }
+
+      .clock {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        border: 1.2px solid var(--blue);
+        position: relative;
+      }
+
+      .clock::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 1.6px;
+        width: 1.2px;
+        height: 3px;
+        background: var(--blue);
+      }
+
+      .when {
+        margin-left: auto;
+        color: var(--blue-soft);
+        letter-spacing: 0.02em;
+      }
+
+      /* each reader gets the same sheet, cut to the rows they may see */
+      .to {
+        display: grid;
+        grid-template-columns: 14px 1fr 11px;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 0;
+        border-top: 1px solid rgb(255 255 255 / 5%);
+      }
+
+      .to:first-of-type {
+        border-top: 0;
+      }
+
+      .av {
+        display: grid;
+        place-items: center;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        font-size: 5.4px;
+        font-weight: 800;
+        color: #fff;
+      }
+
+      .to__name {
+        font-size: 6.4px;
+        font-weight: 700;
+      }
+
+      .to__scope {
+        margin-top: 1.5px;
+        font-size: 5.6px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        color: var(--muted);
+      }
+
+      .sent {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        background: rgb(76 175 120 / 18%);
+        border: 1px solid rgb(110 200 150 / 60%);
+        position: relative;
+      }
+
+      .sent::after {
+        content: '';
+        position: absolute;
+        left: 3px;
+        top: 2.6px;
+        width: 3px;
+        height: 5px;
+        border-right: 1.3px solid var(--green);
+        border-bottom: 1.3px solid var(--green);
+        transform: rotate(42deg);
+      }
+
+      /* the assistant: a plain question, a figure taken from the report.
+         It follows the schedule card directly; the space left below is where the
+         delivered sheet overlaps the window, so nothing is covered. */
+      .ama {
+        margin-top: 0;
+      }
+
+      .q {
+        align-self: flex-end;
+        padding: 6px 8px;
+        border-radius: 9px 9px 3px 9px;
+        background: var(--blue);
+        color: #fff;
+        font-size: 6.8px;
+        line-height: 1.35;
+        font-weight: 600;
+      }
+
+      .a {
+        display: flex;
+        align-items: baseline;
+        gap: 5px;
+        margin-top: 6px;
+        padding: 6px 8px;
+        border-radius: 9px 9px 9px 3px;
+        background: rgb(255 255 255 / 5%);
+        border: 1px solid var(--line);
+      }
+
+      .a b {
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+      }
+
+      .a span {
+        font-size: 6.2px;
+        font-weight: 700;
+        color: var(--muted);
+      }
+
+      .a em {
+        margin-left: auto;
+        font-style: normal;
+        font-size: 5.4px;
+        font-weight: 800;
+        letter-spacing: 0.05em;
+        color: var(--blue-soft);
+      }
+
+      /* the delivered sheet, resting under the window */
+      .paper {
+        position: absolute;
+        right: 26px;
+        bottom: 22px;
+        width: 128px;
+        height: 86px;
+        padding: 9px;
+        border-radius: 6px;
+        background: linear-gradient(180deg, #f4f5f8, #e4e7ee);
+        box-shadow: 0 18px 34px -12px rgb(0 0 0 / 70%);
+        transform: rotate(-4deg);
+      }
+
+      .paper .pband {
+        height: 7px;
+        border-radius: 2px;
+        background: var(--blue);
+        opacity: 0.85;
+      }
+
+      .paper .pline {
+        margin-top: 5px;
+        height: 3px;
+        border-radius: 2px;
+        background: rgb(11 12 18 / 16%);
+      }
+
+      .paper .pbars {
+        display: flex;
+        align-items: flex-end;
+        gap: 3px;
+        height: 26px;
+        margin-top: 7px;
+      }
+
+      .paper .pbars i {
+        flex: 1;
+        border-radius: 1px;
+        background: rgb(76 139 218 / 55%);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stage"></div>
+    <div class="scene">
+      <div class="window">
+        <div class="bar">
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          <span class="brand">Sat<i>or</i>i</span>
+          <span class="asof">AS ON 13 OCT</span>
+        </div>
+        <div class="body">
+          <div class="sheet">
+            <div class="sheet__band">
+              <span class="sheet__title">Daily Sales Performance</span>
+              <span class="sheet__id">RPT 038</span>
+            </div>
+            <div class="chart">
+              <span class="col" style="height: 38%"></span>
+              <span class="col" style="height: 52%"></span>
+              <span class="col" style="height: 44%"></span>
+              <span class="col up" style="height: 68%"></span>
+              <span class="col" style="height: 58%"></span>
+              <span class="col up" style="height: 76%"></span>
+              <span class="col" style="height: 49%"></span>
+              <span class="col up" style="height: 64%"></span>
+              <div class="chart__target"><span>TARGET</span></div>
+            </div>
+            <div class="table">
+              <div class="tr head">
+                <span>REGION</span><span class="n">SALE</span><span class="n">TARGET</span><span class="pc">ACH</span>
+              </div>
+              <div class="tr">
+                <span>North</span><span class="n">7,369</span><span class="n">6,783</span><span class="pc">109%</span>
+              </div>
+              <div class="tr">
+                <span>Central</span><span class="n">8,766</span><span class="n">9,120</span
+                ><span class="pc down">96%</span>
+              </div>
+              <div class="tr">
+                <span>South</span><span class="n">5,214</span><span class="n">4,980</span><span class="pc">105%</span>
+              </div>
+              <div class="tr">
+                <span>East</span><span class="n">4,118</span><span class="n">4,260</span
+                ><span class="pc down">97%</span>
+              </div>
+              <div class="tr">
+                <span>West</span><span class="n">3,882</span><span class="n">3,740</span><span class="pc">104%</span>
+              </div>
+              <div class="tr total">
+                <span>Total</span><span class="n">29,349</span><span class="n">28,883</span><span class="pc">102%</span>
+              </div>
+            </div>
+          </div>
+          <div class="rail">
+            <div class="card">
+              <div class="card__head"><span class="clock"></span>SCHEDULED<span class="when">08:00</span></div>
+              <div class="to">
+                <span class="av" style="background: var(--teal)">ZH</span>
+                <span>
+                  <p class="to__name">Zone head</p>
+                  <p class="to__scope">ALL REGIONS</p>
+                </span>
+                <span class="sent"></span>
+              </div>
+              <div class="to">
+                <span class="av" style="background: var(--violet)">RH</span>
+                <span>
+                  <p class="to__name">Region head</p>
+                  <p class="to__scope">CENTRAL</p>
+                </span>
+                <span class="sent"></span>
+              </div>
+              <div class="to">
+                <span class="av" style="background: var(--coral)">DH</span>
+                <span>
+                  <p class="to__name">District head</p>
+                  <p class="to__scope">ONE DISTRICT</p>
+                </span>
+                <span class="sent"></span>
+              </div>
+            </div>
+            <div class="ama">
+              <p class="q">How did Central do against target?</p>
+              <div class="a"><b>96%</b><span>of target</span><em>RPT 038</em></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="paper">
+        <div class="pband"></div>
+        <div class="pline" style="width: 76%"></div>
+        <div class="pline" style="width: 58%"></div>
+        <div class="pbars">
+          <i style="height: 42%"></i><i style="height: 61%"></i><i style="height: 50%"></i><i style="height: 78%"></i
+          ><i style="height: 66%"></i><i style="height: 88%"></i>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

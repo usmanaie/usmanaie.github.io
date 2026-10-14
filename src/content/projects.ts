@@ -4,6 +4,7 @@ import agenticShot from '../assets/projects/agentic-ai.png';
 import governanceShot from '../assets/projects/ai-governance.png';
 import telehealthShot from '../assets/projects/telehealth.png';
 import dairectorShot from '../assets/projects/dairector.png';
+import satoriShot from '../assets/projects/satori.png';
 
 export interface Project {
   slug: string;
@@ -41,6 +42,22 @@ export const projects: Project[] = [
     image: dairectorShot,
     imageAlt:
       'Illustration of the Dairector studio on a dark stage: a brief in the conversation, the crew of AI agents ticking off their steps, a video frame reading Your team’s favourite blend with its scenes, voice and budget below, a brand palette card, and a presenter drawn on camera from one photo.',
+  },
+  {
+    slug: 'satori',
+    eyebrow: 'ENTERPRISE ANALYTICS',
+    tone: 'standard',
+    title: 'Satori',
+    summary:
+      'A decision-support platform that turns a cloud data warehouse into the reports, dashboards and scheduled briefings an executive team runs on, with an assistant that answers in plain language.',
+    bullets: [
+      'Reports that match in the browser and the inbox',
+      'Row-level access down to a single district',
+      'An AI assistant that never writes its own SQL',
+    ],
+    image: satoriShot,
+    imageAlt:
+      'Illustration of the Satori console on a dark stage: a report sheet with a trend chart and a figures table, a panel scheduling that sheet to a list of recipients, and an assistant answering a typed question with a figure drawn from the same report.',
   },
   {
     slug: 'multi-agent-ai-platform',
