@@ -18,7 +18,7 @@ test.describe('reviews carousel', () => {
     await page.goto('/#reviews');
     const prev = page.getByRole('button', { name: 'Previous review' });
     const next = page.getByRole('button', { name: 'Next review' });
-    const status = page.locator('[data-carousel-status]');
+    const status = page.locator('#reviews [data-carousel-status]');
     await expect(prev).toHaveAttribute('aria-disabled', 'true');
     await expect(status).toHaveText('Showing review 1 of 5');
 
@@ -37,7 +37,7 @@ test.describe('reviews carousel', () => {
 
   test('the track scrolls with the keyboard', async ({ page }) => {
     await page.goto('/#reviews');
-    const track = page.locator('[data-carousel-track]');
+    const track = page.locator('#reviews [data-carousel-track]');
     await track.focus();
     await page.keyboard.press('ArrowRight');
     await expect.poll(() => track.evaluate((el) => el.scrollLeft)).toBeGreaterThan(0);

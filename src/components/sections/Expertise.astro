@@ -12,34 +12,37 @@ import SectionHeading from '../ui/SectionHeading.astro';
  * Areas of Expertise. The neon ring's blurred glows (SVG blur filters with stdDeviation
  * 40/14/5 in the design) are pre-rendered to images; only the tick marks rotate, as a
  * transformed <img>, and the glow layer "breathes" via opacity. See DECISIONS.md.
+ * The two ring images load only once the section nears the viewport (scripts/defer.ts).
  */
 ---
 
 <section id="expertise" class="expertise" aria-labelledby="expertise-title" data-animated-region>
   <div class="expertise__layout">
     <div class="expertise__ring" aria-hidden="true">
-      <Picture
-        src={ringGlow}
-        alt=""
-        formats={['avif', 'webp']}
-        widths={[640, 960, 1440]}
-        quality={55}
-        sizes="(width >= 64rem) min(960px, 66.7vw), 120vw"
-        loading="lazy"
-        decoding="async"
-        class="expertise__layer expertise__layer--glow"
-      />
-      <Picture
-        src={ringRings}
-        alt=""
-        formats={['avif', 'webp']}
-        widths={[640, 960, 1440]}
-        quality={60}
-        sizes="(width >= 64rem) min(960px, 66.7vw), 120vw"
-        loading="lazy"
-        decoding="async"
-        class="expertise__layer"
-      />
+      <noscript data-defer>
+        <Picture
+          src={ringGlow}
+          alt=""
+          formats={['avif', 'webp']}
+          widths={[640, 960, 1440]}
+          quality={55}
+          sizes="(width >= 64rem) min(960px, 66.7vw), 120vw"
+          loading="lazy"
+          decoding="async"
+          class="expertise__layer expertise__layer--glow"
+        />
+        <Picture
+          src={ringRings}
+          alt=""
+          formats={['avif', 'webp']}
+          widths={[640, 960, 1440]}
+          quality={60}
+          sizes="(width >= 64rem) min(960px, 66.7vw), 120vw"
+          loading="lazy"
+          decoding="async"
+          class="expertise__layer"
+        />
+      </noscript>
       <img src={ticks} alt="" width="800" height="800" loading="lazy" decoding="async" class="expertise__ticks" />
     </div>
 
@@ -68,8 +71,10 @@ import SectionHeading from '../ui/SectionHeading.astro';
 </section>
 
 <script>
+  import { loadWhenNear } from '../../scripts/defer';
   import { observeVisibility } from '../../scripts/visibility';
 
+  loadWhenNear();
   for (const region of document.querySelectorAll<HTMLElement>('[data-animated-region]')) observeVisibility(region);
 </script>
 

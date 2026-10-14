@@ -54,6 +54,20 @@ test.describe('layout', () => {
     });
   }
 
+  test('on phones nothing widens the layout viewport beyond the device width', async ({ browser, browserName }) => {
+    test.skip(browserName !== 'chromium', 'mobile viewport emulation (isMobile) is Chromium-only here');
+    // Overflow the body cannot clip (e.g. hidden text positioned outside a scroller) makes phone
+    // browsers grow the layout viewport: the fixed header widens and lazy images load far early.
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+    const page = await context.newPage();
+    for (const path of PAGES) {
+      await page.goto(path);
+      await expect(page.locator('html')).toHaveAttribute('data-ready', '');
+      expect(await page.evaluate(() => [window.innerWidth, document.documentElement.scrollWidth])).toEqual([390, 390]);
+    }
+    await context.close();
+  });
+
   test('touch targets are at least 44px tall', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/');
@@ -75,5 +89,25 @@ test.describe('layout', () => {
     expect(html).not.toContain('usmanaslam1002@gmail.com');
     const href = await page.getByRole('link', { name: 'Contact Usman by email' }).getAttribute('href');
     expect(decodeURIComponent(href ?? '')).toBe('mailto:usmanaslam1002@gmail.com');
+  });
+});
+
+test.describe('page weight', () => {
+  test.use({ viewport: { width: 412, height: 823 } });
+
+  test('the Expertise ring art loads only as the section nears the viewport', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'networkidle' });
+    await page.waitForTimeout(1500);
+    const fetched = () =>
+      page.evaluate(() => performance.getEntriesByType('resource').some((r) => /ring-(glow|rings)/.test(r.name)));
+    expect(await fetched()).toBe(false);
+
+    await page.locator('#expertise').scrollIntoViewIfNeeded();
+    const layers = page.locator('#expertise .expertise__layer');
+    await expect(layers).toHaveCount(2);
+    await expect
+      .poll(() => layers.evaluateAll((imgs) => imgs.every((i) => (i as HTMLImageElement).naturalWidth > 0)))
+      .toBe(true);
+    expect(await fetched()).toBe(true);
   });
 });

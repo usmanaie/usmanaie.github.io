@@ -257,6 +257,14 @@ export function initHero(root: Document = document): void {
     flow.removeAttribute('data-resetting');
   }
 
+  /**
+   * Shows the charge fill (hidden until needed, so its mask is not fetched). With the head live on
+   * its canvas the body-only mask applies (CSS); otherwise the whole robot's, fetched only now.
+   */
+  function showCharge() {
+    if (!headSprite) flow.setAttribute('data-charge-full', '');
+  }
+
   async function play() {
     run += 1;
     const id = run;
@@ -270,6 +278,7 @@ export function initHero(root: Document = document): void {
         activate(first.direction === 'out' ? 'agent' : first.spoke);
       }
       if (!(await wait(TIMING.start, id))) return;
+      showCharge();
       for (const [i, hop] of hops.entries()) {
         placeOn(hop);
         lookAt(hop.look ?? headDefault);
@@ -303,6 +312,7 @@ export function initHero(root: Document = document): void {
     flow.setAttribute('data-approved', '');
     flow.style.setProperty('--level', '1');
     setTint(1, 1, true);
+    showCharge();
   }
 
   const start = () => (reduceMotion.matches ? showComplete() : void play());
