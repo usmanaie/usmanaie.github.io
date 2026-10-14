@@ -161,14 +161,14 @@ export const certification = {
 
 export const about = {
   heading: { lead: 'From Complex Requirements to', accent: 'Production-Grade AI' },
+  /** From the owner's LinkedIn About (Oct 2026). */
   paragraphs: [
     `I’m a ${JOB_TITLE} who designs scalable, enterprise-grade backend systems and intelligent AI solutions that create real business value.`,
-    'My work spans telehealth, supply chain and AI governance, and today I specialise in agentic AI on Google Cloud. Across every role, I’ve been drawn to the same challenge:',
+    'I’ve shipped a telehealth platform, a generative AI governance platform aligned to HIPAA, SOC 2 and GDPR, and AI-powered supply chain tools that turn documents into decisions. Across every role, I’ve been drawn to the same challenge:',
   ],
-  emphasis: 'Turning ambitious ideas into reliable software.',
-  /** OWNER-CONFIRM: "HIPAA, SOC 2 and GDPR controls in production". */
+  emphasis: 'Building systems that think, act and scale autonomously.',
   closing:
-    'I enjoy leading system design, mentoring engineers, and shipping AI that is safe, compliant and responsible, with HIPAA, SOC 2 and GDPR controls in production.',
+    'I enjoy leading system design, mentoring engineers, and shipping AI that is safe, compliant and responsible, from LLM orchestration and RAG pipelines to multi-agent workflows, with HIPAA, SOC 2 and GDPR controls in production.',
   scrollLabel: 'Scroll down to Education',
 } as const;
 

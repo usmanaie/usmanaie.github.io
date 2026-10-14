@@ -6,11 +6,11 @@ export interface Stat {
   accent: boolean;
 }
 
-/** OWNER-CONFIRM: every figure below. "Years" derives from CAREER_START in site.ts. */
+/** Owner-provided figures (Oct 2026). "Years" derives from CAREER_START in site.ts. */
 export const stats: Stat[] = [
   { value: `${yearsOfExperience}+`, label: 'Years of Experience', accent: true },
-  { value: '8', label: 'Certifications Earned', accent: false },
-  { value: '7', label: 'Platform Integrations', accent: false },
-  { value: '3', label: 'Compliance Frameworks', accent: true },
-  { value: '3', label: 'Industry Domains', accent: false },
+  { value: '25+', label: 'Google Cloud Badges', accent: false },
+  { value: '10+', label: 'Platform Integrations', accent: false },
+  { value: '5+', label: 'Industry Domains', accent: true },
+  { value: '5+', label: 'Products Launched', accent: false },
 ];

@@ -1,7 +1,9 @@
 ---
+import { Image } from 'astro:assets';
+
+import portrait from '../../assets/about/usman-portrait.png';
 import { about } from '../../content/site';
 import { stats } from '../../content/stats';
-import AgentPortrait from '../ui/AgentPortrait.astro';
 import RotatingRingLink from '../ui/RotatingRingLink.astro';
 import SectionHeading from '../ui/SectionHeading.astro';
 
@@ -40,8 +42,8 @@ const PLACEMENT = [
           variant="scroll"
           class="about__ring"
         />
-        <div class="about__portrait" aria-hidden="true">
-          <AgentPortrait variant="about" width={206} height={247} class="about__portrait-svg" />
+        <div class="about__portrait">
+          <Image src={portrait} alt="Usman Aslam" widths={[240, 480, 640]} sizes="240px" class="about__portrait-img" />
         </div>
       </div>
     </div>
@@ -125,8 +127,8 @@ const PLACEMENT = [
   .about__portrait {
     position: relative;
     flex: none;
-    width: 206px;
-    height: 250px;
+    width: 240px;
+    height: 300px;
     margin-block-start: 45px;
     overflow: hidden;
     background:
@@ -134,10 +136,13 @@ const PLACEMENT = [
       radial-gradient(120px 140px at 80% 50%, rgb(255 50 80 / 18%), transparent 70%), var(--color-portrait-bg);
   }
 
-  .about__portrait :global(.about__portrait-svg) {
-    position: absolute;
-    left: 0;
-    top: 6px;
+  /* The owner's photo, cut out on a transparent background, lit by the frame's blue/red glow. */
+  .about__portrait :global(.about__portrait-img) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 0%;
   }
 
   /* ---------- Stats grid ---------- */

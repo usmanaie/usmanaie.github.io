@@ -116,6 +116,12 @@ Owner-facing items are also tracked in [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md
   navy, `rgb(44 50 74 / 76%)` to `rgb(31 36 56 / 72%)`, blur 18px) with a faint top highlight and a soft shadow
   below, so it reads as its own layer over any section; the sections keep their original backgrounds. Chosen over a
   lighter slate tone, which competed with the headings.
+- **About section (owner request, Oct 2026).** Stats are the owner's figures: 4+ years, 25+ Google Cloud badges, 10+
+  platform integrations, 5+ industry domains, 5+ products launched (compliance frameworks removed). The copy keeps the
+  owner's preferred opening and closing lines, with details from their LinkedIn About (telehealth, AI governance and
+  supply chain work; "Building systems that think, act and scale autonomously"; LLM orchestration and RAG). The bot
+  avatar is replaced by the owner's photo (their own blue/red-graded cut-out, `src/assets/about/usman-portrait.png`),
+  slightly larger (240×300) so its bottom lines up with the stat tiles.
 - **Hero robot (owner request).** The owner asked for AI-generated, high-resolution, full-body art and approved
   candidate "A, presenting" (`design-candidates/`, git-ignored).
   - The final art was produced with **Gemini 3 Pro Image on Vertex AI**, at
