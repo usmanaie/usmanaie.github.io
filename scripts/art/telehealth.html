@@ -1,9 +1,9 @@
 <!doctype html>
 <!--
   The Enterprise Telehealth Platform's project illustration, made in code (rendered by scripts/render-project-art.mjs
-  at 2x to src/assets/projects/telehealth.png). A stylised operations console, not a screenshot: patients, providers,
-  pharmacies and labs on one platform, a secure visit with its chat, the prescription and the lab order it sends, and
-  the payment. Sized at the cards' 603 x 464 display box.
+  at 2x to src/assets/projects/telehealth.png). A stylised console in the provider's view, not a screenshot: a secure
+  consultation being transcribed beside its chat, the prescription sent to the pharmacy and the lab result returned to
+  the record, the payment, and the patient's confirmed visit. Sized at the cards' 603 x 464 display box.
 -->
 <html lang="en">
   <head>
@@ -109,6 +109,46 @@
         margin-left: 10px;
         font-weight: 800;
         font-size: 9.5px;
+      }
+
+      .role {
+        margin-left: 8px;
+        padding: 2px 7px;
+        border-radius: 20px;
+        background: rgb(76 139 218 / 18%);
+        border: 1px solid rgb(76 139 218 / 50%);
+        color: #9cc1ff;
+        font-size: 6px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+      }
+
+      .rec {
+        position: absolute;
+        right: 8px;
+        top: 8px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 7px;
+        border-radius: 20px;
+        background: rgb(0 0 0 / 45%);
+        font-size: 6.2px;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+      }
+
+      .rec i {
+        display: flex;
+        align-items: flex-end;
+        gap: 1px;
+        height: 7px;
+      }
+
+      .rec i b {
+        width: 1.5px;
+        border-radius: 1px;
+        background: #e0566c;
       }
 
       .secure {
@@ -490,7 +530,8 @@
       <div class="window">
         <div class="bar">
           <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-          <span class="title">Telehealth operations</span>
+          <span class="title">Telehealth platform</span>
+          <span class="role">PROVIDER VIEW</span>
           <span class="secure">END-TO-END SECURE</span>
         </div>
         <div class="body">
@@ -516,21 +557,11 @@
             </div>
             <div class="visit">
               <div class="video">
+                <!-- the provider's view: the patient on screen, the provider in the corner -->
                 <div class="person" style="top: 20px">
                   <span
                     class="torso"
-                    style="top: 58px; width: 104px; height: 70px; margin-left: -52px; background: #eef1f4"
-                  ></span>
-                  <span
-                    class="torso"
-                    style="
-                      top: 58px;
-                      width: 20px;
-                      height: 26px;
-                      margin-left: -10px;
-                      background: #3b6f91;
-                      border-radius: 0 0 10px 10px;
-                    "
+                    style="top: 58px; width: 104px; height: 70px; margin-left: -52px; background: #6a4c93"
                   ></span>
                   <span
                     class="head"
@@ -539,28 +570,45 @@
                       width: 32px;
                       height: 40px;
                       margin-left: -16px;
-                      background: linear-gradient(160deg, #c9926e, #a9724f);
+                      background: linear-gradient(160deg, #e2bc9b, #c99a76);
                     "
                   ></span>
                   <span
                     class="hair"
-                    style="top: 8px; width: 36px; height: 16px; margin-left: -18px; background: #1f1b19"
+                    style="top: 7px; width: 37px; height: 18px; margin-left: -18.5px; background: #6b4a33"
                   ></span>
                 </div>
                 <span class="tag">SECURE VIDEO VISIT</span>
+                <span class="rec"
+                  ><i
+                    ><b style="height: 40%"></b><b style="height: 100%"></b><b style="height: 60%"></b
+                    ><b style="height: 85%"></b></i
+                  >TRANSCRIBING</span
+                >
                 <div class="pip">
                   <div class="person" style="top: 6px">
                     <span
                       class="torso"
-                      style="top: 28px; width: 40px; height: 30px; margin-left: -20px; background: #6a4c93"
+                      style="top: 28px; width: 40px; height: 30px; margin-left: -20px; background: #eef1f4"
+                    ></span>
+                    <span
+                      class="torso"
+                      style="
+                        top: 28px;
+                        width: 8px;
+                        height: 11px;
+                        margin-left: -4px;
+                        background: #3b6f91;
+                        border-radius: 0 0 4px 4px;
+                      "
                     ></span>
                     <span
                       class="head"
-                      style="top: 6px; width: 16px; height: 20px; margin-left: -8px; background: #d9b08f"
+                      style="top: 6px; width: 16px; height: 20px; margin-left: -8px; background: #b07a55"
                     ></span>
                     <span
                       class="hair"
-                      style="top: 3px; width: 19px; height: 10px; margin-left: -9.5px; background: #6b4a33"
+                      style="top: 3px; width: 19px; height: 10px; margin-left: -9.5px; background: #1f1b19"
                     ></span>
                   </div>
                 </div>
@@ -582,8 +630,8 @@
               </div>
               <div class="order">
                 <i style="font-style: normal; font-size: 9px">🧪</i>
-                <div>Lab order<small>To the lab</small></div>
-                <span class="ok">RESULTS IN</span>
+                <div>Lab result<small>Back in the record</small></div>
+                <span class="ok">IN RECORD</span>
               </div>
             </div>
           </div>

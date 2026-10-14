@@ -88,12 +88,16 @@ export const projects: Project[] = [
   },
   {
     slug: 'multi-agent-ai-platform',
-    eyebrow: 'AGENTIC AI',
+    eyebrow: 'BUSINESS ACQUISITION',
     tone: 'standard',
     title: 'Multi-Agent AI Platform',
     summary:
-      'Autonomous, tool-using agents built with Google ADK, MCP and the Agent2Agent protocol, integrating securely with live enterprise infrastructure.',
-    bullets: ['Autonomous, tool-using agents', 'Secure MCP integrations', 'Agent-to-agent collaboration (A2A)'],
+      'A multi-agent platform for buying a business, built with Google ADK: a persona orchestrator directs agents that discover the businesses that fit the buyer, build each one’s profile and run due diligence on the deal, working together over A2A and reaching live data through MCP.',
+    bullets: [
+      'Business discovery driven by the buyer’s persona',
+      'Profiles and due diligence by specialist agents',
+      'Secure MCP tools, agents working together over A2A',
+    ],
     features: [
       'Persona orchestration',
       'Business discovery',
@@ -117,19 +121,29 @@ export const projects: Project[] = [
     tone: 'bright',
     title: 'Enterprise Telehealth Platform',
     summary:
-      'A multi-stakeholder platform for patients, providers, pharmacies and labs, with e-prescriptions, payments and real-time secure communication.',
-    bullets: ['e-Prescriptions via DoseSpot', 'Payments with 1Merchant', 'Real-time chat with TalkJS & Twilio'],
+      'A multi-tenant telehealth platform connecting patients, providers, pharmacies, labs and administrators, so every virtual consultation leads to a prescription, a lab order and a documented care plan within one system.',
+    bullets: [
+      'Secure virtual consultations, transcribed',
+      'e-Prescriptions and lab results in one record',
+      'Multi-tenant, with a portal for every role',
+    ],
     features: [
-      'Patients, providers, pharmacies & labs',
-      'Appointments',
+      'Patient, provider, pharmacy, lab & admin portals',
+      'Multi-tenant client organisations',
+      'Provider search & scheduling',
+      'Secure audio & video consultations',
+      'Consultation transcription',
+      'Shared clinical record',
       'e-Prescriptions (DoseSpot)',
-      'Lab orders',
+      'Lab orders & results',
       'Payments (1Merchant)',
       'Real-time chat (TalkJS & Twilio)',
+      'Role-based access control',
+      'Usage reporting',
     ],
     image: telehealthShot,
     imageAlt:
-      'Illustration of a telehealth operations console on a dark stage: appointment, e-prescription, lab order and payment tiles, a secure video visit beside its secure chat, a prescription sent to the pharmacy and a lab order, with a payment received and the patient’s confirmed visit on a phone.',
+      'Illustration of a telehealth console in the provider’s view on a dark stage: appointment, e-prescription, lab order and payment tiles, a secure video consultation being transcribed beside its chat, a prescription sent to the pharmacy and a lab result returned to the record, with a payment received and the patient’s confirmed visit on a phone.',
   },
   {
     slug: 'responsible-ai-governance',
