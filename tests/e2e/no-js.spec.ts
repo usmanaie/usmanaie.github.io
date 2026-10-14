@@ -6,7 +6,7 @@ test.describe('without JavaScript', () => {
   test('desktop: all content is readable and navigation still works', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/');
-    for (const id of ['about', 'education', 'expertise', 'projects', 'experience', 'contact']) {
+    for (const id of ['about', 'expertise', 'projects', 'experience', 'contact']) {
       await expect(page.locator(`#${id} h2`)).toBeVisible();
     }
     // The always-visible header takes over from the hero's nav row (no duplicate, no overlap).

@@ -216,7 +216,7 @@ test.describe('hero', () => {
     await page.goto('/');
     const hero = page.locator('[data-hero]');
     await expect(hero).not.toHaveAttribute('data-paused', '');
-    await page.locator('#education').scrollIntoViewIfNeeded();
+    await page.locator('#expertise').scrollIntoViewIfNeeded();
     await expect(hero).toHaveAttribute('data-paused', '');
     await page.evaluate(() => window.scrollTo(0, 0));
     await expect(hero).not.toHaveAttribute('data-paused', '');

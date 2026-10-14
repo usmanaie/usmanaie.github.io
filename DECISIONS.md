@@ -122,6 +122,9 @@ Owner-facing items are also tracked in [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md
   supply chain work; "Building systems that think, act and scale autonomously"; LLM orchestration and RAG). The bot
   avatar is replaced by the owner's photo (their own blue/red-graded cut-out, `src/assets/about/usman-portrait.png`),
   slightly larger (240×300) so its bottom lines up with the stat tiles.
+- **Education section removed (owner request, Oct 2026).** The section, its content and its menu item are gone; the
+  Professional Cloud Developer certification it featured lives in Certifications. About's "Scroll down" ring now leads
+  to Expertise.
 - **Hero robot (owner request).** The owner asked for AI-generated, high-resolution, full-body art and approved
   candidate "A, presenting" (`design-candidates/`, git-ignored).
   - The final art was produced with **Gemini 3 Pro Image on Vertex AI**, at

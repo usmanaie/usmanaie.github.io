@@ -9,7 +9,6 @@ export interface NavItem {
 const primary: NavItem[] = [
   { label: 'Home', id: 'top' },
   { label: 'About', id: 'about' },
-  { label: 'Education', id: 'education' },
   { label: 'Expertise', id: 'expertise' },
   { label: 'Projects', id: 'projects' },
   { label: 'Experience', id: 'experience' },

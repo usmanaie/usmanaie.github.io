@@ -43,9 +43,9 @@ const { project } = Astro.props;
         src={project.image}
         alt={project.imageAlt}
         formats={['avif', 'webp']}
-        widths={[603, 1206]}
+        widths={[480, 760, 1206]}
         quality={80}
-        sizes="(width >= 64rem) 660px, 100vw"
+        sizes="(width >= 64rem) 660px, calc(100vw - 32px)"
         loading="eager"
         fetchpriority="high"
         decoding="async"

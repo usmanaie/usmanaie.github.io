@@ -6,7 +6,7 @@ import { expect, test } from '@playwright/test';
  * Fidelity against the original design export is measured separately by
  * scripts/fidelity.mjs (see DECISIONS.md for the results and accepted exceptions).
  */
-const SECTIONS = ['top', 'about', 'education', 'expertise', 'projects', 'experience', 'reviews', 'contact'];
+const SECTIONS = ['top', 'about', 'expertise', 'projects', 'experience', 'reviews', 'contact'];
 
 async function settle(page: import('@playwright/test').Page) {
   await page.evaluate(async () => {

@@ -46,7 +46,7 @@ export const credentials = {
     title: 'Professional Cloud Developer',
     issuer: 'Google Cloud Certified',
     level: 'Professional',
-    /** OWNER-CONFIRM: validity (matches Education). */
+    /** OWNER-CONFIRM: validity. */
     validity: 'Valid 2026–2028',
     image: certificationImage,
   },

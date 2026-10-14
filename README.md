@@ -48,11 +48,11 @@ uipro init --ai claude
 
 ```
 src/
-  content/        typed copy and data: site, nav, stats, education, expertise, projects, experience, reviews, legal
+  content/        typed copy and data: site, nav, stats, credentials, expertise, projects, experience, reviews, legal
   styles/         tokens.css (design tokens), fonts.css (generated), global.css
   layouts/        BaseLayout (head, SEO, header/footer), SubPageLayout
   components/
-    sections/     one component per section: Hero, About, Education, Expertise, Projects, Experience, Reviews, Contact
+    sections/     one component per section: Hero, About, Expertise, Projects, Experience, Certifications, Reviews, Contact
     layout/       SiteHeader (sticky + mobile menu), SiteFooter, PageIntro, LegalPage
     ui/           primitives: Pill, Eyebrow, SectionHeading, Icon, AgentPortrait, RotatingRingLink
     hero/         AgentOrb
@@ -78,7 +78,7 @@ All copy lives in `src/content/*.ts`; components contain no hard-coded copy.
 - **Job title:** `site.jobTitle` in `site.ts`. It feeds the `<title>`, footer tagline and JSON-LD.
 - **Years of experience:** derived from `CAREER_START` in `site.ts`, which updates the About stat, the
   Experience numeral and the intro sentence.
-- **Stats, education, expertise, experience, projects:** their respective files. Project illustrations are in
+- **Stats, credentials, expertise, experience, projects:** their respective files. Project illustrations are in
   `src/assets/projects/`. Case-study pages are generated from `projects.ts`.
 - **Reviews:** add real, permitted quotes to `items` in `reviews.ts` and set `enabled: true`. The section and its
   nav links then appear automatically.

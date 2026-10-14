@@ -17,7 +17,7 @@ import { PNG } from 'pngjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const base = process.argv[2] ?? 'http://localhost:4173';
-const all = ['hero', 'about', 'education', 'expertise', 'projects', 'experience', 'reviews', 'contact'];
+const all = ['hero', 'about', 'expertise', 'projects', 'experience', 'reviews', 'contact'];
 const only = process.argv.slice(3);
 const sections = only.length ? only : all;
 const out = path.join(root, 'test-results/fidelity');

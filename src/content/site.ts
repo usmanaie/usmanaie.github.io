@@ -169,7 +169,7 @@ export const about = {
   emphasis: 'Building systems that think, act and scale autonomously.',
   closing:
     'I enjoy leading system design, mentoring engineers, and shipping AI that is safe, compliant and responsible, from LLM orchestration and RAG pipelines to multi-agent workflows, with HIPAA, SOC 2 and GDPR controls in production.',
-  scrollLabel: 'Scroll down to Education',
+  scrollLabel: 'Scroll down to Expertise',
 } as const;
 
 export const contact = {

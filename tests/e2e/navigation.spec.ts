@@ -7,7 +7,7 @@ test.describe('desktop navigation', () => {
     await page.goto('/');
     const nav = page.getByRole('navigation', { name: 'Primary' });
     for (const [label, id] of [
-      ['Education', 'education'],
+      ['Expertise', 'expertise'],
       ['Projects', 'projects'],
       ['Experience', 'experience'],
     ] as const) {
@@ -51,7 +51,7 @@ test.describe('desktop navigation', () => {
             })
             .toBeLessThanOrEqual(headerHeight + 2),
         );
-    for (const id of ['about', 'education', 'expertise', 'projects', 'experience', 'certifications']) {
+    for (const id of ['about', 'expertise', 'projects', 'experience', 'certifications']) {
       // From the hero's own menu (top of the page)...
       await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
       await page.locator(`.hero__nav-link[href="#${id}"]`).click();
