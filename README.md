@@ -1,8 +1,8 @@
 # Usman Aslam — Portfolio
 
 One-page portfolio for Usman Aslam (Lead AI Engineer, agentic AI on Google Cloud), built from the
-"★ Portfolio · full one-page site" design export. It is a static Astro site with about 1.5 KB of JavaScript,
-self-hosted fonts, a strict CSP, and automated quality gates.
+"★ Portfolio · full one-page site" design export. It is a static Astro site with about 5 KB (Brotli) of
+JavaScript, self-hosted fonts, a strict CSP, and automated quality gates. Live at https://usmanaie.github.io.
 
 - **Decisions and deviations:** [DECISIONS.md](DECISIONS.md)
 - **Launch status and owner items:** [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md)
@@ -63,9 +63,11 @@ src/
     ui/           primitives: Pill, Eyebrow, SectionHeading, Icon, AgentPortrait, RotatingRingLink
     hero/         AgentFlow (the agent loop and robot), RingBadge (trust and certification badges)
     projects/     ProjectList, ProjectRow
-  lib/            build-time helpers: hero-flow geometry, hero image, email encoding, experience dates, JSON-LD
+  lib/            build-time helpers: hero-flow geometry, hero image, agent portrait drawing, email encoding,
+                  experience dates, JSON-LD
   scripts/        client TS: hero, header, menu, scroll-spy, carousel, visibility, defer, ready
-  pages/          index, projects/, projects/[slug], privacy, terms, 404, robots.txt, sitemap.xml
+  pages/          index, projects/, projects/[slug], privacy, terms, 404, robots.txt, sitemap.xml,
+                  art/[file] (the agent portrait SVGs)
   assets/         fonts, hero art + masks, About portrait, project illustrations, Expertise ring layers,
                   credential badges, employer logos, brand icon
 scripts/          build tooling (fonts, images, design and project-art renders, robot art, OG image, serve, prune,
@@ -133,9 +135,10 @@ below run instead. One-time setup, done by the owner in their GCP project:
 The pipeline (`.github/workflows/ci.yml`):
 
 1. install → lint → type-check → unit → audit → build
-2. e2e + axe in three browsers, visual regression and Lighthouse CI, in parallel
-3. a **preview channel per PR**, with its URL posted as a comment
-4. **production deploy on `main`** once every gate passes
+2. e2e + axe in three browsers, visual regression and Lighthouse CI, in parallel. Visual regression compares
+   only once Linux baselines are committed (see below); until then the job passes without comparing.
+3. deploy: on `main`, GitHub Pages once e2e and Lighthouse pass. With Firebase configured instead, the
+   production deploy on `main` and a **preview channel per PR**, each once e2e, visual and Lighthouse pass
 
 Firebase deploy jobs are skipped until `FIREBASE_PROJECT_ID` is set.
 
@@ -155,17 +158,18 @@ artifact, review the screenshots, and commit them to `tests/visual/__screenshots
 
 - **Uptime:** create a Google Cloud Monitoring uptime check (HTTPS, path `/`, every 5 minutes) on the production
   URL, with an email alert policy.
-- **Real-user Core Web Vitals:** verify the domain in Google Search Console and watch the Core Web Vitals report.
-  Firebase Hosting's usage dashboard shows traffic and bandwidth.
+- **Real-user Core Web Vitals:** verify the site in Google Search Console and watch the Core Web Vitals report.
+  GitHub Pages has no traffic dashboard; Search Console's performance report is the closest substitute (Firebase
+  Hosting would add a usage dashboard).
 - **Dependencies:** Dependabot opens weekly grouped PRs; CI runs `pnpm audit --audit-level high`.
 
 ## Asset provenance
 
 - **Hero robot** (`src/assets/hero/robot-agent.png`) and its head-turn frames (`robot-head-sprite.webp`) were
   generated with Gemini 3 Pro Image on Vertex AI (`python scripts/generate-robot-art.py --vertex-project <id>`).
-  Rebuild them with `node scripts/build-robot-head.mjs <A-rest.png> <head-L20.png> <head-LH2.png> <head-F0.png>
-<A-rest.png> <head-RH.png>` (needs Python with `opencv-python-headless` and `numpy` for the in-betweens), then
-  `pnpm images`. The prompts in the script are the provenance record; commercial-use sign-off is launch
+  Rebuild them with
+  `node scripts/build-robot-head.mjs <A-rest.png> <head-L20.png> <head-LH2.png> <head-F0.png> <A-rest.png> <head-RH.png>`
+  (needs Python with `opencv-python-headless` and `numpy` for the in-betweens), then `pnpm images`. The prompts in the script are the provenance record; commercial-use sign-off is launch
   checklist item 13.
 - **Certification seal** in the hero is original vector artwork.
 - **Certifications section:** the Professional Cloud Developer badge and the skill/completion badge images
@@ -176,7 +180,8 @@ artifact, review the screenshots, and commit them to `tests/visual/__screenshots
   generated images). `scripts/render-project-art.mjs` renders them to `src/assets/projects/`, and the PNGs are
   committed.
 - **The agent portraits** (Experience, Contact) and the **Expertise ring** are original vector artwork from the
-  design export. The portraits are drawn in `src/lib/agent-portrait.ts` and built to `/art/agent-*.svg`. `pnpm design:render` pre-renders the ring's glow layers to PNG,
-  and those files are committed.
+  design export. The portraits are drawn in `src/lib/agent-portrait.ts` and built to `/art/agent-*.svg` at build
+  time. `pnpm design:render` pre-renders the ring's glow layers to PNG, and those files are committed.
 - Fonts are all under the SIL Open Font License: Manrope, Hanken Grotesk, League Gothic, Instrument Serif,
-  JetBrains Mono. They're subset from the `@fontsource` packages.
+  JetBrains Mono. They're subset from the `@fontsource` packages. Their metric-matched fallbacks use local Arial,
+  Times New Roman and Courier New, or their Linux twins (Liberation, Arimo, Tinos, Cousine).

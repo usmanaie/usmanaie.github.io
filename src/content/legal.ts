@@ -36,7 +36,7 @@ export const privacy: LegalPage = {
     {
       heading: 'Hosting and server logs',
       paragraphs: [
-        'The site is served by Google Firebase Hosting. To deliver pages and keep the service secure, the hosting provider automatically processes technical data such as your IP address, browser user agent, the page requested and the time of the request. This data is used only to operate and protect the service and is retained according to the provider’s own policies.',
+        'The site is hosted on GitHub Pages, a service of GitHub, Inc. To deliver pages and keep the service secure, the hosting provider automatically processes technical data such as your IP address, browser user agent, the page requested and the time of the request. This data is used only to operate and protect the service and is retained according to the provider’s own policies.',
       ],
     },
     {

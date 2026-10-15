@@ -7,13 +7,13 @@ Owner-facing items are also tracked in [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md
 
 | Decision                                                                       | Reasoning                                                                                                                                                                                                                                                                     |
 | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Astro 7.3 (static output), TypeScript strict (`astro/tsconfigs/strictest`)** | The brief's recommendation. A content site with three tiny interactive pieces; Astro ships zero JS by default. First-load JS is **1.5 KB (Brotli)** against a 30 KB budget.                                                                                                   |
+| **Astro 7.3 (static output), TypeScript strict (`astro/tsconfigs/strictest`)** | The brief's recommendation. A content site with three tiny interactive pieces; Astro ships zero JS by default. First-load JS is **about 5 KB (Brotli)** against a 30 KB budget.                                                                                               |
 | **No client islands / no framework runtime**                                   | Header, mobile menu, scroll-spy, carousel buttons and hero controls are small vanilla TS modules bundled by Astro. No component needed a framework.                                                                                                                           |
 | **Plain CSS + custom-property tokens + Astro scoped styles**                   | No Tailwind, no CSS-in-JS, no UI libraries. All design values live in `src/styles/tokens.css`.                                                                                                                                                                                |
 | **Typed TS modules in `src/content/*.ts`** (not Astro content collections)     | The content is small, structured and partly derived (years of experience, copyright year). Typed modules give compile-time checking without a schema layer.                                                                                                                   |
 | **pnpm 12.11, Node 22.19 (pinned in `.nvmrc`, `engines`, `packageManager`)**   | Node 22 is the LTS installed on the owner's machine and is supported until April 2027. Moving to Node 24 LTS is a one-line change.                                                                                                                                            |
 | **TypeScript 6.0 and ESLint 10**                                               | TypeScript 7 (the native port) is not yet supported by `@astrojs/check` or `typescript-eslint`. `eslint-plugin-astro` 3 requires ESLint 10; `eslint-plugin-jsx-a11y` declares a peer range up to 9 but works with 10, so that peer range is allowed in `pnpm-workspace.yaml`. |
-| **Firebase Hosting** with GitHub Actions + Workload Identity Federation        | Global CDN, automatic TLS, Brotli, HTTP/2+, header control and per-PR preview channels. No long-lived keys: deploy jobs authenticate via OIDC.                                                                                                                                |
+| **GitHub Pages** (live), **Firebase Hosting** ready as the upgrade             | Pages is free and deploys from CI with no keys, but cannot send response headers (see Security). The Firebase setup (GitHub Actions + Workload Identity Federation) adds header control and per-PR preview channels; it takes over once `FIREBASE_PROJECT_ID` is set.         |
 
 ## Structural additions and changes
 
@@ -32,7 +32,7 @@ Owner-facing items are also tracked in [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md
    use only content already in the design (summary, highlights, illustration) plus a contact CTA. No case-study
    details were invented.
 5. **Privacy and Terms pages** (`/privacy`, `/terms`) replace `#privacy`/`#terms`. The draft copy describes a
-   static, cookie-free, mailto-only site on Firebase Hosting. It is not legal advice and needs owner sign-off.
+   static, cookie-free site on GitHub Pages, contacted by email, phone or LinkedIn. It is not legal advice and needs owner sign-off.
 6. **Custom 404**, `robots.txt`, `sitemap.xml`, favicon set, web manifest and a 1200×630 share image.
 7. **Footer moved outside `<main>`** for correct landmarks. The Contact colour field extends behind it so the
    design's continuous background is preserved.
@@ -44,21 +44,24 @@ Owner-facing items are also tracked in [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md
 | Job title inconsistency ("Lead AI Engineer" in `<title>`, "Lead Software Engineer" on the page) | **Lead AI Engineer** everywhere (title, tagline, About intro, JSON-LD `jobTitle`, web manifest) from one field, `site.jobTitle`, confirmed by the owner (matches LinkedIn). Past roles keep their own titles in Experience.                                    |
 | Typo "Lets Build Something"                                                                     | Fixed to "Let's Build Something" (typographic apostrophe). `check-dist` rejects the typo.                                                                                                                                                                      |
 | Claims to confirm                                                                               | Copied verbatim and marked `OWNER-CONFIRM` in `src/content`. "4+ years" and "Four years" both derive from `CAREER_START` (May 2022).                                                                                                                           |
-| Duplicate SVG ids (`av-g` ×5, repeated gradient/filter ids)                                     | Every inline SVG id is namespaced (`hero-*`, `agent-<variant>-*`, `ring-<variant>-path`). The reviewer avatar is one `<symbol>` used via `<use>`. An e2e test asserts there are no duplicate ids.                                                              |
+| Duplicate SVG ids (`av-g` ×5, repeated gradient/filter ids)                                     | Every inline SVG id is namespaced (`flow-*`, `trust-ring-*`, `cert-ring-*`, `ring-<variant>-path`). The reviewer avatar is one `<symbol>` used via `<use>`. An e2e test asserts there are no duplicate ids.                                                    |
 | "SCROLL DOWN" / "CONTACT US" ring text overlapping itself ("SCRSCROLL")                         | The design repeats the phrase three times, which is longer than the circle, so the ends collide. Now two repetitions spread around the full circumference with `textLength` + `lengthAdjust="spacing"`. Only letter spacing changes; glyphs are not distorted. |
 | Email harvesting                                                                                | `mailto:` is percent-encoded at build time (`src/lib/email.ts`). It works without JavaScript, and the address never appears in plain text in the HTML.                                                                                                         |
 
 ## Fidelity decisions
 
 - **Hero redesign (owner request, 2026-10-13).** The design's single scaled 1600×1067 canvas is replaced by a
-  **two-column grid** (copy | agent flow) sized to the viewport: `min-height: clamp(640px, 100svh, 1000px)`.
+  **two-column grid** (copy | agent flow) that fills the window (`min-height: 100svh`; the design-unit scaling
+  under "Hero type scale" keeps the whole hero inside it).
   - **The card container is removed.** The overlap the owner saw came from the composition itself (the agent
     column started inside the headline's span, also visible in the mockup), not from the card. The grid now
     guarantees a gap.
-  - **The headline is sized to its column** (`min(42cqi, 19svh)`, a container query), so it can never reach the
-    flow.
-  - **The flow** is a 720×720 stage scaled by one unitless factor (`tan(atan2(100cqw, 720px))`), so bubbles,
-    connectors and the `offset-path` token stay aligned.
+  - **The headline is capped by its column** (a container query on the copy column: 231u up to `44cqi` on
+    desktop, `min(42cqi, 12rem)` when stacked), so it can never reach the flow. It started as
+    `min(42cqi, 19svh)`, replaced by the type scale below.
+  - **The flow** is a 720×880 stage (first 720×720) scaled by one unitless factor
+    (`tan(atan2(var(--stage-px, 100cqw), 720px))`), so bubbles, connectors and the `offset-path` token stay
+    aligned.
   - **Below 1024px** everything stacks: headline, copy, CTA, badge, then the flow. Step names are counter-scaled
     and captions dropped below 640px.
 - **Agent flow (owner request, revised).** The loop follows the standard tool-calling architecture, as in Google's
@@ -90,7 +93,8 @@ Owner-facing items are also tracked in [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md
     to the visible part). The robot sits right of centre so the row ends clear of its legs; the right-hand
     bubbles overhang the stage slightly. Prominent vertical bars glow behind the head and shoulders and fade
     upward past the stage (it clips only at the bottom; the bars ignore the pointer, as they reach behind the
-    nav). Copy 540 : flow 761; the headline cap is 44% of the copy column (it still fits).
+    nav). Copy 540 : flow 761 on full-height windows (shorter windows give the extra width to the flow, see "Hero
+    edges"); the headline cap is 44% of the copy column (it still fits).
 - **Section and sub-page balance (owner request).** The home sections below the hero follow the design (within
   0.5–3% at 1440px); the owner kept the design's vector portraits. The sub-pages are balanced the standard way: a
   case study sets the story (intro, highlights, next step) beside the project image, centred against it, on
@@ -103,8 +107,8 @@ Owner-facing items are also tracked in [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md
   the profile) and the completion badges as a carousel: a native scroll-snap track (touch, trackpad,
   keyboard and no-JS work) whose scrollbar gives way, once enhanced, to arrow buttons and a progress line below the
   rail (owner: the standard place), edge fades and polite announcements. It reuses the Reviews carousel script,
-  which now steps a page at a time where asked and re-measures when its track is laid out. The badge images are Google's own artwork, resized;
-  every badge links to its public page so it can be verified. Badge types were confirmed from the artwork ("SKILL
+  which now steps a page at a time where asked and re-measures when its track is laid out. The badge images are
+  Google's own artwork, resized; every badge links to its public page so it can be verified. Badge types were confirmed from the artwork ("SKILL
   BADGE · ADVANCED" vs "COMPLETION BADGE"). Three completion badges for courses Google has retired are kept in the
   content but not shown (25 of 28). Chosen over a "ledger" variant (certification banner + year-grouped list).
 - **External links open in a new tab (owner request).** Links to other sites (Google Skills badges and profile)
@@ -139,9 +143,8 @@ Owner-facing items are also tracked in [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md
     brand-palette stage: blue on the outer top corner, crimson on the inner bottom corner, a faint violet centre,
     mirrored for image-right rows. Each product's own colour stays inside its UI; before, each stage carried its own
     accent glow (orange, teal, amber, green), so `/projects` read as seven colour schemes.
-- **Contact section (owner request, Oct 2026).** A professional rewrite of the copy, and three round icon-only buttons (owner: no labels; each
-  keeps an accessible name and a hover tooltip):
-  LinkedIn (new tab), call (`tel:+923152331002`, shown as +92 315 2331002) and email (the new address,
+- **Contact section (owner request, Oct 2026).** A professional rewrite of the copy, and three round icon-only
+  buttons (owner: no labels; each keeps an accessible name and a hover tooltip): LinkedIn (new tab), call (`tel:+923152331002`, shown as +92 315 2331002) and email (the new address,
   usmanaslam.aie@gmail.com, still percent-encoded so it never appears as plain text; `check-dist` rejects it in plain
   text). The portrait and the "Contact us" ring now keep clear of the copy column at 1024-1279px (the portrait's
   left is `max(50% - 420px, gutter + 200px)` and the ring moves with it). LinkedIn joins JSON-LD `sameAs`. The
@@ -188,7 +191,7 @@ Owner-facing items are also tracked in [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md
       frames. The turn follows a critically damped spring (owner: slow and smooth): it eases in and out,
       settles in ~2.2 s, never overshoots, and a turn that interrupts another carries on without a jerk. The
       sprite holds only the head box (the band above the seam, cropped to the columns that change, 41% of the
-      width), which keeps the mobile home page under its 500 KB budget. While the canvas is live, exactly that
+      width), which keeps the mobile home page under its 512 KB budget. While the canvas is live, exactly that
       box is masked out of the photo (`mask-composite: exclude`).
     - The robot faces the USER at first paint (the photo itself), turns right for the LLM, RAG and TOOLS,
       slightly left for GUARDRAILS, and back to the USER. The sprite loads after the load event, and never under
@@ -214,13 +217,18 @@ Owner-facing items are also tracked in [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md
   1440 artboard, e.g. About `589fr 99fr 512fr` and Projects `600fr 66fr 534fr`. So the layout is exact at 1440 and
   scales between 1024 and 1440. Decorative layers (portraits, big background words, ring) are absolutely
   positioned relative to the page centre so they stay put above 1440.
-- **Project illustrations** were rendered from the mockup's `.shot` DOM at 2× with Playwright
-  (`scripts/render-design-assets.mjs`) and shipped as AVIF/WebP with descriptive alt text, instead of porting
-  hundreds of decorative `<div>`s.
+- **Project illustrations** are HTML artwork in `scripts/art/*.html`, rendered to PNG at 2× with Playwright
+  (`scripts/render-project-art.mjs`) and shipped as AVIF/WebP with descriptive alt text, instead of porting
+  hundreds of decorative `<div>`s. The first three were screenshots of the mockup's `.shot` DOM via
+  `scripts/render-design-assets.mjs`; all seven are now made in code (see "Projects" above).
 - **Pill widths.** The design's pills have hand-set widths (109–178px). I used uniform padding (24px; compact
   19px for VIEW ALL), and every pill is at least **44px tall** (the design had 42–43px).
 
 ### Fidelity results at 1440px (`pnpm fidelity`, pixelmatch threshold 0.1)
+
+Measured before the owner-requested redesigns (hero, Projects, Contact) and the removal of Education. Those
+sections now intentionally differ from the design export, so their rows are historical; `pnpm fidelity` no
+longer compares Education.
 
 | Section           | Mismatch | Notes                                                                                                                                                                                                             |
 | ----------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -263,14 +271,16 @@ All token changes are minimal and documented in `tokens.css`:
 ## Performance decisions
 
 - **Fonts**: six subset WOFF2 files, **70 KB total**, self-hosted, `font-display: swap`. Only League Gothic and
-  Manrope (above the fold) are preloaded. Capsize-generated metric-adjusted fallbacks prevent layout shift.
+  Manrope (above the fold) are preloaded. Capsize-generated metric-adjusted fallbacks prevent layout shift. They
+  load local Arial, Times New Roman or Courier New, or their metric-identical Linux twins (Liberation, Arimo,
+  Tinos, Cousine): without the twins, Linux had no fallback and the case-study page shifted (CLS 0.14 in CI).
   Weights are restricted to those used: Hanken 200–600 + 300 italic, Manrope 300–700.
 - **Hero image (LCP).** The robot cut-out ships as AVIF/WebP/PNG at widths 360/540/720, never lazy. On desktop,
   where the robot is the LCP element, it is preloaded via `imagesrcset` with `fetchpriority="high"`
   (`media="(width >= 64rem)"`). On phones the LCP is the headline, so the `<img>` itself has default priority:
   at high priority the 46 KB image raced the render-blocking stylesheet in the first round trips and pushed
-  simulated mobile LCP from ~1.85s to ~2.11s, depending on how Chrome happened to queue the requests. Lighthouse judges resolution against the robot's
-  untransformed 343px CSS width inside the scaled stage, so `sizes` steers phones to the 540 file, encoded at
+  simulated mobile LCP from ~1.85s to ~2.11s, depending on how Chrome happened to queue the requests.
+  Lighthouse judges resolution against the robot's untransformed 343px CSS width inside the scaled stage, so `sizes` steers phones to the 540 file, encoded at
   quality 56 (~43 KB) so the headline's LCP stays under 2 s. The head-turn sprite
   loads only after the load event.
 - **Hero animation.** Keyframes are ported verbatim, plus these optimisations:
@@ -325,14 +335,14 @@ All token changes are minimal and documented in `tokens.css`:
 
   | Page                                | Perf | A11y | BP  | SEO | LCP   | CLS | TBT  | Transfer |
   | ----------------------------------- | ---- | ---- | --- | --- | ----- | --- | ---- | -------- |
-  | `/`                                 | 0.99 | 1    | 1   | 1   | 1.96s | 0   | 0 ms | 265 KB   |
-  | `/projects`                         | 0.99 | 1    | 1   | 1   | 1.74s | 0   | 0 ms | 150 KB   |
-  | `/projects/multi-agent-ai-platform` | 0.99 | 1    | 1   | 1   | 1.96s | 0   | 0 ms | 159 KB   |
-  | `/privacy`                          | 1    | 1    | 1   | 1   | 1.50s | 0   | 0 ms | 83 KB    |
+  | `/`                                 | 0.99 | 1    | 1   | 1   | 1.82s | 0   | 0 ms | 356 KB   |
+  | `/projects`                         | 0.99 | 1    | 1   | 1   | 1.81s | 0   | 0 ms | 196 KB   |
+  | `/projects/multi-agent-ai-platform` | 0.99 | 1    | 1   | 1   | 1.66s | 0   | 0 ms | 105 KB   |
+  | `/privacy`                          | 1    | 1    | 1   | 1   | 1.51s | 0   | 0 ms | 84 KB    |
 
-  Home and case-study LCP sit only ~40ms under the 2.0s budget in simulation, so watch CI. A real
-  high-resolution hero (smaller than the upscale at equal quality) or inlined critical CSS (would need per-build
-  CSP hashes) are the next levers.
+  Measured 15 October 2026, after the robot-priority fix above; CI on GitHub's Linux runners passes the same
+  budgets. Every page has 180-490ms of LCP headroom. A real high-resolution hero (smaller than the upscale at
+  equal quality) or inlined critical CSS (would need per-build CSP hashes) are the next levers if that shrinks.
 
 - **Home HTML and CSS trimmed (Oct 2026).** The hidden Reviews section's styles moved to their own stylesheet
   (`reviews.css`), linked by `Reviews.astro` only when the section renders; a static or dynamic import alone
@@ -353,7 +363,7 @@ All token changes are minimal and documented in `tokens.css`:
   - JSON-LD is a non-executable data block.
   - Astro's built-in CSP was not used because it only emits a `<meta>` tag, which cannot carry `frame-ancestors`.
 - HSTS (preload-ready), nosniff, strict referrer policy, deny-all Permissions-Policy, COOP/CORP same-origin and
-  `X-Frame-Options: DENY`.
+  `X-Frame-Options: DENY`, all in `firebase.json`, so they apply only on Firebase Hosting (see below).
 - **GitHub Pages hosting (Oct 2026).** Pages cannot send response headers, so `BaseLayout` also ships the
   `firebase.json` CSP as a `<meta http-equiv>` tag, minus `frame-ancestors` (ignored in meta) and
   `upgrade-insecure-requests` (Pages enforces HTTPS). Clickjacking protection, HSTS preload and Permissions-Policy
@@ -379,10 +389,10 @@ All token changes are minimal and documented in `tokens.css`:
 - `scripts/serve.mjs` drops only `upgrade-insecure-requests` from the CSP when serving plain-http localhost
   (WebKit would otherwise upgrade every asset to https and fail). Production is HTTPS-only, where it's a no-op.
 
-- `scripts/prune-dist.mjs` removes two unreferenced build artefacts: the original hero PNG (only its
-  derivatives are used) and the compiled-but-unrendered Reviews script.
+- `scripts/prune-dist.mjs` removes every hashed file in `/_astro` that nothing references, such as the originals
+  of transformed images (only their derivatives are used) and the compiled-but-unrendered Reviews script.
 - Linux visual baselines can't be generated on the Windows development machine. Run the CI workflow manually
   with `update_baselines: true`, review the uploaded screenshots, and commit them to
   `tests/visual/__screenshots__/linux/`.
-- Illustration colours (agent portraits, orb icons, flyers) are artwork data inside the illustration components,
-  not UI tokens.
+- Illustration colours (agent portraits in `src/lib/agent-portrait.ts`, orb icons, flyers) are artwork data
+  inside the illustrations, not UI tokens.
