@@ -90,8 +90,8 @@ const POSITIONS: Record<FlowNodeId, Point> = {
 
 /**
  * Which way the robot attends to each participant: the unit vector from its eyes to the bubble
- * (x right, y down). The photo already faces the USER, so that is the rest pose; the others are
- * reached by gliding the eye lights and tilting the helmet (scripts/hero.ts).
+ * (x right, y down), reached by gliding the eye lights and tilting the helmet (scripts/hero.ts).
+ * The photo's head faces the visitor (GAZE_FRONT): the rest pose, between the hops' two sides.
  */
 function gazeAt(to: Point): readonly [number, number] {
   const dx = to.x - EYES.x;
@@ -106,8 +106,8 @@ export const GAZE: Record<Exclude<FlowNodeId, 'agent'>, readonly [number, number
   tools: gazeAt(POSITIONS.tools),
   guardrails: gazeAt(POSITIONS.guardrails),
 };
-/** The participant the photo's head already faces: no motion is needed to attend to it. */
-export const GAZE_REST: keyof typeof GAZE = 'user';
+/** The photo's own pose: straight out at the visitor (first paint, the loop's start and end, reduced motion). */
+export const GAZE_FRONT = [0, 0] as const;
 
 /** How far each spoke bows away from the straight line (fraction of its length). */
 const BOW: Record<Exclude<FlowNodeId, 'agent'>, number> = {

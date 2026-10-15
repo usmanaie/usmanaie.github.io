@@ -33,23 +33,23 @@ export function springStep(
 export type Gaze = readonly [number, number];
 
 /**
- * How much attention moves the head, per unit of gaze change from the rest pose (the photo's own,
- * facing the USER; a full swing to the LLM is ~1.9 units): the eye lights glide across the visor
- * (head-box widths), the helmet tilts about the neck joint (degrees, clockwise) and shifts a little
- * (head-box widths). Subtle on purpose: the helmet moves 2-5 px at the page's scale.
+ * How much attention moves the head, per unit of gaze away from the front (the photo's own pose; the
+ * USER and the LLM are ~0.95 units to either side): the eye lights glide across the visor (head-box
+ * widths), the helmet tilts about the neck joint (degrees, clockwise when looking right) and shifts a
+ * little (head-box widths). Subtle on purpose: at most 2.5 degrees, a few px at the page's scale.
  */
-export const POSE = { eyeX: 0.069, eyeY: 0.062, tilt: 1.33, shiftX: 0.0063, shiftY: 0.0158 } as const;
+export const POSE = { eyeX: 0.08, eyeY: 0.039, tilt: 2.6, shiftX: 0.0125, shiftY: 0.0098 } as const;
 
 /** The helmet's tilt (radians, clockwise) and shift (head-box widths) while attending to `gaze`. */
-export function headPose(gaze: Gaze, rest: Gaze): { angle: number; dx: number; dy: number } {
-  const gx = gaze[0] - rest[0];
-  const gy = gaze[1] - rest[1];
+export function headPose(gaze: Gaze, front: Gaze): { angle: number; dx: number; dy: number } {
+  const gx = gaze[0] - front[0];
+  const gy = gaze[1] - front[1];
   return { angle: (gx * POSE.tilt * Math.PI) / 180, dx: gx * POSE.shiftX, dy: gy * POSE.shiftY };
 }
 
 /** How far the eye lights have glided from their place in the photo (head-box widths). */
-export function eyeShift(gaze: Gaze, rest: Gaze): [number, number] {
-  return [(gaze[0] - rest[0]) * POSE.eyeX, (gaze[1] - rest[1]) * POSE.eyeY];
+export function eyeShift(gaze: Gaze, front: Gaze): [number, number] {
+  return [(gaze[0] - front[0]) * POSE.eyeX, (gaze[1] - front[1]) * POSE.eyeY];
 }
 
 /** A blink (the eye lights dim and narrow, then open) as the robot turns to the other side. */
@@ -62,60 +62,38 @@ export function blinkOpen(t: number): number {
 }
 
 /**
- * The eye lights' glow, measured from the photo's two lights ([offset, r, g, b, alpha] stops of a
- * radial gradient drawn with 'screen'): the left one is narrow and whitish (it sits on the visor's
- * reflection, seen at an angle), the right one round and blue. A light takes on the right one's look
- * as it glides off the reflection.
+ * The eye lights' glow, measured from the photo's two lights (averaged): [offset, r, g, b, alpha] stops
+ * of a radial gradient drawn with 'screen'. A white-blue disc with a blue halo.
  */
-const GLOW_NARROW = [
-  [0, 255, 245, 234, 0.5],
-  [0.094, 255, 241, 254, 0.48],
-  [0.188, 255, 241, 245, 0.414],
-  [0.25, 234, 232, 255, 0.392],
-  [0.312, 197, 211, 255, 0.392],
-  [0.375, 185, 207, 255, 0.352],
-  [0.438, 179, 208, 255, 0.261],
-  [0.531, 156, 200, 255, 0.174],
-  [0.625, 130, 187, 255, 0.137],
-  [0.75, 100, 160, 255, 0.113],
-  [0.875, 83, 159, 255, 0.061],
-  [1, 80, 144, 255, 0],
+const GLOW = [
+  [0, 152, 219, 255, 0.795],
+  [0.094, 151, 218, 255, 0.789],
+  [0.188, 147, 215, 255, 0.772],
+  [0.25, 144, 211, 255, 0.736],
+  [0.312, 134, 203, 255, 0.595],
+  [0.375, 102, 186, 255, 0.36],
+  [0.438, 77, 170, 255, 0.225],
+  [0.531, 61, 161, 255, 0.146],
+  [0.625, 43, 156, 255, 0.102],
+  [0.75, 28, 137, 255, 0.049],
+  [0.875, 6, 96, 255, 0.02],
+  [1, 0, 127, 255, 0],
 ] as const;
-const GLOW_ROUND = [
-  [0, 147, 215, 255, 0.765],
-  [0.094, 148, 216, 255, 0.751],
-  [0.188, 147, 215, 255, 0.732],
-  [0.25, 144, 213, 255, 0.691],
-  [0.312, 132, 203, 255, 0.553],
-  [0.375, 114, 180, 255, 0.362],
-  [0.438, 110, 169, 255, 0.268],
-  [0.531, 105, 162, 255, 0.189],
-  [0.625, 100, 155, 255, 0.128],
-  [0.75, 92, 141, 255, 0.07],
-  [0.875, 74, 133, 255, 0.036],
-  [1, 56, 114, 255, 0],
-] as const;
-/** The narrow light's width and height relative to the round one's. */
-const NARROW = [0.6, 0.95] as const;
+export const GLOW_STOPS: [number, string][] = GLOW.map(([offset, r, g, b, a]) => [
+  offset,
+  `rgb(${r} ${g} ${b} / ${a})`,
+]);
 
-const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+/** How narrow a light is at the visor's edge (the glass curves away), relative to its width in the middle. */
+export const EDGE_WIDTH = 0.78;
 
-/** 0 where the visor shows a light at an angle (`from`), 1 from `to` rightward, eased between. */
-export function roundness(x: number, from: number, to: number): number {
-  const t = Math.min(1, Math.max(0, (x - from) / (to - from)));
-  return t * t * (3 - 2 * t);
-}
-
-/** The glow's gradient stops for a light of the given roundness (0 narrow, 1 round). */
-export function glowStops(round: number): [number, string][] {
-  return GLOW_NARROW.map((narrow, i) => {
-    const wide = GLOW_ROUND[i] ?? narrow;
-    const [offset, r, g, b, a] = narrow.map((v, c) => lerp(v, wide[c] ?? v, round));
-    return [
-      offset ?? 0,
-      `rgb(${Math.round(r ?? 0)} ${Math.round(g ?? 0)} ${Math.round(b ?? 0)} / ${(a ?? 0).toFixed(3)})`,
-    ];
-  });
+/**
+ * A light's width at `x` (head-box widths): full where the photo has them (up to `inner` from the
+ * visor's middle), easing to EDGE_WIDTH by `outer`.
+ */
+export function eyeWidth(x: number, [centre, inner, outer]: readonly [number, number, number]): number {
+  const t = Math.min(1, Math.max(0, (Math.abs(x - centre) - inner) / (outer - inner)));
+  return 1 - (1 - EDGE_WIDTH) * t * t * (3 - 2 * t);
 }
 
 export function easeInOut(t: number): number {
@@ -130,10 +108,38 @@ export function headFillTop(level: number, seam: number): number {
   return Math.min(1, Math.max(0, (1 - level) / seam));
 }
 
-/** Fill colour on the head: the charge's blue, turning to its green once approved (0-1). */
-export function headTintColor(green: number): string {
-  const mix = (a: number, b: number) => a + (b - a) * green;
-  return `rgb(${mix(130, 120)} ${mix(210, 240)} ${mix(255, 170)} / ${mix(0.55, 0.6)})`;
+/**
+ * The charge fill's gradients, as in AgentFlow.astro's CSS (.flow__charge-level, top to bottom of the
+ * robot): blue while the agent works, green over it once the guardrails approve.
+ */
+export const CHARGE_STOPS = {
+  blue: [
+    [0, 'rgb(130 210 255 / 55%)'],
+    [0.55, 'rgb(90 150 255 / 42%)'],
+    [1, 'rgb(255 110 140 / 48%)'],
+  ],
+  green: [
+    [0, 'rgb(120 240 170 / 46%)'],
+    [0.55, 'rgb(40 200 130 / 36%)'],
+    [1, 'rgb(20 160 110 / 40%)'],
+  ],
+} as const;
+
+/**
+ * Where the CSS fill's gradient runs, in px of a head canvas `h` px tall (the robot's top `seam`): the
+ * gradient spans the risen fill, from its top (`level` of the robot, from the feet) to the feet.
+ */
+export function chargeGradientSpan(level: number, seam: number, h: number): [number, number] {
+  return [((1 - level) / seam) * h, h / seam];
+}
+
+/**
+ * The head canvas's share of the charge fill at (x, y) on a `w` x `h` canvas (0-1). It fades out over
+ * `feather` px toward the canvas's sides and bottom, where the body's CSS fill (robot-agent-mask-body,
+ * scripts/build-images.mjs: the same ramp, inverted) fades in, so the two always add up to one fill.
+ */
+export function headChargeShare(x: number, y: number, w: number, h: number, feather: number): number {
+  return Math.min(1, Math.max(0, Math.min(x, w - x, h - y) / feather));
 }
 
 /** Robot energy level (0-1) once `done` of `total` hops have completed. */
@@ -155,11 +161,13 @@ export interface HeadRig {
   pivot: [number, number];
   eyes: [number, number][];
   glow: number;
-  /** The visor span (box fractions) across which a light goes from narrow to round. */
-  foreshortened: [number, number];
+  /** The visor's middle, and the distances from it over which a gliding light narrows (box widths). */
+  visor: [number, number, number];
+  /** How far (box widths) the head's share of the charge fill fades out toward the box's sides and bottom. */
+  chargeFeather: number;
   gaze: Record<string, Gaze>;
-  /** The participant the photo's head faces. */
-  rest: string;
+  /** The photo's own pose: facing the visitor. */
+  front: Gaze;
 }
 
 export function parseRig(json: string | undefined): HeadRig | undefined {
@@ -170,11 +178,12 @@ export function parseRig(json: string | undefined): HeadRig | undefined {
       Array.isArray(rig.pivot) &&
       Array.isArray(rig.eyes) &&
       typeof rig.glow === 'number' &&
-      Array.isArray(rig.foreshortened) &&
+      Array.isArray(rig.visor) &&
+      rig.visor.length === 3 &&
+      typeof rig.chargeFeather === 'number' &&
       typeof rig.gaze === 'object' &&
       rig.gaze !== null &&
-      typeof rig.rest === 'string' &&
-      rig.rest in rig.gaze;
+      Array.isArray(rig.front);
     return ok ? (rig as HeadRig) : undefined;
   } catch {
     return undefined;
@@ -281,13 +290,16 @@ export function initHero(root: Document = document): void {
   const headUrl = flow.dataset['headLayers'];
   const rig = parseRig(flow.dataset['headRig']);
   const headSeam = Number(flow.dataset['headSeam'] ?? 0.2);
-  const rest: Gaze = rig?.gaze[rig.rest] ?? [0, 0];
+  const front: Gaze = rig?.front ?? [0, 0];
   const frameCanvas = document.createElement('canvas');
+  /** The charge fill drawn on the head, and the head's share of it (headChargeShare) as alpha. */
+  const fillCanvas = document.createElement('canvas');
+  const shareCanvas = document.createElement('canvas');
   let headLayers: HTMLImageElement | undefined;
   /** Where the robot attends, and the eye lights' and the helmet's springs toward it. */
-  let target: Gaze = rest;
-  const eyes = { x: rest[0], y: rest[1], vx: 0, vy: 0 };
-  const helmet = { x: rest[0], y: rest[1], vx: 0, vy: 0 };
+  let target: Gaze = front;
+  const eyes = { x: front[0], y: front[1], vx: 0, vy: 0 };
+  const helmet = { x: front[0], y: front[1], vx: 0, vy: 0 };
   let blinkFrom = -Infinity;
   let headAnim = 0;
   /** The charge fill on the head, mirroring the CSS fill on the body (level 0-1, green 0-1). */
@@ -304,7 +316,7 @@ export function initHero(root: Document = document): void {
     const frameCtx = frameCanvas.getContext('2d');
     if (!headCanvas || !ctx || !frameCtx || !headLayers || !rig) return;
     const { width: w, height: h } = headCanvas;
-    const pose = headPose([helmet.x, helmet.y], rest);
+    const pose = headPose([helmet.x, helmet.y], front);
     const px = rig.pivot[0] * w;
     const py = rig.pivot[1] * h;
     const tilt = (c: CanvasRenderingContext2D) => {
@@ -322,25 +334,40 @@ export function initHero(root: Document = document): void {
     ctx.globalCompositeOperation = 'copy';
     ctx.drawImage(frameCanvas, 0, 0);
     const top = headFillTop(tint.level, headSeam);
-    if (top < 1) {
+    const fillCtx = fillCanvas.getContext('2d');
+    if (top < 1 && fillCtx) {
+      const [y0, y1] = chargeGradientSpan(tint.level, headSeam, h);
+      fillCtx.globalCompositeOperation = 'source-over';
+      fillCtx.clearRect(0, 0, w, h);
+      for (const [stops, alpha] of [
+        [CHARGE_STOPS.blue, 1],
+        [CHARGE_STOPS.green, tint.green],
+      ] as const) {
+        const gradient = fillCtx.createLinearGradient(0, y0, 0, y1);
+        for (const [offset, color] of stops) gradient.addColorStop(offset, color);
+        fillCtx.globalAlpha = alpha;
+        fillCtx.fillStyle = gradient;
+        fillCtx.fillRect(0, top * h, w, h - top * h);
+      }
+      fillCtx.globalAlpha = 1;
+      fillCtx.globalCompositeOperation = 'destination-in';
+      fillCtx.drawImage(shareCanvas, 0, 0);
       ctx.globalCompositeOperation = 'multiply';
-      ctx.fillStyle = headTintColor(tint.green);
-      ctx.fillRect(0, top * h, w, h - top * h);
+      ctx.drawImage(fillCanvas, 0, 0);
     }
 
     ctx.save();
     tilt(ctx);
     ctx.globalCompositeOperation = 'screen';
-    const [sx, sy] = eyeShift([eyes.x, eyes.y], rest);
+    const [sx, sy] = eyeShift([eyes.x, eyes.y], front);
     const open = blinkOpen(now - blinkFrom);
     const r = rig.glow * w;
+    const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
+    for (const [offset, color] of GLOW_STOPS) glow.addColorStop(offset, color);
     for (const [ex, ey] of rig.eyes) {
-      const round = roundness(ex + sx, rig.foreshortened[0], rig.foreshortened[1]);
-      const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
-      for (const [offset, color] of glowStops(round)) glow.addColorStop(offset, color);
       ctx.save();
       ctx.translate((ex + sx) * w, ey * h + sy * w);
-      ctx.scale(lerp(NARROW[0], 1, round), lerp(NARROW[1], 1, round) * open);
+      ctx.scale(eyeWidth(ex + sx, rig.visor), open);
       ctx.fillStyle = glow;
       ctx.fillRect(-r, -r, 2 * r, 2 * r);
       ctx.restore();
@@ -403,13 +430,16 @@ export function initHero(root: Document = document): void {
     headAnim = requestAnimationFrame(step);
   }
 
-  /** Attends to participant `id`: the eyes glide there and the helmet follows (see HEAD_TURN_MS). */
+  /**
+   * Attends to participant `id`, or faces the visitor (`front`): the eyes glide there and the helmet
+   * follows (see HEAD_TURN_MS).
+   */
   function lookAt(id: string) {
-    const next = rig?.gaze[id] ?? rest;
-    // Turning to the other side of the stage: a blink as the eyes set off.
-    if (headLayers && Math.sign(next[0]) !== Math.sign(target[0])) blinkFrom = performance.now();
+    const next = rig?.gaze[id] ?? front;
+    // Crossing to the other side of the stage: a blink as the eyes set off.
+    if (headLayers && next[0] * target[0] < 0) blinkFrom = performance.now();
     target = next;
-    flow.dataset['head'] = id;
+    flow.dataset['head'] = rig?.gaze[id] ? id : 'front';
     animateHead();
   }
 
@@ -427,6 +457,21 @@ export function initHero(root: Document = document): void {
     headCanvas.height = Math.floor(img.naturalHeight / 2);
     frameCanvas.width = headCanvas.width;
     frameCanvas.height = headCanvas.height;
+    fillCanvas.width = shareCanvas.width = headCanvas.width;
+    fillCanvas.height = shareCanvas.height = headCanvas.height;
+    const shareCtx = shareCanvas.getContext('2d');
+    if (shareCtx) {
+      const { width: w, height: h } = shareCanvas;
+      const share = shareCtx.createImageData(w, h);
+      for (let y = 0; y < h; y += 1) {
+        for (let x = 0; x < w; x += 1) {
+          share.data[(y * w + x) * 4 + 3] = Math.round(
+            255 * headChargeShare(x + 0.5, y + 0.5, w, h, rig.chargeFeather * w),
+          );
+        }
+      }
+      shareCtx.putImageData(share, 0, 0);
+    }
     headLayers = img;
     drawHead();
     flow.setAttribute('data-head-live', '');
@@ -472,7 +517,7 @@ export function initHero(root: Document = document): void {
     for (const spoke of spokes.values()) spoke.classList.remove('is-drawn', 'is-active');
     label.textContent = '';
     flow.removeAttribute('data-approved');
-    lookAt(rig?.rest ?? '');
+    lookAt('front');
     setLevel(0, true);
     void flow.offsetWidth;
     flow.removeAttribute('data-resetting');
@@ -516,6 +561,7 @@ export function initHero(root: Document = document): void {
       label.textContent = '';
       for (const spoke of spokes.values()) spoke.classList.remove('is-active');
       flow.setAttribute('data-complete', '');
+      lookAt('front');
       if (!(await wait(TIMING.hold, id))) return;
       flow.removeAttribute('data-complete');
     }
@@ -526,9 +572,10 @@ export function initHero(root: Document = document): void {
     flow.removeAttribute('data-live');
     cancelAnimationFrame(headAnim);
     headAnim = 0;
-    target = rest;
+    target = front;
     blinkFrom = -Infinity;
-    for (const p of [eyes, helmet]) Object.assign(p, { x: rest[0], y: rest[1], vx: 0, vy: 0 });
+    flow.dataset['head'] = 'front';
+    for (const p of [eyes, helmet]) Object.assign(p, { x: front[0], y: front[1], vx: 0, vy: 0 });
     drawHead();
     flow.setAttribute('data-approved', '');
     flow.style.setProperty('--level', '1');

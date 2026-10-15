@@ -2,10 +2,11 @@
  * Builds the hero robot with an animated head: one fixed body, and a head that turns smoothly
  * between the AI-generated head frames (owner request: face the user, front, then right).
  *
- *   node scripts/build-robot-head.mjs <body.png> <head-frame.png>... [--preview <out.webp>]
+ *   node scripts/build-robot-head.mjs <body.png> <head-frame.png>... [--default <i>] [--preview <out.webp>]
  *
- * Head frames are ordered left to right (as seen by the viewer); frame 0 faces the USER bubble
- * and is the static default (first paint, no-JS, reduced motion). Every frame is a full
+ * Head frames are ordered left to right (as seen by the viewer). Frame `--default` (0 unless given)
+ * is the static robot (robot-agent.png: first paint, no-JS, reduced motion); the page uses the
+ * front-facing one (index 2 of the README's list). Every frame is a full
  * generation of the same robot; only its head is used:
  *  1. Each frame is aligned to the body by matching the torso (translation search).
  *  2. Above the collar (SEAM) the frame's head and neck replace the body's, blending into the
@@ -36,9 +37,13 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
 const previewAt = args.indexOf('--preview');
 const preview = previewAt >= 0 ? args.splice(previewAt, 2)[1] : undefined;
+const defaultAt = args.indexOf('--default');
+const DEFAULT_FRAME = defaultAt >= 0 ? Number(args.splice(defaultAt, 2)[1]) : 0;
 const [bodyFile, ...frameFiles] = args;
 if (!bodyFile || frameFiles.length < 2) {
-  console.error('Usage: node scripts/build-robot-head.mjs <body.png> <head-frame.png>... [--preview out.webp]');
+  console.error(
+    'Usage: node scripts/build-robot-head.mjs <body.png> <head-frame.png>... [--default <i>] [--preview out.webp]',
+  );
   process.exit(1);
 }
 
@@ -48,7 +53,6 @@ const FEATHER = 40;
 /** Torso region used to align frames to the body. */
 const TORSO = { x0: 560, x1: 1150, y0: 530, y1: 900 };
 const SEARCH = 32;
-const DEFAULT_FRAME = 0;
 const MARGIN = 24;
 /**
  * Keep the top of the figure only: the hero's stage crops the robot at the shins, so the rest

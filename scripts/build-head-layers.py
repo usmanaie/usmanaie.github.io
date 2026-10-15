@@ -32,47 +32,54 @@ HERO = ROOT / "src/assets/hero"
 # photo's own srcset tops out at 720 px for the 822 px art).
 LAYER_SCALE = 0.75
 
-# The helmet's lower rim (art px, robot-agent.png): from under the chin on the left, along the chin
-# and up the back of the helmet to where it meets the background on the right. Traced from the art and
-# kept a pixel or two low: neck that moves with the helmet is invisible, helmet left on the plate is not.
+# The helmet's lower rim (art px, robot-agent.png): the bottom edge of the visor's frame, from the
+# helmet's left side, under the chin and up to where the shell meets the background on the right. Traced
+# from the art and kept a pixel or two low: neck that moves with the helmet is invisible, helmet left on
+# the plate is not. Left of the neck (x < 312) it runs just above the shoulder.
 RIM = [
     (220, 388),
-    (300, 384),
-    (320, 386),
-    (340, 386),
-    (360, 383),
-    (380, 379),
-    (400, 372),
-    (420, 366),
-    (440, 361),
-    (448, 353),
-    (455, 336),
-    (462, 318),
-    (470, 307),
-    (480, 302),
-    (490, 299),
-    (500, 296),
-    (600, 296),
+    (300, 388),
+    (306, 350),
+    (312, 348),
+    (320, 356),
+    (330, 363),
+    (340, 369),
+    (360, 378),
+    (380, 383),
+    (400, 386),
+    (420, 386),
+    (440, 380),
+    (460, 372),
+    (475, 368),
+    (490, 353),
+    (500, 343),
+    (505, 331),
+    (512, 319),
+    (520, 300),
+    (600, 300),
 ]
-# The helmet tilts about the neck joint, under the middle of the rim (art px).
-PIVOT = (400, 380)
+# The helmet tilts about the neck joint, under the middle of the chin (art px).
+PIVOT = (406, 388)
 # How far up (art px) the plate continues the neck under the rim; more than the helmet ever lifts.
 NECK_REACH = 16
-# The columns (art px) where the neck runs under the rim. Left of it the chin overhangs the background
-# and the shoulder, which must not be continued upward.
-NECK_COLUMNS = (306, 494)
+# The columns (art px) where the neck runs under the rim. Either side the helmet overhangs the
+# background and the shoulders, which must not be continued upward.
+NECK_COLUMNS = (314, 492)
 
 # The eye lights (art px): centre, and the half-size of the patch painted out around each (its glow
-# included). The left light is foreshortened (narrow) and sits on the visor's blue reflection.
+# included). The head faces front: both lights are round and level.
 EYES = [
-    {"x": 276.3, "y": 206.8, "hole": (18, 28)},
-    {"x": 354.1, "y": 201.9, "hole": (32, 34)},
+    {"x": 363.9, "y": 202.9, "hole": (32, 34)},
+    {"x": 448.4, "y": 203.6, "hole": (32, 34)},
 ]
 # Radius (art px) of an eye light's glow, halo included; the page draws it as a radial gradient.
 GLOW = 32
-# Across this span of the visor (art px, left to right) an eye light changes from the left one's look
-# (narrow, whitish on the reflection) to the right one's (round, blue on the dark glass).
-FORESHORTENED = (276.3, 330)
+# Over this distance (art px, ~4 CSS px) the head canvas's share of the charge fill fades out toward
+# the head box's sides and bottom, and the body's CSS fill fades in (scripts/build-images.mjs).
+CHARGE_FEATHER = 10
+# The visor (art px): its middle (between the lights), and the distances from it over which a light
+# gliding sideways narrows, as the glass curves away (from where the lights sit, to near the frame).
+VISOR = {"centre": (EYES[0]["x"] + EYES[1]["x"]) / 2, "inner": (EYES[1]["x"] - EYES[0]["x"]) / 2, "outer": 76}
 
 
 def load_art():
@@ -177,10 +184,15 @@ def main():
         "pivot": [frac(PIVOT[0] - x0, bw), frac(PIVOT[1], bh)],
         "eyes": [[frac(e["x"] - x0, bw), frac(e["y"], bh)] for e in EYES],
         "glow": frac(GLOW, bw),
-        "foreshortened": [frac(v - x0, bw) for v in FORESHORTENED],
+        "chargeFeather": frac(CHARGE_FEATHER, bw),
+        "visor": [frac(VISOR["centre"] - x0, bw), frac(VISOR["inner"], bw), frac(VISOR["outer"], bw)],
     }
-    # Number pairs on one line, as the repo's formatter (prettier) writes them.
-    text = re.sub(r"\[\s*(-?[\d.]+),\s*(-?[\d.]+)\s*\]", r"[\1, \2]", json.dumps(meta, indent=2))
+    # Lists of numbers on one line, as the repo's formatter (prettier) writes them.
+    text = re.sub(
+        r"\[\s*(-?[\d.]+(?:,\s*-?[\d.]+)*)\s*\]",
+        lambda m: "[" + ", ".join(re.split(r",\s*", m.group(1))) + "]",
+        json.dumps(meta, indent=2),
+    )
     (HERO / "robot-head-layers.json").write_text(text + "\n", newline="\n")
     print(f"robot-head-layers.webp {tiles[0].shape[1]}x{tiles[0].shape[0]} x2", meta)
 

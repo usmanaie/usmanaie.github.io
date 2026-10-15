@@ -4,9 +4,11 @@
  *   src/assets/hero/robot-agent.png  ->  src/assets/hero/robot-agent-mask.webp
  *     Alpha-only silhouette for the robot's "energy fill" (CSS mask). Derived from the
  *     displayed cut-out, so the fill always matches the artwork; small (no colour data).
- *     Also robot-agent-mask-body.webp without the head band (above the seam in
- *     robot-head.json): while the head turns on its canvas, the fill there is drawn by
- *     scripts/hero.ts instead.
+ *     Also robot-agent-mask-body.webp without the head box (above the seam in robot-head.json,
+ *     the head's columns): while the head moves on its canvas, the fill there is drawn by
+ *     scripts/hero.ts instead. The two fills cross-fade over `chargeFeather`
+ *     (robot-head-layers.json) at the box's sides and bottom, so no edge shows on the shoulders
+ *     and collar (headChargeShare in hero.ts is the same ramp).
  *
  *   src/assets/brand/icon.svg  ->  public/favicon-32.png, apple-touch-icon.png,
  *                                  icon-192.png, icon-512.png, icon-maskable-512.png
@@ -33,8 +35,23 @@ const writeMask = (channel, file) =>
     .webp({ quality: 70, alphaQuality: 80, effort: 6 })
     .toFile(file);
 await writeMask(alpha, robotMask);
+const layers = JSON.parse(await readFile(path.join(root, 'src/assets/hero/robot-head-layers.json'), 'utf8'));
+const box = {
+  x0: head.headLeft * maskWidth,
+  x1: (head.headLeft + head.headWidth) * maskWidth,
+  y1: head.seam * maskHeight,
+  feather: layers.chargeFeather * head.headWidth * maskWidth,
+};
 const body = Buffer.from(alpha);
-body.fill(0, 0, Math.round(head.seam * maskHeight) * maskWidth);
+for (let y = 0; y < Math.ceil(box.y1); y += 1) {
+  for (let x = Math.floor(box.x0); x < Math.ceil(box.x1); x += 1) {
+    const cx = x + 0.5;
+    const cy = y + 0.5;
+    if (cx < box.x0 || cx > box.x1 || cy > box.y1) continue;
+    const share = Math.min(1, Math.max(0, Math.min(cx - box.x0, box.x1 - cx, box.y1 - cy) / box.feather));
+    body[y * maskWidth + x] = Math.round(body[y * maskWidth + x] * (1 - share));
+  }
+}
 await writeMask(body, path.join(root, 'src/assets/hero/robot-agent-mask-body.webp'));
 console.log(`robot-agent-mask.webp, robot-agent-mask-body.webp ${maskWidth}x${maskHeight}`);
 

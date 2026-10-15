@@ -83,7 +83,7 @@ test.describe('hero', () => {
     page,
     request,
   }) => {
-    // First paint: the photo, facing the USER. No head-turn pictures exist, and HTML requests no head layers.
+    // First paint: the photo, facing front. No head-turn pictures exist, and HTML requests no head layers.
     const html = await (await request.get('/')).text();
     expect(html).not.toMatch(/robot-head-sprite/);
     expect(html).not.toMatch(/(src|srcset|href)="[^"]*robot-head-layers/);
@@ -98,38 +98,44 @@ test.describe('hero', () => {
     const chargeMask = await page.locator('.flow__charge').evaluate((el) => getComputedStyle(el).maskImage);
     expect(chargeMask).toContain('robot-agent-mask-body');
 
-    /** The head canvas's pixels: how many are opaque, and a coarse signature of where the light is. */
+    /** The head canvas's pixels: how many are opaque, and where across the visor the eye lights are. */
     const snapshot = () =>
       page.locator('[data-flow-head]').evaluate((c) => {
         const canvas = c as HTMLCanvasElement;
+        const rig = JSON.parse(canvas.closest<HTMLElement>('[data-flow]')!.dataset['headRig']!) as {
+          visor: [number, number, number];
+        };
+        const [centre, , reach] = rig.visor;
         const data = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data;
         let opaque = 0;
         let lightX = 0;
         let light = 0;
         for (let i = 0; i < data.length; i += 4) {
           if (data[i + 3]! > 200) opaque += 1;
-          // The eye lights: bright, blue-white pixels in the visor's band.
-          const y = Math.floor(i / 4 / canvas.width);
-          if (y > canvas.height * 0.35 && y < canvas.height * 0.65 && data[i + 2]! > 200 && data[i]! > 110) {
-            lightX += (i / 4) % canvas.width;
+          // The eye lights' cores: bright blue-white pixels on the visor, at the lights' height.
+          const x = ((i / 4) % canvas.width) / canvas.width;
+          const y = Math.floor(i / 4 / canvas.width) / canvas.height;
+          const onVisor = Math.abs(x - centre) < reach && y > 0.35 && y < 0.65;
+          if (onVisor && data[i]! > 100 && data[i + 1]! > 150 && data[i + 2]! > 185 && data[i + 2]! - data[i]! > 40) {
+            lightX += x;
             light += 1;
           }
         }
-        return { opaque, eyesX: light ? lightX / light / canvas.width : 0 };
+        return { opaque, centre, eyesX: light ? lightX / light : 0 };
       });
-    expect((await snapshot()).opaque).toBeGreaterThan(1000);
+    const { opaque, centre } = await snapshot();
+    expect(opaque).toBeGreaterThan(1000);
 
-    // Talking to the LLM (on the right), the eye lights have glided right across the visor...
-    await expect(page.locator('[data-flow-label]')).toHaveText('tool call: retrieve', { timeout: 10000 });
+    // While the LLM, RAG and TOOLS (all on the right) are involved, the eye lights glide right of the visor's middle...
+    await expect(page.locator('[data-flow-label]')).toHaveText('prompt + tools', { timeout: 20000 });
     await expect(flow).toHaveAttribute('data-head', 'llm');
-    const atLlm = await snapshot();
-    expect(atLlm.eyesX).toBeGreaterThan(0);
+    await expect.poll(async () => (await snapshot()).eyesX, { timeout: 10000 }).toBeGreaterThan(centre + 0.04);
+    // ...and left of it for the GUARDRAILS and then the USER (both on the left).
     await expect(page.locator('[data-flow-label]')).toHaveText('policy check', { timeout: 30000 });
     await expect(flow).toHaveAttribute('data-head', 'guardrails');
-    // ...and back with the USER they glide left again, to their place in the photo.
-    await expect(page.locator('[data-flow-label]')).toHaveText('response', { timeout: 10000 });
-    await expect(flow).toHaveAttribute('data-head', 'user');
-    await expect.poll(async () => (await snapshot()).eyesX).toBeLessThan(atLlm.eyesX - 0.05);
+    await expect.poll(async () => (await snapshot()).eyesX).toBeLessThan(centre - 0.02);
+    // Once the request is answered, the robot faces front again.
+    await expect(flow).toHaveAttribute('data-head', 'front', { timeout: 10000 });
 
     // The layers are fetched only after the page has loaded (they never compete with the LCP).
     const timing = await page.evaluate(() => {
@@ -272,7 +278,7 @@ test.describe('reduced motion', () => {
     expect(parseFloat(state.dash)).toBe(0);
     expect(Number(state.level)).toBe(1);
     expect(state.bob).toBe('none');
-    // Static head (facing the USER, from the photo); the head layers are never fetched.
+    // Static head (facing front, from the photo); the head layers are never fetched.
     await expect(page.locator('[data-flow]')).not.toHaveAttribute('data-head-live', '');
     const layers = await page.evaluate(() =>
       performance.getEntriesByType('resource').some((r) => r.name.includes('robot-head-layers')),
