@@ -364,6 +364,10 @@ All token changes are minimal and documented in `tokens.css`:
 
 ## Tooling notes
 
+- **Firefox headline size (Oct 2026).** At 1280×720, Firefox (CI only) renders the hero headline at 154px where
+  Chromium and WebKit render 155.9px (`min(231u, 44cqi)`). 154 is exactly 44cqi of a 350px column although the
+  column lays out 507px wide, so Firefox appears to resolve the container-unit cap against the column's
+  provisional grid width. The difference is 1.2% with no visible effect, so the e2e check allows 2%.
 - **Local test environment.** On the development machine, Windows application control blocks the downloaded
   Firefox and full Chrome binaries ("Permission denied"), so locally:
   - Firefox runs only in CI (Linux).
