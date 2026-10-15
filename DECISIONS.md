@@ -172,34 +172,33 @@ Owner-facing items are also tracked in [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md
     the body) are treated as background too, and the alpha ramp starts just above each image's background level.
   - **Poses tried and dropped.** Per-step full-body poses, crossfaded, were built first; the owner found the
     transitions not smooth. Separate AI generations never match exactly, so swapping whole frames flickers.
-  - **Head turn (owner request: face the user, then front, then right, and back; smooth).** Only the head moves,
-    so the body stays pixel-identical:
-    - Five head angles were generated from the body as reference: 3/4 left, slight left, front, slight right
-      (A-rest itself) and 3/4 right. Exact-angle prompts were unreliable; describing what is visible worked.
-    - `scripts/build-robot-head.mjs` puts each head on the one body above the collar (40-row blend), so every
-      composite is identical below the seam, then cuts them out to one shared box.
-    - `scripts/tween-head.py` (OpenCV, build time only) morphs in-betweens along a smoothed optical flow, so the
-      visor slides instead of crossfading: 48 frames in all, at most ~2.5 px of motion per frame.
-      The eyes travel further than the smoothed flow suggests, which showed as a double pair of eyes
-      mid-turn; the eye lights are recorded per frame (`scripts/head-landmarks.json`) and the flow is
-      steered so each eye slides to its partner. (Generating an extra in-between angle was tried; the
-      model kept turning the head to the right instead.)
-      A plain 50/50 blend still showed both keys' visor edges and sheen as faint streaks, so the
-      in-betweens use a sharpened dissolve: the shapes warp continuously, but each frame takes nearly
-      all of its pixels from the nearer key, handing over within a few frames around the midpoint.
-    - The page draws the head from a 48-frame sprite (~180 KB WebP) onto a canvas, blended between adjacent
-      frames. The turn follows a critically damped spring (owner: slow and smooth): it eases in and out,
-      settles in ~2.2 s, never overshoots, and a turn that interrupts another carries on without a jerk. The
-      sprite holds only the head box (the band above the seam, cropped to the columns that change, 41% of the
-      width), which keeps the mobile home page under its 512 KB budget. While the canvas is live, exactly that
-      box is masked out of the photo (`mask-composite: exclude`).
-    - The robot faces the USER at first paint (the photo itself), turns right for the LLM, RAG and TOOLS,
-      slightly left for GUARDRAILS, and back to the USER. The sprite loads after the load event, and never under
-      reduced motion or without JS.
-  - The energy "charge" is a tint masked to an alpha-only silhouette (`pnpm images`). While the head turns on its
-    canvas, the CSS fill uses a body-only mask and the canvas draws the fill on the head itself (multiplied and
-    kept to the head's silhouette), following the same level and blue-to-green change. Under reduced motion the
-    full mask covers the static head.
+  - **The head attends without head-turn pictures (owner request, Oct 2026: "front face, then eye glide toward
+    the active participant, helmet tilts up to 2.5°, a short blink when it switches sides").**
+    - The static robot is the front-facing generation (F0) on the A-rest body (`scripts/build-robot-head.mjs
+--default 2`, 40-row blend at the collar, so the body is identical below the seam). It faces the visitor
+      at first paint, without JS, under reduced motion, and again once the answer is delivered.
+    - The page animates only that photo's head. `scripts/build-head-layers.py` cuts it into a still neck plate
+      and a helmet with the eye lights painted out (16 KB, loaded after the load event). On a canvas:
+      - the eye lights (radial glows matched to the photo's) glide toward the participant on a 1 s spring: left
+        for USER and GUARDRAILS, right for LLM, RAG and TOOLS, lower for the lower bubbles, narrowing slightly
+        near the visor's edge;
+      - the helmet follows on the 2.2 s critically damped spring, tilting at most 2.5° about the neck and
+        shifting a few px;
+      - a short blink marks a switch from one side to the other.
+    - The photo's mask hole sits 2 px inside the canvas, so their edges never meet (they showed a dark hairline
+      across the collar).
+  - **Head turns tried and dropped.** A 48-frame sprite (~175 KB) of five separately generated head angles
+    (3/4 left, slight left, front, slight right, 3/4 right), morphed in between by `scripts/tween-head.py`, gave
+    a real turn but never a smooth one. The angles disagree in detail (helmet shape, visor rim, ear ring), so
+    blended frames showed two helmets and hard handovers read as pictures changing (owner: "easily person can
+    feel pictures are changing"). One continuous Veo 3.1 image-to-video clip of the head turning was also
+    built and reviewed; it was smooth, but restyled the eyes and ear ring. The owner chose the front face with
+    subtle motion. `build-robot-head.mjs` and `tween-head.py` remain as the provenance pipeline for
+    `robot-agent.png`; the sprite they also write is unused.
+  - The energy "charge" is a tint masked to an alpha-only silhouette (`pnpm images`). Once the head canvas is
+    live, the body's CSS fill clears only the head box and the canvas fills the head, cross-fading over 10 art
+    px with the CSS fill's own gradients, so the shoulders above the collar fill and no edge shows (they used to
+    stay unfilled). Under reduced motion the full mask covers the static head.
   - Gemini output carries Google's invisible SynthID watermark. Commercial use is governed by Google Cloud's
     generative AI terms (launch item 13).
 - **Trust badge and certification (owner request).** "Trusted by innovators worldwide" is restored in the design's
@@ -280,9 +279,9 @@ All token changes are minimal and documented in `tokens.css`:
   (`media="(width >= 64rem)"`). On phones the LCP is the headline, so the `<img>` itself has default priority:
   at high priority the 46 KB image raced the render-blocking stylesheet in the first round trips and pushed
   simulated mobile LCP from ~1.85s to ~2.11s, depending on how Chrome happened to queue the requests.
-  Lighthouse judges resolution against the robot's untransformed 343px CSS width inside the scaled stage, so `sizes` steers phones to the 540 file, encoded at
-  quality 56 (~43 KB) so the headline's LCP stays under 2 s. The head-turn sprite
-  loads only after the load event.
+  Lighthouse judges resolution against the robot's untransformed 343px CSS width inside the scaled stage, so
+  `sizes` steers phones to the 540 file, encoded at quality 56 (~43 KB) so the headline's LCP stays under 2 s.
+  The head layers load only after the load event.
 - **Hero animation.** Keyframes are ported verbatim, plus these optimisations:
   - Connector blur filters use the default object-bounding-box filter region instead of the design's full
     1600×1067 region.
@@ -325,11 +324,10 @@ All token changes are minimal and documented in `tokens.css`:
     absolutely positioned, so insertion causes no layout shift.
   - **Only one charge mask is fetched.** The charge layer stays `display: none` (so its mask is not requested)
     until `scripts/hero.ts` needs it, i.e. when the first hop starts. By then the head canvas is normally live,
-    so only the body mask loads. The whole-robot mask loads only if the sprite is not ready yet, or under
+    so only the body mask loads. The whole-robot mask loads only if the head layers are not ready yet, or under
     reduced motion. This saves 16 KB. Level 0 is invisible, so showing the layer later looks identical.
 
-  The head sprite (175 KB) is unchanged. Re-encoding it was not needed, and head-turn artefacts are
-  owner-sensitive.
+  The 175 KB head sprite was later replaced by 16 KB of head layers (see "Hero robot"), a further saving.
 
 - **Lighthouse CI, local, mobile, simulated throttling** (median of 3):
 

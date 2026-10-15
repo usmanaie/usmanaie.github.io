@@ -111,7 +111,8 @@ three files:
 - the hop sequence: `hero` in `src/content/site.ts`
 - node geometry and spoke paths: `src/lib/hero-flow.ts`
 - runtime: `src/scripts/hero.ts`, which handles the canvas head (eye lights and a slight helmet tilt on springs,
-  no head-turn pictures), the charge mask, and `spreadSpoke`, which moves the right-hand participants out when the stage is wider than its design width
+  no head-turn pictures), the charge mask, and `spreadSpoke`, which moves the right-hand participants out when
+  the stage is wider than its design width
 
 Unit and e2e tests enforce the flow's invariants: every hop goes through the agent, and RAG or tools run only
 right after an LLM request. Animations pause when off-screen or when the tab is hidden. Reduced motion shows a
