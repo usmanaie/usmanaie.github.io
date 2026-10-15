@@ -165,11 +165,12 @@ artifact, review the screenshots, and commit them to `tests/visual/__screenshots
 
 ## Asset provenance
 
-- **Hero robot** (`src/assets/hero/robot-agent.png`) and its head-turn frames (`robot-head-sprite.webp`) were
-  generated with Gemini 3 Pro Image on Vertex AI (`python scripts/generate-robot-art.py --vertex-project <id>`).
-  Rebuild them with
+- **Hero robot** (`src/assets/hero/robot-agent.png`) was generated with Gemini 3 Pro Image on Vertex AI
+  (`python scripts/generate-robot-art.py --vertex-project <id>`). Rebuild it with
   `node scripts/build-robot-head.mjs <A-rest.png> <head-L20.png> <head-LH2.png> <head-F0.png> <A-rest.png> <head-RH.png>`
-  (needs Python with `opencv-python-headless` and `numpy` for the in-betweens), then `pnpm images`. The prompts in the script are the provenance record; commercial-use sign-off is launch
+  (needs Python with `opencv-python-headless` and `numpy`; it also writes a head-turn sprite the page no longer
+  uses, so delete `robot-head-sprite.webp`), then `python scripts/build-head-layers.py` (the head layers the page
+  animates, cut from `robot-agent.png`; no new art) and `pnpm images`. The prompts in the script are the provenance record; commercial-use sign-off is launch
   checklist item 13.
 - **Certification seal** in the hero is original vector artwork.
 - **Certifications section:** the Professional Cloud Developer badge and the skill/completion badge images

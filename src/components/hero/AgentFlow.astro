@@ -1,9 +1,9 @@
 ---
 import { Picture } from 'astro:assets';
 
-import headSprite from '../../assets/hero/robot-head-sprite.webp';
+import headLayers from '../../assets/hero/robot-head-layers.webp';
 import { hero } from '../../content/site';
-import { AGENT_CORE, flowNodes, HEAD, hops, LOOK_AT, NODE_RADIUS, spokes, STAGE } from '../../lib/hero-flow';
+import { AGENT_CORE, flowNodes, GAZE, GAZE_REST, HEAD, hops, NODE_RADIUS, spokes, STAGE } from '../../lib/hero-flow';
 import { robotImage } from '../../lib/hero-image';
 
 /**
@@ -15,8 +15,9 @@ import { robotImage } from '../../lib/hero-image';
  * styles) and is aria-hidden; screen readers get every hop as an ordered list.
  * Static HTML shows all participants and connections (no-JS, reduced motion, first paint);
  * scripts/hero.ts then plays the request hop by hop, the token carrying each hop's label, and
- * turns the robot's head toward the participant it is talking to (a sprite of head frames,
- * loaded only after the page has loaded; first paint shows the head facing the USER).
+ * the robot attends to the participant it is talking to: its eye lights glide across the visor and
+ * the helmet tilts slightly (two layers cut from the photo, loaded only after the page has loaded;
+ * first paint shows the photo, which faces the USER).
  */
 const ICONS: Record<string, string[]> = {
   user: ['M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z', 'M4.5 20c.8-3.6 3.8-6 7.5-6s6.7 2.4 7.5 6'],
@@ -40,18 +41,12 @@ const ICONS: Record<string, string[]> = {
   guardrails: ['M12 3 4.5 6v5.5c0 4.6 3.2 8.6 7.5 9.5 4.3-.9 7.5-4.9 7.5-9.5V6L12 3Z', 'm8.8 12.2 2.3 2.3 4.4-4.6'],
 };
 
+const headRig = JSON.stringify({ ...HEAD.rig, gaze: GAZE, rest: GAZE_REST });
 const R = NODE_RADIUS;
 /** Chip centre sits on the bubble's edge (upper-left, 45°), so it overlaps the bubble by half. */
 const chipOffset = Math.round(R * Math.SQRT1_2);
 const hopData = JSON.stringify(
-  hops.map(({ spoke, direction, to, label, approves }) => ({
-    spoke,
-    direction,
-    to,
-    label,
-    approves,
-    look: LOOK_AT[spoke],
-  })),
+  hops.map(({ spoke, direction, to, label, approves }) => ({ spoke, direction, to, label, approves })),
 );
 ---
 
@@ -59,9 +54,8 @@ const hopData = JSON.stringify(
   class="flow"
   data-flow
   data-hops={hopData}
-  data-head-sprite={headSprite.src}
-  data-head-frames={HEAD.frames}
-  data-head-default={HEAD.defaultFrame}
+  data-head-layers={headLayers.src}
+  data-head-rig={headRig}
   data-head-seam={HEAD.seam}
 >
   <ol class="visually-hidden" aria-label={hero.flowLabel}>
@@ -289,9 +283,10 @@ const hopData = JSON.stringify(
   }
 
   /*
-   * The turning head: a canvas over the head box (HEAD.box in hero-flow.ts: the band above the
-   * collar, cropped to the columns that change; the unit test guards these numbers). Once it
-   * is drawing, that box is masked out of the photo.
+   * The attending head: a canvas over the head box (HEAD.box in hero-flow.ts: the band above the
+   * collar, cropped to the head's columns; the unit test guards these numbers). Once it is drawing,
+   * the photo is masked out under it (HEAD.hole: 2 px inside the box at the sides and bottom, where the
+   * canvas draws the same neck and collar, so no hairline shows at the join).
    */
   .flow__head {
     position: absolute;
@@ -310,10 +305,10 @@ const hopData = JSON.stringify(
     mask-image: linear-gradient(#000 0 0), linear-gradient(#000 0 0);
     mask-size:
       100% 100%,
-      141.87px 171.83px;
+      137.87px 169.83px;
     mask-position:
       0 0,
-      97.64px 0;
+      99.64px 0;
     mask-repeat: no-repeat;
     mask-composite: exclude;
   }

@@ -1,3 +1,4 @@
+import headLayers from '../assets/hero/robot-head-layers.json';
 import robotHead from '../assets/hero/robot-head.json';
 import { type FlowNodeId, hero } from '../content/site';
 
@@ -37,16 +38,15 @@ export const ROBOT = {
 const CORE = { x: 0.584, y: 0.376 };
 
 /**
- * The robot's turning head: frames in the sprite run from facing the viewer's left (the USER
- * bubble) through front to the right. `keys` are the frame indices of the generated angles
- * (3/4 left, slight left, front, slight right, 3/4 right); the rest are morphed in-betweens.
- * BOX is where the sprite is drawn (and the photo masked), in px within the robot box: the
- * band above the collar, cropped to the columns that change between frames.
+ * The robot's head: one picture (the photo's own), which scripts/hero.ts animates on a canvas so the
+ * robot attends to each participant. BOX is that canvas, in px within the robot box: the band above the
+ * collar (`seam`), cropped to the head's columns. The photo is masked there once the canvas is live.
+ * The canvas draws the layers from scripts/build-head-layers.py (a still neck plate, and the helmet
+ * with the eye lights painted out); `rig` places them, as fractions of the box.
  */
 const round2 = (v: number) => Math.round(v * 100) / 100;
+const HOLE_INSET = 2;
 export const HEAD = {
-  frames: robotHead.frames,
-  defaultFrame: robotHead.default,
   /** The head band's height as a fraction of the robot box (the charge fill reaches it last). */
   seam: robotHead.seam,
   box: {
@@ -54,16 +54,23 @@ export const HEAD = {
     width: round2(robotHead.headWidth * ROBOT.width),
     height: round2(robotHead.seam * ROBOT.height),
   },
+  /**
+   * The hole masked out of the photo: the box less HOLE_INSET px at the sides and bottom, so the canvas
+   * always overlaps the photo there (two anti-aliased edges meeting showed as a dark hairline).
+   */
+  hole: {
+    x: round2(robotHead.headLeft * ROBOT.width + HOLE_INSET),
+    width: round2(robotHead.headWidth * ROBOT.width - 2 * HOLE_INSET),
+    height: round2(robotHead.seam * ROBOT.height - HOLE_INSET),
+  },
+  rig: headLayers,
 } as const;
 
-const [LEFT = 0, SLIGHT_LEFT = 0, , , RIGHT = 0] = robotHead.keys;
-/** Which way the robot looks while talking to each participant (a frame index). */
-export const LOOK_AT: Record<Exclude<FlowNodeId, 'agent'>, number> = {
-  user: LEFT,
-  guardrails: SLIGHT_LEFT,
-  llm: RIGHT,
-  rag: RIGHT,
-  tools: RIGHT,
+/** Midway between the two eye lights, in the stage: where the robot's gaze starts. */
+const [[leftEyeX = 0, leftEyeY = 0] = [], [rightEyeX = 0, rightEyeY = 0] = []] = headLayers.eyes;
+const EYES: Point = {
+  x: ROBOT.x + HEAD.box.x + ((leftEyeX + rightEyeX) / 2) * HEAD.box.width,
+  y: ROBOT.y + ((leftEyeY + rightEyeY) / 2) * HEAD.box.height,
 };
 
 export const AGENT_CORE: Point = {
@@ -80,6 +87,27 @@ const POSITIONS: Record<FlowNodeId, Point> = {
   tools: { x: 662, y: 680 },
   guardrails: { x: 90, y: 500 },
 };
+
+/**
+ * Which way the robot attends to each participant: the unit vector from its eyes to the bubble
+ * (x right, y down). The photo already faces the USER, so that is the rest pose; the others are
+ * reached by gliding the eye lights and tilting the helmet (scripts/hero.ts).
+ */
+function gazeAt(to: Point): readonly [number, number] {
+  const dx = to.x - EYES.x;
+  const dy = to.y - EYES.y;
+  const length = Math.hypot(dx, dy);
+  return [Math.round((dx / length) * 1000) / 1000, Math.round((dy / length) * 1000) / 1000];
+}
+export const GAZE: Record<Exclude<FlowNodeId, 'agent'>, readonly [number, number]> = {
+  user: gazeAt(POSITIONS.user),
+  llm: gazeAt(POSITIONS.llm),
+  rag: gazeAt(POSITIONS.rag),
+  tools: gazeAt(POSITIONS.tools),
+  guardrails: gazeAt(POSITIONS.guardrails),
+};
+/** The participant the photo's head already faces: no motion is needed to attend to it. */
+export const GAZE_REST: keyof typeof GAZE = 'user';
 
 /** How far each spoke bows away from the straight line (fraction of its length). */
 const BOW: Record<Exclude<FlowNodeId, 'agent'>, number> = {

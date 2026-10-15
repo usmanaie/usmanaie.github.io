@@ -110,8 +110,8 @@ three files:
 
 - the hop sequence: `hero` in `src/content/site.ts`
 - node geometry and spoke paths: `src/lib/hero-flow.ts`
-- runtime: `src/scripts/hero.ts`, which handles the canvas head-turn sprite, the spring easing, the charge mask,
-  and `spreadSpoke`, which moves the right-hand participants out when the stage is wider than its design width
+- runtime: `src/scripts/hero.ts`, which handles the canvas head (eye lights and a slight helmet tilt on springs,
+  no head-turn pictures), the charge mask, and `spreadSpoke`, which moves the right-hand participants out when the stage is wider than its design width
 
 Unit and e2e tests enforce the flow's invariants: every hop goes through the agent, and RAG or tools run only
 right after an LLM request. Animations pause when off-screen or when the tab is hidden. Reduced motion shows a
@@ -144,7 +144,8 @@ lists keep `role="list"` on purpose, for Safari and VoiceOver.
 - `pnpm design:render <dir>` for references from the design export. It also overwrites three project PNGs
   (`agentic-ai`, `telehealth`, `ai-governance`) with the design's originals, so re-run
   `render-project-art.mjs` afterwards.
-- `scripts/build-robot-head.mjs` for the hero robot
+- `scripts/build-robot-head.mjs` for the hero robot, then `python scripts/build-head-layers.py` for the head
+  layers cut from it (`robot-head-layers.webp/.json`)
 
 The Experience and Contact agent portraits are the exception: `src/pages/art/[file].ts` builds them from
 `src/lib/agent-portrait.ts` on every build, so there is no output file to commit.

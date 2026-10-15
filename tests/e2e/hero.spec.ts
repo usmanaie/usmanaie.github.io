@@ -79,46 +79,63 @@ test.describe('hero', () => {
     await expect(label).toHaveText('retrieve', { timeout: 5000 });
   });
 
-  test('the robot turns its head toward each participant, the sprite loading after first paint', async ({
+  test('the robot attends to each participant with its one picture, the layers loading after first paint', async ({
     page,
     request,
   }) => {
-    // First paint: the head faces the USER in the photo; the head sprite is not requested by HTML.
+    // First paint: the photo, facing the USER. No head-turn pictures exist, and HTML requests no head layers.
     const html = await (await request.get('/')).text();
-    expect(html).not.toMatch(/(src|srcset|href)="[^"]*robot-head-sprite/);
+    expect(html).not.toMatch(/robot-head-sprite/);
+    expect(html).not.toMatch(/(src|srcset|href)="[^"]*robot-head-layers/);
 
     await page.goto('/');
     const flow = page.locator('[data-flow]');
-    const frames = Number(await flow.getAttribute('data-head-frames'));
-    expect(frames).toBeGreaterThan(20);
     await expect(flow).toHaveAttribute('data-head-live', '');
-    // The photo's own head is masked out; the canvas draws the turning head.
+    // The photo's own head is masked out; the canvas draws the head.
     const mask = await page.locator('.flow__robot-img').evaluate((el) => getComputedStyle(el).maskImage);
     expect(mask).toContain('linear-gradient');
     // The body's charge fill stops at the collar; the canvas fills the head itself.
     const chargeMask = await page.locator('.flow__charge').evaluate((el) => getComputedStyle(el).maskImage);
     expect(chargeMask).toContain('robot-agent-mask-body');
-    const drawn = await page.locator('[data-flow-head]').evaluate((c) => {
-      const canvas = c as HTMLCanvasElement;
-      const data = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data;
-      let opaque = 0;
-      for (let i = 3; i < data.length; i += 4) if (data[i]! > 200) opaque += 1;
-      return opaque;
-    });
-    expect(drawn).toBeGreaterThan(1000);
 
-    await expect(page.locator('[data-flow-label]')).toHaveText('prompt + tools', { timeout: 5000 });
-    await expect(flow).toHaveAttribute('data-head', String(frames - 1));
+    /** The head canvas's pixels: how many are opaque, and a coarse signature of where the light is. */
+    const snapshot = () =>
+      page.locator('[data-flow-head]').evaluate((c) => {
+        const canvas = c as HTMLCanvasElement;
+        const data = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data;
+        let opaque = 0;
+        let lightX = 0;
+        let light = 0;
+        for (let i = 0; i < data.length; i += 4) {
+          if (data[i + 3]! > 200) opaque += 1;
+          // The eye lights: bright, blue-white pixels in the visor's band.
+          const y = Math.floor(i / 4 / canvas.width);
+          if (y > canvas.height * 0.35 && y < canvas.height * 0.65 && data[i + 2]! > 200 && data[i]! > 110) {
+            lightX += (i / 4) % canvas.width;
+            light += 1;
+          }
+        }
+        return { opaque, eyesX: light ? lightX / light / canvas.width : 0 };
+      });
+    expect((await snapshot()).opaque).toBeGreaterThan(1000);
+
+    // Talking to the LLM (on the right), the eye lights have glided right across the visor...
+    await expect(page.locator('[data-flow-label]')).toHaveText('tool call: retrieve', { timeout: 10000 });
+    await expect(flow).toHaveAttribute('data-head', 'llm');
+    const atLlm = await snapshot();
+    expect(atLlm.eyesX).toBeGreaterThan(0);
     await expect(page.locator('[data-flow-label]')).toHaveText('policy check', { timeout: 30000 });
-    const towardGuardrails = Number(await flow.getAttribute('data-head'));
-    expect(towardGuardrails).toBeGreaterThan(0);
-    expect(towardGuardrails).toBeLessThan(frames / 2);
+    await expect(flow).toHaveAttribute('data-head', 'guardrails');
+    // ...and back with the USER they glide left again, to their place in the photo.
+    await expect(page.locator('[data-flow-label]')).toHaveText('response', { timeout: 10000 });
+    await expect(flow).toHaveAttribute('data-head', 'user');
+    await expect.poll(async () => (await snapshot()).eyesX).toBeLessThan(atLlm.eyesX - 0.05);
 
-    // The sprite is fetched only after the page has loaded (it never competes with the LCP).
+    // The layers are fetched only after the page has loaded (they never compete with the LCP).
     const timing = await page.evaluate(() => {
       const nav = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
-      const sprite = performance.getEntriesByType('resource').find((r) => r.name.includes('robot-head-sprite'));
-      return { loadEnd: nav.loadEventEnd, start: sprite?.startTime ?? -1 };
+      const layers = performance.getEntriesByType('resource').find((r) => r.name.includes('robot-head-layers'));
+      return { loadEnd: nav.loadEventEnd, start: layers?.startTime ?? -1 };
     });
     expect(timing.start).toBeGreaterThanOrEqual(timing.loadEnd);
   });
@@ -255,12 +272,12 @@ test.describe('reduced motion', () => {
     expect(parseFloat(state.dash)).toBe(0);
     expect(Number(state.level)).toBe(1);
     expect(state.bob).toBe('none');
-    // Static head (facing the USER, from the photo); the head sprite is never fetched.
+    // Static head (facing the USER, from the photo); the head layers are never fetched.
     await expect(page.locator('[data-flow]')).not.toHaveAttribute('data-head-live', '');
-    const sprite = await page.evaluate(() =>
-      performance.getEntriesByType('resource').some((r) => r.name.includes('robot-head-sprite')),
+    const layers = await page.evaluate(() =>
+      performance.getEntriesByType('resource').some((r) => r.name.includes('robot-head-layers')),
     );
-    expect(sprite).toBe(false);
+    expect(layers).toBe(false);
   });
 
   test('anchor navigation jumps instantly', async ({ page }) => {

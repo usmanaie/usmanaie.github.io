@@ -3,14 +3,33 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 import { hero } from '../../src/content/site';
-import { AGENT_CORE, flowNodes, HEAD, hops, LOOK_AT, NODE_RADIUS, ROBOT, spokes, STAGE } from '../../src/lib/hero-flow';
 import {
+  AGENT_CORE,
+  flowNodes,
+  GAZE,
+  GAZE_REST,
+  HEAD,
+  hops,
+  NODE_RADIUS,
+  ROBOT,
+  spokes,
+  STAGE,
+} from '../../src/lib/hero-flow';
+import {
+  BLINK_MS,
+  blinkOpen,
   easeInOut,
+  EYE_GLIDE_MS,
+  eyeShift,
+  glowStops,
   HEAD_TURN_MS,
   headFillTop,
+  headPose,
   headTintColor,
   levelFor,
   parseHops,
+  parseRig,
+  roundness,
   spreadSpoke,
   springStep,
 } from '../../src/scripts/hero';
@@ -33,17 +52,43 @@ describe('hero flow layout', () => {
     const px = (prop: string) => Number(new RegExp(String.raw`\b${prop}: ([\d.]+)px`).exec(rule)?.[1]);
     const { x, width, height } = HEAD.box;
     expect({ x: px('left'), width: px('width'), height: px('height') }).toEqual({ x, width, height });
-    expect(css).toMatch(new RegExp(String.raw`mask-size:\s*100% 100%,\s*${width}px ${height}px;`));
-    expect(css).toMatch(new RegExp(String.raw`mask-position:\s*0 0,\s*${x}px 0;`));
+    const hole = HEAD.hole;
+    expect(css).toMatch(new RegExp(String.raw`mask-size:\s*100% 100%,\s*${hole.width}px ${hole.height}px;`));
+    expect(css).toMatch(new RegExp(String.raw`mask-position:\s*0 0,\s*${hole.x}px 0;`));
+    // The hole sits inside the canvas, flush with its top (the helmet's background) only.
+    expect(hole.x).toBeGreaterThan(x);
+    expect(hole.x + hole.width).toBeLessThan(x + width);
+    expect(hole.height).toBeLessThan(height);
   });
 
-  it('turns the head left for the USER (the static default) and right for the LLM and tools', () => {
-    expect(LOOK_AT.user).toBe(HEAD.defaultFrame);
-    expect(LOOK_AT.guardrails).toBeGreaterThan(LOOK_AT.user);
-    expect(LOOK_AT.guardrails).toBeLessThan(LOOK_AT.llm);
-    expect(LOOK_AT.llm).toBe(HEAD.frames - 1);
-    expect(LOOK_AT.rag).toBe(LOOK_AT.llm);
-    expect(LOOK_AT.tools).toBe(LOOK_AT.llm);
+  it('attends left to the USER (the photo itself, at rest) and right to the LLM, RAG and tools', () => {
+    expect(GAZE_REST).toBe('user');
+    for (const [x, y] of Object.values(GAZE)) expect(Math.hypot(x, y)).toBeCloseTo(1, 2);
+    expect(GAZE.user[0]).toBeLessThan(-0.9);
+    // GUARDRAILS: slightly left of the USER's direction, and lower.
+    expect(GAZE.guardrails[0]).toBeGreaterThan(GAZE.user[0]);
+    expect(GAZE.guardrails[0]).toBeLessThan(0);
+    expect(GAZE.guardrails[1]).toBeGreaterThan(GAZE.user[1]);
+    for (const id of ['llm', 'rag', 'tools'] as const) expect(GAZE[id][0]).toBeGreaterThan(0.4);
+    // Down the right-hand column: LLM, then RAG, then TOOLS.
+    expect(GAZE.llm[1]).toBeLessThan(GAZE.rag[1]);
+    expect(GAZE.rag[1]).toBeLessThan(GAZE.tools[1]);
+  });
+
+  it('rigs the head from the photo: the eye lights on the visor, the tilt pivot at the neck', () => {
+    const { pivot, eyes, glow, foreshortened } = HEAD.rig;
+    expect(eyes).toHaveLength(2);
+    for (const [x, y] of eyes) {
+      expect(x).toBeGreaterThan(0);
+      expect(x).toBeLessThan(0.5);
+      expect(y).toBeGreaterThan(0.4);
+      expect(y).toBeLessThan(0.6);
+    }
+    expect(pivot[1]).toBeGreaterThan(0.85);
+    expect(glow).toBeLessThan(0.15);
+    // The left light is the foreshortened one; the right one is fully round.
+    expect(foreshortened[0]).toBeCloseTo(eyes[0]?.[0] ?? 0, 4);
+    expect(foreshortened[1]).toBeLessThan(eyes[1]?.[0] ?? 0);
   });
 
   it('keeps every bubble (nearly) inside the stage and clear of the robot', () => {
@@ -102,6 +147,56 @@ describe('controller helpers', () => {
     expect(headTintColor(1)).toBe('rgb(120 240 170 / 0.6)');
   });
 
+  it('leaves the photo exactly as it is at rest (the first paint, no-JS and reduced motion)', () => {
+    const rest = GAZE[GAZE_REST];
+    expect(headPose(rest, rest)).toEqual({ angle: 0, dx: 0, dy: 0 });
+    expect(eyeShift(rest, rest)).toEqual([0, 0]);
+  });
+
+  it('moves the head subtly: the helmet tilts under 3 degrees, the eyes stay on the visor', () => {
+    const rest = GAZE[GAZE_REST];
+    const deg = (rad: number) => (rad * 180) / Math.PI;
+    for (const gaze of Object.values(GAZE)) {
+      const pose = headPose(gaze, rest);
+      expect(deg(pose.angle)).toBeGreaterThanOrEqual(0);
+      expect(deg(pose.angle)).toBeLessThan(3);
+      expect(Math.abs(pose.dx)).toBeLessThan(0.02);
+      expect(Math.abs(pose.dy)).toBeLessThan(0.02);
+      const [ex, ey] = eyeShift(gaze, rest);
+      expect(ex).toBeGreaterThanOrEqual(0);
+      expect(ex).toBeLessThan(0.14);
+      expect(Math.abs(ey)).toBeLessThan(0.05);
+    }
+    // To the right: the eyes glide right and the helmet leans that way; to the tools, the eyes drop too.
+    expect(eyeShift(GAZE.llm, rest)[0]).toBeGreaterThan(0.1);
+    expect(eyeShift(GAZE.tools, rest)[1]).toBeGreaterThan(eyeShift(GAZE.llm, rest)[1]);
+    expect(headPose(GAZE.llm, rest).angle).toBeGreaterThan(headPose(GAZE.guardrails, rest).angle);
+  });
+
+  it('blinks smoothly: one dip, open at both ends, never a jump', () => {
+    expect(blinkOpen(-1)).toBe(1);
+    expect(blinkOpen(0)).toBe(1);
+    expect(blinkOpen(BLINK_MS)).toBe(1);
+    expect(blinkOpen(BLINK_MS / 2)).toBeCloseTo(0.15);
+    let prev = 1;
+    for (let t = 0; t <= BLINK_MS; t += 1000 / 120) {
+      expect(Math.abs(blinkOpen(t) - prev)).toBeLessThan(0.08);
+      prev = blinkOpen(t);
+    }
+  });
+
+  it('glows like the photo: narrow on the reflection, round on the dark glass, fading to nothing', () => {
+    expect(roundness(0.1, 0.12, 0.28)).toBe(0);
+    expect(roundness(0.2, 0.12, 0.28)).toBeCloseTo(0.5);
+    expect(roundness(0.4, 0.12, 0.28)).toBe(1);
+    for (const round of [0, 0.5, 1]) {
+      const stops = glowStops(round);
+      expect(stops[0]?.[0]).toBe(0);
+      expect(stops.at(-1)).toEqual([1, expect.stringMatching(/\/ 0\.000\)$/)]);
+    }
+    expect(glowStops(1)[0]?.[1]).toBe('rgb(147 215 255 / 0.765)');
+  });
+
   it('turns the head smoothly: no overshoot, ~95% of the way after HEAD_TURN_MS', () => {
     let pos = 0;
     let vel = 0;
@@ -115,10 +210,33 @@ describe('controller helpers', () => {
     expect(max).toBeLessThanOrEqual(47);
   });
 
+  it('glides the eyes on the same spring, quicker than the head, so they lead the turn', () => {
+    const omega = 4.74 / (EYE_GLIDE_MS / 1000);
+    let pos = 0;
+    let vel = 0;
+    let max = 0;
+    for (let t = 0; t < EYE_GLIDE_MS / 1000; t += 1 / 120) {
+      [pos, vel] = springStep(pos, vel, 1, 1 / 120, omega);
+      max = Math.max(max, pos);
+    }
+    expect(pos).toBeGreaterThan(0.93);
+    expect(max).toBeLessThanOrEqual(1);
+    expect(EYE_GLIDE_MS).toBeLessThan(HEAD_TURN_MS);
+  });
+
   it('parses hop data defensively', () => {
     expect(parseHops(undefined)).toEqual([]);
     expect(parseHops('not json')).toEqual([]);
     expect(parseHops('[{"spoke":"user","direction":"back","to":"agent","label":"request"}]')).toHaveLength(1);
+  });
+
+  it('parses the head rig defensively', () => {
+    const rig = { ...HEAD.rig, gaze: GAZE, rest: GAZE_REST };
+    expect(parseRig(JSON.stringify(rig))?.rest).toBe('user');
+    expect(parseRig(undefined)).toBeUndefined();
+    expect(parseRig('{')).toBeUndefined();
+    expect(parseRig(JSON.stringify({ ...rig, rest: 'nobody' }))).toBeUndefined();
+    expect(parseRig(JSON.stringify({ ...rig, eyes: undefined }))).toBeUndefined();
   });
 });
 
