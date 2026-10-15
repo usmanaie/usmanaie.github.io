@@ -58,8 +58,8 @@ CANDIDATES = {
     "colours, camera angle, scale and position in the frame, the head and visor exactly as in the "
     "reference, both feet in exactly the same place. Change only the arms: both arms hang relaxed "
     "and natural at the sides of the body, hands loose beside the thighs, nothing raised.",
-    # Head-turn keys (owner request: the robot turns its head toward each step). Only the head of
-    # each is used; scripts/build-robot-head.mjs puts it on the A-rest body and morphs in-betweens.
+    # Head angles. Only the head of each is used: scripts/build-robot-head.mjs puts it on the A-rest body.
+    # The page's robot is the front-facing one (F0); the others only size the head box it animates.
     # Exact angles were unreliable, so the prompts that worked describe what is visible.
     # head-L20 and head-F0: reference A-rest.
     "head-L20": "Recreate the reference image exactly: the same robot, identical materials, lighting, "

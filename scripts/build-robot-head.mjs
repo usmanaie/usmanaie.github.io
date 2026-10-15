@@ -1,31 +1,24 @@
 /**
- * Builds the hero robot with an animated head: one fixed body, and a head that turns smoothly
- * between the AI-generated head frames (owner request: face the user, front, then right).
+ * Builds the hero robot: one fixed body with the front-facing head, plus the head box the page animates.
  *
- *   node scripts/build-robot-head.mjs <body.png> <head-frame.png>... [--default <i>] [--preview <out.webp>]
+ *   node scripts/build-robot-head.mjs <body.png> <head-frame.png>... [--default <i>]
  *
- * Head frames are ordered left to right (as seen by the viewer). Frame `--default` (0 unless given)
- * is the static robot (robot-agent.png: first paint, no-JS, reduced motion); the page uses the
- * front-facing one (index 2 of the README's list). Every frame is a full
- * generation of the same robot; only its head is used:
+ * Head frames are AI generations of the same robot with the head at different angles, ordered left to right
+ * (as seen by the viewer). Frame `--default` (0 unless given) becomes the static robot (robot-agent.png); the page
+ * uses the front-facing one (index 2 of the README's list). Only each frame's head is used:
  *  1. Each frame is aligned to the body by matching the torso (translation search).
- *  2. Above the collar (SEAM) the frame's head and neck replace the body's, blending into the
- *     body over FEATHER rows, so every composite is identical below the seam.
+ *  2. Above the collar (SEAM) the frame's head and neck replace the body's, blending into the body over
+ *     FEATHER rows, so every composite is identical below the seam.
  *  3. Each composite is cut out (lib/cutout.mjs) and all are trimmed to one shared box.
- *  4. scripts/tween-head.py morphs in-between frames along the optical flow between
- *     neighbouring keys, so the head turns smoothly instead of crossfading. The eye lights
- *     (scripts/head-landmarks.json) are carried to their partners explicitly.
+ *  4. The head box is every column above the seam that differs between the frames: the room a head needs to
+ *     turn. scripts/build-head-layers.py cuts the animated head layers to it, and the page masks it out of the
+ *     photo while its canvas is live.
  *
  * Outputs (src/assets/hero/):
- *   robot-agent.png         the default composite (the LCP image)
- *   robot-head-sprite.webp  the head box (the band above the seam, cropped to the columns that
- *                           change) for every frame, stacked vertically
- *   robot-head.json         frame count, the frame index of each key, the head box as fractions
- * The page swaps only that band, so the body never moves or flickers.
+ *   robot-agent.png   the default composite (the LCP image)
+ *   robot-head.json   the trimmed size, the seam and the head box, as fractions
  */
-import { spawnSync } from 'node:child_process';
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import os from 'node:os';
+import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -35,15 +28,11 @@ import { cutout, figureBox } from './lib/cutout.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
-const previewAt = args.indexOf('--preview');
-const preview = previewAt >= 0 ? args.splice(previewAt, 2)[1] : undefined;
 const defaultAt = args.indexOf('--default');
 const DEFAULT_FRAME = defaultAt >= 0 ? Number(args.splice(defaultAt, 2)[1]) : 0;
 const [bodyFile, ...frameFiles] = args;
 if (!bodyFile || frameFiles.length < 2) {
-  console.error(
-    'Usage: node scripts/build-robot-head.mjs <body.png> <head-frame.png>... [--default <i>] [--preview out.webp]',
-  );
+  console.error('Usage: node scripts/build-robot-head.mjs <body.png> <head-frame.png>... [--default <i>]');
   process.exit(1);
 }
 
@@ -59,11 +48,9 @@ const MARGIN = 24;
  * never shows (and would only add bytes to the LCP image).
  */
 const VISIBLE = 0.875;
-/** Sprite resolution relative to the cut-out (the robot is drawn ~200-240 CSS px wide). */
-const SPRITE_SCALE = 0.46;
 /**
- * A column is part of the head box when, in some frame, more than CHANGE_SHARE of its rows differ
- * from the default frame by more than CHANGE_THRESHOLD (ignores blend and background noise).
+ * A column is part of the head box when, in some frame, more than CHANGE_SHARE of its rows above the seam
+ * differ from the default frame by more than CHANGE_THRESHOLD (ignores blend and background noise).
  */
 const CHANGE_THRESHOLD = 24;
 const CHANGE_SHARE = 0.02;
@@ -158,34 +145,19 @@ const heroDir = path.join(root, 'src/assets/hero');
 await mkdir(heroDir, { recursive: true });
 await trimmed(cutouts[DEFAULT_FRAME]).png({ compressionLevel: 9 }).toFile(path.join(heroDir, 'robot-agent.png'));
 
-// Key bands (above the seam) -> in-betweens (tween-head.py) -> sprite, stacked vertically.
-// HEAD_WORK keeps the key bands and frames for inspection.
-const keepWork = process.env['HEAD_WORK'];
-const work = keepWork ?? (await mkdtemp(path.join(os.tmpdir(), 'robot-head-')));
-await mkdir(work, { recursive: true });
-await Promise.all(
-  cutouts.map(async (c, i) =>
+// Head box: the columns above the seam that differ between the frames (the shoulders in the band never move).
+const bands = await Promise.all(
+  cutouts.map(async (c) =>
     sharp(await trimmed(c).png().toBuffer())
       .extract({ left: 0, top: 0, width: trimW, height: seam })
-      .png()
-      .toFile(path.join(work, `key-${i}.png`)),
+      .ensureAlpha()
+      .raw()
+      .toBuffer(),
   ),
 );
-// Eye landmarks (scripts/head-landmarks.json, source px) -> band px, per key, for the tween.
-const landmarks = JSON.parse(await readFile(path.join(root, 'scripts/head-landmarks.json'), 'utf8'));
-const eyes = frameFiles.map((f) => (landmarks[path.basename(f)] ?? []).map(([x, y]) => [x - left, y - top]));
-await writeFile(path.join(work, 'landmarks.json'), JSON.stringify(eyes));
-const tween = spawnSync('python', [path.join(root, 'scripts/tween-head.py'), work], { stdio: 'inherit' });
-if (tween.status !== 0) throw new Error('tween-head.py failed');
-const { count, keys } = JSON.parse(await readFile(path.join(work, 'frames.json'), 'utf8'));
-const framePaths = Array.from({ length: count }, (_, i) => path.join(work, `frame-${String(i).padStart(3, '0')}.png`));
-
-// Only the columns that change between frames go into the sprite (the shoulders in the band
-// never move); the page masks exactly that box out of the photo.
-const raws = await Promise.all(framePaths.map((f) => sharp(f).ensureAlpha().raw().toBuffer()));
-const base = raws[keys[DEFAULT_FRAME]];
+const base = bands[DEFAULT_FRAME];
 const changed = new Uint32Array(trimW);
-for (const raw of raws) {
+for (const raw of bands) {
   const perColumn = new Uint32Array(trimW);
   for (let p = 0; p < raw.length / 4; p += 1) {
     const o = p * 4;
@@ -195,33 +167,13 @@ for (const raw of raws) {
   for (let x = 0; x < trimW; x += 1) changed[x] = Math.max(changed[x], perColumn[x]);
 }
 const moving = [...changed.keys()].filter((x) => changed[x] > seam * CHANGE_SHARE);
-let x0 = Math.min(...moving);
-let x1 = Math.max(...moving);
-x0 = Math.max(0, x0 - 16);
-x1 = Math.min(trimW, x1 + 17);
-const spriteW = Math.round((x1 - x0) * SPRITE_SCALE);
-const bandH = Math.round(seam * SPRITE_SCALE);
-const bands = await Promise.all(
-  framePaths.map((f) =>
-    sharp(f)
-      .extract({ left: x0, top: 0, width: x1 - x0, height: seam })
-      .resize(spriteW, bandH)
-      .png()
-      .toBuffer(),
-  ),
-);
-await sharp({
-  create: { width: spriteW, height: bandH * count, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
-})
-  .composite(bands.map((input, i) => ({ input, left: 0, top: i * bandH })))
-  .webp({ quality: 62, alphaQuality: 70, effort: 6 })
-  .toFile(path.join(heroDir, 'robot-head-sprite.webp'));
+// Margins around the moving columns. The left one is 19 px: the box the head layers and masks were cut to came
+// from the head-turn in-betweens (since removed), which reached 3 px further left than the source frames.
+const x0 = Math.max(0, Math.min(...moving) - 19);
+const x1 = Math.min(trimW, Math.max(...moving) + 17);
 
 const fraction = (v) => Math.round(v * 1e6) / 1e6;
 const meta = {
-  frames: count,
-  keys,
-  default: keys[DEFAULT_FRAME],
   seam: fraction(seam / trimH),
   headLeft: fraction(x0 / trimW),
   headWidth: fraction((x1 - x0) / trimW),
@@ -233,45 +185,4 @@ await writeFile(
   `${JSON.stringify(meta, null, 2)}
 `,
 );
-console.log(`robot-agent.png ${trimW}x${trimH}; sprite ${spriteW}x${bandH} x${count}`, meta);
-
-// Preview: the head turning left -> right -> left at the page's frame rate, over the body.
-if (preview) {
-  const crop = { left: Math.round(trimW * 0.12), top: 0, width: Math.round(trimW * 0.76), height: seam + 260 };
-  const bodyPart = await trimmed(cutouts[DEFAULT_FRAME])
-    .extract({ left: 0, top: seam, width: trimW, height: 260 })
-    .png()
-    .toBuffer();
-  const order = [
-    ...Array(15).fill(0),
-    ...framePaths.keys(),
-    ...Array(15).fill(count - 1),
-    ...[...framePaths.keys()].toReversed(),
-  ];
-  const stills = await Promise.all(
-    framePaths.map(async (f) => {
-      const full = await sharp({
-        create: { width: trimW, height: seam + 260, channels: 4, background: '#05060b' },
-      })
-        .composite([
-          { input: bodyPart, left: 0, top: seam },
-          { input: f, left: 0, top: 0 },
-        ])
-        .png()
-        .toBuffer();
-      return sharp(full)
-        .extract(crop)
-        .resize(Math.round(crop.width / 2))
-        .png()
-        .toBuffer();
-    }),
-  );
-  await sharp(
-    order.map((i) => stills[i]),
-    { join: { animated: true } },
-  )
-    .webp({ loop: 0, delay: order.map(() => 33), quality: 85 })
-    .toFile(preview);
-  console.log(`preview ${preview} (${order.length} frames)`);
-}
-if (!keepWork) await rm(work, { recursive: true, force: true });
+console.log(`robot-agent.png ${trimW}x${trimH}`, meta);
