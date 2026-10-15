@@ -3,15 +3,17 @@
     python scripts/build-head-layers.py [--preview <out.png>]
 
 Splits the head box of src/assets/hero/robot-agent.png (HEAD.box: the band above the collar seam,
-robot-head.json) into two layers that scripts/hero.ts composites on a canvas:
+robot-head.json) into layers that scripts/hero.ts composites on a canvas:
 
   helmet  the helmet alone (above its lower rim), with the two eye lights painted out of the visor,
           so the page can draw them as glows that glide toward the participant the robot attends to
   plate   what stays put: the neck and collar inside the box, with the neck continued a little way up
           under the rim, so a slightly tilted helmet never uncovers a gap
+  shadow  the photo's own drop shadow inside the head's hole (the photo's CSS shadow is masked out
+          there with its head), drawn behind the head
 
-Both come from the one existing image (no new art). Writes, in src/assets/hero/:
-  robot-head-layers.webp  the two layers stacked (helmet on top), LAYER_SCALE of the art's size
+All come from the one existing image (no new art). Writes, in src/assets/hero/:
+  robot-head-layers.webp  the three layers stacked (helmet, plate, shadow), LAYER_SCALE of the art's size
   robot-head-layers.json  their size, the tilt pivot and the eye lights, as fractions of the head box
 
 Requires opencv-python-headless and numpy (build-time only).
@@ -32,29 +34,30 @@ HERO = ROOT / "src/assets/hero"
 # photo's own srcset tops out at 720 px for the 822 px art).
 LAYER_SCALE = 0.75
 
-# The helmet's lower rim (art px, robot-agent.png): the bottom edge of the visor's frame, from the
-# helmet's left side, under the chin and up to where the shell meets the background on the right. Traced
-# from the art and kept a pixel or two low: neck that moves with the helmet is invisible, helmet left on
-# the plate is not. Left of the neck (x < 312) it runs just above the shoulder.
+# The helmet's lower rim (art px, robot-agent.png): the lower edge of the visor's frame, from the
+# helmet's left side, under the chin and up its right side to where it meets the background. Traced at
+# 8x zoom, hugging the frame: neck left on the helmet would travel with it when the head turns and show a
+# step at the neck's edge. Left of the neck (x < 307) it runs down to just above the shoulder.
 RIM = [
     (220, 388),
     (300, 388),
-    (306, 350),
-    (312, 348),
-    (320, 356),
-    (330, 363),
-    (340, 369),
-    (360, 378),
+    (307, 325),
+    (318, 333),
+    (328, 340),
+    (338, 348),
+    (348, 358),
+    (358, 368),
+    (368, 376),
     (380, 383),
     (400, 386),
     (420, 386),
-    (440, 380),
-    (460, 372),
-    (475, 368),
-    (490, 353),
-    (500, 343),
-    (505, 331),
-    (512, 319),
+    (440, 381),
+    (455, 373),
+    (468, 360),
+    (476, 352),
+    (490, 344),
+    (500, 337),
+    (512, 320),
     (520, 300),
     (600, 300),
 ]
@@ -62,6 +65,10 @@ RIM = [
 PIVOT = (406, 388)
 # How far up (art px) the plate continues the neck under the rim; more than the helmet ever lifts.
 NECK_REACH = 16
+# Rows (art px) under the traced rim that still hold the frame's anti-aliased edge. The helmet takes them
+# along (the split runs this much lower), so the plate below is pure neck: a turned helmet never uncovers a
+# second, static copy of its edge.
+RIM_EDGE = 3
 # The columns (art px) where the neck runs under the rim. Either side the helmet overhangs the
 # background and the shoulders, which must not be continued upward.
 NECK_COLUMNS = (314, 492)
@@ -77,6 +84,18 @@ GLOW = 32
 # Over this distance (art px, ~4 CSS px) the head canvas's share of the charge fill fades out toward
 # the head box's sides and bottom, and the body's CSS fill fades in (scripts/build-images.mjs).
 CHARGE_FEATHER = 10
+# The page turns the helmet (its face slides around the outline); the turn fades out over these rows
+# (art px) toward the chin, so the chin stays square on the neck.
+TURN_FADE = (300, 370)
+# The helmet tilts about the chin's corner on the side it turns away from (so that side never lifts off
+# the neck): the corners' distance (art px) from PIVOT.
+PIVOT_SWING = 80
+# The photo's CSS drop shadow (AgentFlow.astro, .flow__robot-img: offset y, blur radius in CSS px of the
+# 343 px wide robot, opacity), and the photo's hole's inset from the head box's sides and bottom
+# (HEAD.hole in hero-flow.ts), in the same px.
+CSS_SHADOW = (26, 40, 0.55)
+HOLE_INSET = 2
+ROBOT_CSS_WIDTH = 343
 # The visor (art px): its middle (between the lights), and the distances from it over which a light
 # gliding sideways narrows, as the glass curves away (from where the lights sit, to near the frame).
 VISOR = {"centre": (EYES[0]["x"] + EYES[1]["x"]) / 2, "inner": (EYES[1]["x"] - EYES[0]["x"]) / 2, "outer": 76}
@@ -101,7 +120,7 @@ def head_box(art):
 def helmet_weight(width, height):
     """1 above the rim, 0 below, over a ~2 px soft edge (art px grid)."""
     xs = np.arange(width, dtype=np.float32)
-    rim = np.interp(xs, [p[0] for p in RIM], [p[1] for p in RIM]).astype(np.float32)
+    rim = np.interp(xs, [p[0] for p in RIM], [p[1] for p in RIM]).astype(np.float32) + RIM_EDGE
     ys = np.arange(height, dtype=np.float32)[:, None]
     return np.clip((rim[None, :] - ys) / 2.0 + 0.5, 0.0, 1.0), rim
 
@@ -163,6 +182,19 @@ def main():
 
     plate = neck_plate(art, weight, rim)
 
+    # The drop shadow (blur radius = 2 sigma), black, inside the hole only.
+    css = art.shape[1] / ROBOT_CSS_WIDTH
+    offset, blur, opacity = CSS_SHADOW
+    shifted = np.zeros_like(alpha)
+    dy = round(offset * css)
+    shifted[dy:] = alpha[:-dy]
+    shade = cv2.GaussianBlur(shifted, (0, 0), blur / 2 * css) * opacity
+    inset = round(HOLE_INSET * css)
+    hole = np.zeros_like(alpha)
+    hole[: bh - inset, x0 + inset : x0 + bw - inset] = 1.0
+    shadow = np.zeros_like(art)
+    shadow[..., 3] = shade * hole
+
     def tile(layer):
         box = layer[:bh, x0 : x0 + bw].copy()
         # Premultiply before resizing so transparent pixels don't bleed their colour into edges.
@@ -173,7 +205,7 @@ def main():
         small[..., :3] = np.where(a > 1e-4, small[..., :3] / np.maximum(a, 1e-4), 0.0)
         return small
 
-    tiles = [tile(helmet), tile(plate)]
+    tiles = [tile(helmet), tile(plate), tile(shadow)]
     sheet = np.clip(np.concatenate(tiles, axis=0) * 255.0 + 0.5, 0, 255).astype(np.uint8)
     cv2.imwrite(str(HERO / "robot-head-layers.webp"), sheet, [cv2.IMWRITE_WEBP_QUALITY, 90])
 
@@ -185,7 +217,10 @@ def main():
         "eyes": [[frac(e["x"] - x0, bw), frac(e["y"], bh)] for e in EYES],
         "glow": frac(GLOW, bw),
         "chargeFeather": frac(CHARGE_FEATHER, bw),
+        "turnFade": [frac(v, bh) for v in TURN_FADE],
+        "pivotSwing": frac(PIVOT_SWING, bw),
         "visor": [frac(VISOR["centre"] - x0, bw), frac(VISOR["inner"], bw), frac(VISOR["outer"], bw)],
+        "shadow": list(CSS_SHADOW),
     }
     # Lists of numbers on one line, as the repo's formatter (prettier) writes them.
     text = re.sub(
@@ -194,7 +229,7 @@ def main():
         json.dumps(meta, indent=2),
     )
     (HERO / "robot-head-layers.json").write_text(text + "\n", newline="\n")
-    print(f"robot-head-layers.webp {tiles[0].shape[1]}x{tiles[0].shape[0]} x2", meta)
+    print(f"robot-head-layers.webp {tiles[0].shape[1]}x{tiles[0].shape[0]} x{len(tiles)}", meta)
 
     if preview:
         bg = np.zeros((bh, bw * 3, 3), np.float32) + np.array([0.16, 0.1, 0.08], np.float32)

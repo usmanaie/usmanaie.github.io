@@ -7,11 +7,11 @@ export const TIMING = { travel: 1000, dwell: 550, start: 500, hold: 2600 } as co
 /**
  * The head moves like a critically damped spring: it eases in and out, never overshoots, and a
  * new turn that interrupts one in progress carries on smoothly instead of stopping and
- * restarting. Any turn settles (95%) in about this long, in ms (owner: a slow, smooth turn).
+ * restarting. Any turn settles (95%) in about this long, in ms.
  */
-export const HEAD_TURN_MS = 2200;
+export const HEAD_TURN_MS = 1200;
 /** The eye lights lead the head: the same spring, settling in this long (ms). */
-export const EYE_GLIDE_MS = 1000;
+export const EYE_GLIDE_MS = 700;
 const omegaFor = (ms: number) => 4.74 / (ms / 1000);
 const HEAD_OMEGA = omegaFor(HEAD_TURN_MS);
 const EYE_OMEGA = omegaFor(EYE_GLIDE_MS);
@@ -34,17 +34,141 @@ export type Gaze = readonly [number, number];
 
 /**
  * How much attention moves the head, per unit of gaze away from the front (the photo's own pose; the
- * USER and the LLM are ~0.95 units to either side): the eye lights glide across the visor (head-box
- * widths), the helmet tilts about the neck joint (degrees, clockwise when looking right) and shifts a
- * little (head-box widths). Subtle on purpose: at most 2.5 degrees, a few px at the page's scale.
+ * USER and the LLM are ~0.95 units to either side). The head carries most of it: the helmet turns
+ * (`yaw`, degrees: its face slides around the outline, see turnSource), tilts toward the participant
+ * (`tilt`, degrees, clockwise when looking right) and shifts a little (`shiftX`, `shiftY`, head-box
+ * widths). The eye lights add the last part, gliding across the visor (`eyeX`, `eyeY`, head-box widths).
+ * At the USER or the LLM: a 10 degree turn, a 4 degree tilt, a 6 art px shift, a 17 art px glide.
  */
-export const POSE = { eyeX: 0.08, eyeY: 0.039, tilt: 2.6, shiftX: 0.0125, shiftY: 0.0098 } as const;
+export const POSE = { eyeX: 0.0524, eyeY: 0.026, yaw: 10.5, tilt: 4.19, shiftX: 0.0185, shiftY: 0.015 } as const;
 
-/** The helmet's tilt (radians, clockwise) and shift (head-box widths) while attending to `gaze`. */
-export function headPose(gaze: Gaze, front: Gaze): { angle: number; dx: number; dy: number } {
+/**
+ * The helmet's pose while attending to `gaze`: turn and tilt (radians, clockwise when looking right)
+ * and shift (head-box widths).
+ */
+export function headPose(gaze: Gaze, front: Gaze): { yaw: number; angle: number; dx: number; dy: number } {
   const gx = gaze[0] - front[0];
   const gy = gaze[1] - front[1];
-  return { angle: (gx * POSE.tilt * Math.PI) / 180, dx: gx * POSE.shiftX, dy: gy * POSE.shiftY };
+  const rad = Math.PI / 180;
+  return { yaw: gx * POSE.yaw * rad, angle: gx * POSE.tilt * rad, dx: gx * POSE.shiftX, dy: gy * POSE.shiftY };
+}
+
+/**
+ * Where the helmet tilts about, across the chin (head-box widths): at the chin's corner on the side it
+ * turns away from, so that side never lifts off the neck. It swings smoothly between the two corners
+ * as the tilt passes through zero (`swing`: the corners' distance from the middle).
+ */
+export function tiltPivot(angle: number, middle: number, swing: number): number {
+  return middle - Math.tanh(angle / ((0.5 * Math.PI) / 180)) * swing;
+}
+
+/**
+ * The turn, along one row of the helmet: the face slides around the outline as on a ball, by
+ * `k` (the sine of the turn) of the row's half-width at the middle and not at all at the outline, so the
+ * silhouette stays put and the side turning away narrows. For a point `u` across the row (-1 to 1 from
+ * outline to outline) after the turn, the point of the photo that lands there.
+ */
+export function turnSource(u: number, k: number): number {
+  if (Math.abs(k) < 1e-6) return u;
+  return (1 - Math.sqrt(Math.max(0, 1 - 4 * k * (u - k)))) / (2 * k);
+}
+
+/**
+ * Turns one row of RGBA pixels (packed 32-bit, as ImageData's buffer): every pixel of the row's
+ * outline (`middle` +- `half`, px) takes the photo's point that lands there (turnSource), interpolated
+ * linearly. Opaque pixels, most of the helmet, blend in 8-bit fixed point; this runs on every frame of
+ * a turn, ~1.4 ms for the whole helmet on a desktop.
+ */
+export function turnRow(
+  src: Uint32Array,
+  out: Uint32Array,
+  base: number,
+  w: number,
+  middle: number,
+  half: number,
+  k: number,
+): void {
+  const inv2k = 1 / (2 * k);
+  const end = Math.min(w, Math.ceil(middle + half));
+  for (let x = Math.max(0, Math.floor(middle - half)); x < end; x += 1) {
+    let u = (x + 0.5 - middle) / half;
+    u = u < -1 ? -1 : u > 1 ? 1 : u;
+    const d = 1 - 4 * k * (u - k);
+    let sx = middle + half * (1 - Math.sqrt(d > 0 ? d : 0)) * inv2k - 0.5;
+    sx = sx < 0 ? 0 : sx > w - 1 ? w - 1 : sx;
+    const xi = Math.floor(sx);
+    const fi = Math.floor((sx - xi) * 256);
+    const gi = 256 - fi;
+    const pa = src[base + xi] ?? 0;
+    const pb = src[base + Math.min(w - 1, xi + 1)] ?? 0;
+    if (pa >>> 24 === 255 && pb >>> 24 === 255) {
+      const rb = (((pa & 0xff00ff) * gi + (pb & 0xff00ff) * fi) >>> 8) & 0xff00ff;
+      const g = (((pa & 0xff00) * gi + (pb & 0xff00) * fi) >>> 8) & 0xff00;
+      out[base + x] = (0xff000000 | rb | g) >>> 0;
+      continue;
+    }
+    const aA = (pa >>> 24) * gi;
+    const aB = (pb >>> 24) * fi;
+    const alpha = aA + aB;
+    if (alpha === 0) {
+      out[base + x] = 0;
+      continue;
+    }
+    const channel = (shift: number) =>
+      Math.round((((pa >>> shift) & 255) * aA + ((pb >>> shift) & 255) * aB) / alpha) & 255;
+    out[base + x] = (((alpha >>> 8) << 24) | (channel(16) << 16) | (channel(8) << 8) | channel(0)) >>> 0;
+  }
+}
+
+/** Where point `u` of a row lands after the turn (the inverse of turnSource), and how wide it is there. */
+export function turnPoint(u: number, k: number): [number, number] {
+  return [u + k * (1 - u * u), 1 - 2 * k * u];
+}
+
+/**
+ * How much of the turn a row of the helmet takes (0-1, eased): all of it down to `from`, none from `to`
+ * (head-box heights). The chin stays square on the neck.
+ */
+export function turnWeight(y: number, [from, to]: readonly [number, number]): number {
+  const t = Math.min(1, Math.max(0, (to - y) / (to - from)));
+  return t * t * (3 - 2 * t);
+}
+
+/**
+ * Each row's outline in a helmet layer (`alpha`, `w` x `h`): its middle and half-width in px, smoothed
+ * across rows so the turn has no row-to-row jitter. NaN for rows the helmet doesn't reach.
+ */
+export function helmetRows(alpha: (i: number) => number, w: number, h: number): Float32Array {
+  const raw = new Float32Array(h * 2).fill(Number.NaN);
+  for (let y = 0; y < h; y += 1) {
+    let left = -1;
+    let right = -1;
+    for (let x = 0; x < w; x += 1) {
+      if (alpha(y * w + x) > 127) {
+        if (left < 0) left = x;
+        right = x + 1;
+      }
+    }
+    if (right - left > 2) [raw[y * 2], raw[y * 2 + 1]] = [left, right];
+  }
+  const rows = new Float32Array(h * 2).fill(Number.NaN);
+  for (let y = 0; y < h; y += 1) {
+    if (Number.isNaN(raw[y * 2] ?? Number.NaN)) continue;
+    let sum = 0;
+    let left = 0;
+    let right = 0;
+    for (let j = Math.max(0, y - 6); j < Math.min(h, y + 7); j += 1) {
+      const l = raw[j * 2] ?? Number.NaN;
+      if (Number.isNaN(l)) continue;
+      const weight = Math.exp(-((j - y) ** 2) / 18);
+      sum += weight;
+      left += l * weight;
+      right += (raw[j * 2 + 1] ?? 0) * weight;
+    }
+    rows[y * 2] = (left + right) / sum / 2;
+    rows[y * 2 + 1] = (right - left) / sum / 2;
+  }
+  return rows;
 }
 
 /** How far the eye lights have glided from their place in the photo (head-box widths). */
@@ -165,6 +289,10 @@ export interface HeadRig {
   visor: [number, number, number];
   /** How far (box widths) the head's share of the charge fill fades out toward the box's sides and bottom. */
   chargeFeather: number;
+  /** Rows (box heights) over which the turn fades out toward the chin (turnWeight). */
+  turnFade: [number, number];
+  /** How far (box widths) the tilt's pivot swings from the chin's middle to its corners (tiltPivot). */
+  pivotSwing: number;
   gaze: Record<string, Gaze>;
   /** The photo's own pose: facing the visitor. */
   front: Gaze;
@@ -181,6 +309,8 @@ export function parseRig(json: string | undefined): HeadRig | undefined {
       Array.isArray(rig.visor) &&
       rig.visor.length === 3 &&
       typeof rig.chargeFeather === 'number' &&
+      Array.isArray(rig.turnFade) &&
+      typeof rig.pivotSwing === 'number' &&
       typeof rig.gaze === 'object' &&
       rig.gaze !== null &&
       Array.isArray(rig.front);
@@ -224,8 +354,8 @@ export function parseHops(json: string | undefined): HopData[] {
  *    carrying that hop's label ("request", "tool call: retrieve", ...); participants appear
  *    when first reached, the spoke in use is highlighted, and the robot charges as hops complete.
  *  - The robot attends to the participant of each hop with no other picture of its head: on a
- *    canvas over the head (two layers cut from the photo, loaded on first play) its eye lights
- *    glide across the visor and the helmet tilts a few degrees, both on springs.
+ *    canvas over the head (two layers cut from the photo, loaded on first play) the helmet turns,
+ *    tilts and shifts toward it, and the eye lights glide the last part, both on springs.
  *  - Pauses while the hero is off-screen or the tab is hidden; the robot replays from the start.
  */
 export function initHero(root: Document = document): void {
@@ -296,6 +426,12 @@ export function initHero(root: Document = document): void {
   const fillCanvas = document.createElement('canvas');
   const shareCanvas = document.createElement('canvas');
   let headLayers: HTMLImageElement | undefined;
+  /** The helmet layer's pixels and outline, and the turned helmet (redrawn when the turn changes). */
+  const turnCanvas = document.createElement('canvas');
+  let helmetPixels: ImageData | undefined;
+  let turned: ImageData | undefined;
+  let rows: Float32Array = new Float32Array(0);
+  let turnedYaw = Number.NaN;
   /** Where the robot attends, and the eye lights' and the helmet's springs toward it. */
   let target: Gaze = front;
   const eyes = { x: front[0], y: front[1], vx: 0, vy: 0 };
@@ -307,9 +443,34 @@ export function initHero(root: Document = document): void {
   let tintAnim = 0;
 
   /**
-   * Draws the head: the still neck plate, the helmet tilted toward the participant, the charge fill
-   * where it has risen into the head (multiplied like the body's), then the eye lights (they glow
-   * over the fill), all kept to the head's own silhouette.
+   * The helmet turned by `yaw` (radians) on turnCanvas: every row's face slides around its outline
+   * (turnSource), resampled linearly along the row; the chin's rows turn less (turnWeight).
+   */
+  function turnHelmet(yaw: number): CanvasImageSource | undefined {
+    if (!helmetPixels || !turned || !rig) return undefined;
+    if (Math.abs(yaw) < 1e-4) return undefined;
+    // Below this change the face would move < 0.04 px: keep the last turn (the springs' long, slow tail).
+    if (Math.abs(yaw - turnedYaw) < 4e-4) return turnCanvas;
+    const { width: w, height: h } = turnCanvas;
+    const src = new Uint32Array(helmetPixels.data.buffer);
+    const out = new Uint32Array(turned.data.buffer);
+    out.set(src);
+    const fade = [rig.turnFade[0] * h, rig.turnFade[1] * h] as const;
+    for (let y = 0; y < h; y += 1) {
+      const middle = rows[y * 2] ?? Number.NaN;
+      const k = Math.sin(yaw * turnWeight(y + 0.5, fade));
+      if (!Number.isNaN(middle) && Math.abs(k) >= 1e-5) turnRow(src, out, y * w, w, middle, rows[y * 2 + 1] ?? 1, k);
+    }
+    turnCanvas.getContext('2d')?.putImageData(turned, 0, 0);
+    turnedYaw = yaw;
+    return turnCanvas;
+  }
+
+  /**
+   * Draws the head: the still neck plate, the helmet turned and tilted toward the participant, the
+   * charge fill where it has risen into the head (multiplied like the body's), then the eye lights
+   * (riding the turn, and glowing over the fill), all kept to the head's own silhouette; and behind
+   * it, the photo's shadow for the head box.
    */
   function drawHead(now = performance.now()) {
     const ctx = headCanvas?.getContext('2d');
@@ -317,7 +478,7 @@ export function initHero(root: Document = document): void {
     if (!headCanvas || !ctx || !frameCtx || !headLayers || !rig) return;
     const { width: w, height: h } = headCanvas;
     const pose = headPose([helmet.x, helmet.y], front);
-    const px = rig.pivot[0] * w;
+    const px = tiltPivot(pose.angle, rig.pivot[0], rig.pivotSwing) * w;
     const py = rig.pivot[1] * h;
     const tilt = (c: CanvasRenderingContext2D) => {
       c.translate(px + pose.dx * w, py + pose.dy * w);
@@ -328,7 +489,9 @@ export function initHero(root: Document = document): void {
     frameCtx.drawImage(headLayers, 0, h, w, h, 0, 0, w, h);
     frameCtx.save();
     tilt(frameCtx);
-    frameCtx.drawImage(headLayers, 0, 0, w, h, 0, 0, w, h);
+    const turnedHelmet = turnHelmet(pose.yaw);
+    if (turnedHelmet) frameCtx.drawImage(turnedHelmet, 0, 0);
+    else frameCtx.drawImage(headLayers, 0, 0, w, h, 0, 0, w, h);
     frameCtx.restore();
 
     ctx.globalCompositeOperation = 'copy';
@@ -364,10 +527,23 @@ export function initHero(root: Document = document): void {
     const r = rig.glow * w;
     const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
     for (const [offset, color] of GLOW_STOPS) glow.addColorStop(offset, color);
+    const fade = [rig.turnFade[0] * h, rig.turnFade[1] * h] as const;
     for (const [ex, ey] of rig.eyes) {
+      // The light glides on the visor, then rides the helmet's turn along its row.
+      let x = (ex + sx) * w;
+      const y = ey * h + sy * w;
+      let width = eyeWidth(ex + sx, rig.visor);
+      const row = Math.min(h - 1, Math.max(0, Math.round(y)));
+      const middle = rows[row * 2] ?? Number.NaN;
+      const half = rows[row * 2 + 1] ?? Number.NaN;
+      if (!Number.isNaN(middle)) {
+        const [u, narrow] = turnPoint((x - middle) / half, Math.sin(pose.yaw * turnWeight(y, fade)));
+        x = middle + u * half;
+        width *= narrow;
+      }
       ctx.save();
-      ctx.translate((ex + sx) * w, ey * h + sy * w);
-      ctx.scale(eyeWidth(ex + sx, rig.visor), open);
+      ctx.translate(x, y);
+      ctx.scale(width, open);
       ctx.fillStyle = glow;
       ctx.fillRect(-r, -r, 2 * r, 2 * r);
       ctx.restore();
@@ -376,6 +552,9 @@ export function initHero(root: Document = document): void {
 
     ctx.globalCompositeOperation = 'destination-in';
     ctx.drawImage(frameCanvas, 0, 0);
+    // Behind it all, the photo's own shadow, which the photo's hole for the head masks out.
+    ctx.globalCompositeOperation = 'destination-over';
+    ctx.drawImage(headLayers, 0, 2 * h, w, h, 0, 0, w, h);
     ctx.globalCompositeOperation = 'source-over';
   }
 
@@ -454,11 +633,20 @@ export function initHero(root: Document = document): void {
       return;
     }
     headCanvas.width = img.naturalWidth;
-    headCanvas.height = Math.floor(img.naturalHeight / 2);
+    headCanvas.height = Math.floor(img.naturalHeight / 3);
     frameCanvas.width = headCanvas.width;
     frameCanvas.height = headCanvas.height;
-    fillCanvas.width = shareCanvas.width = headCanvas.width;
-    fillCanvas.height = shareCanvas.height = headCanvas.height;
+    fillCanvas.width = shareCanvas.width = turnCanvas.width = headCanvas.width;
+    fillCanvas.height = shareCanvas.height = turnCanvas.height = headCanvas.height;
+    const turnCtx = turnCanvas.getContext('2d');
+    if (turnCtx) {
+      const { width: w, height: h } = turnCanvas;
+      turnCtx.drawImage(img, 0, 0, w, h, 0, 0, w, h);
+      helmetPixels = turnCtx.getImageData(0, 0, w, h);
+      turned = turnCtx.createImageData(w, h);
+      const data = helmetPixels.data;
+      rows = helmetRows((i) => data[i * 4 + 3] ?? 0, w, h);
+    }
     const shareCtx = shareCanvas.getContext('2d');
     if (shareCtx) {
       const { width: w, height: h } = shareCanvas;

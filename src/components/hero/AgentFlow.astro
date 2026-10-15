@@ -274,6 +274,12 @@ const hopData = JSON.stringify(
     mask-image: linear-gradient(#000 87%, transparent 99%);
   }
 
+  /*
+   * The photo's shadow. Inside the head box it is masked out with the photo's head while the canvas
+   * draws the head, so the canvas draws that part of it too (baked by scripts/build-head-layers.py
+   * from these numbers). A filter on a wrapper around both would re-blur the whole robot on every
+   * frame of a turn.
+   */
   .flow__robot :global(.flow__robot-img) {
     display: block;
     width: 100%;

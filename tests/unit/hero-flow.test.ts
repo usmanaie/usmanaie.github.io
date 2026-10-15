@@ -27,6 +27,13 @@ import {
   HEAD_TURN_MS,
   headFillTop,
   headPose,
+  helmetRows,
+  POSE,
+  tiltPivot,
+  turnPoint,
+  turnRow,
+  turnSource,
+  turnWeight,
   headChargeShare,
   chargeGradientSpan,
   CHARGE_STOPS,
@@ -178,37 +185,121 @@ describe('controller helpers', () => {
   });
 
   it('leaves the photo exactly as it is when facing front (first paint, no-JS and reduced motion)', () => {
-    expect(headPose(GAZE_FRONT, GAZE_FRONT)).toEqual({ angle: 0, dx: 0, dy: 0 });
+    expect(headPose(GAZE_FRONT, GAZE_FRONT)).toEqual({ yaw: 0, angle: 0, dx: 0, dy: 0 });
     expect(eyeShift(GAZE_FRONT, GAZE_FRONT)).toEqual([0, 0]);
   });
 
-  it('moves the head subtly: the helmet tilts at most 2.5 degrees, the eyes stay on the visor', () => {
+  it('turns the head toward the participant (at most 10 degrees, tilted at most 4), the eyes staying on the visor', () => {
     const deg = (rad: number) => (rad * 180) / Math.PI;
     for (const gaze of Object.values(GAZE)) {
       const pose = headPose(gaze, GAZE_FRONT);
-      expect(Math.abs(deg(pose.angle))).toBeLessThanOrEqual(2.5);
+      expect(Math.abs(deg(pose.yaw))).toBeLessThanOrEqual(10.05);
+      expect(Math.abs(deg(pose.angle))).toBeLessThanOrEqual(4);
       expect(Math.abs(pose.dx)).toBeLessThan(0.02);
       expect(Math.abs(pose.dy)).toBeLessThan(0.02);
       const [ex, ey] = eyeShift(gaze, GAZE_FRONT);
-      expect(Math.abs(ex)).toBeLessThan(0.1);
+      expect(Math.abs(ex)).toBeLessThan(0.06);
       expect(ey).toBeGreaterThanOrEqual(0);
-      expect(ey).toBeLessThan(0.05);
-      // The glide never takes a light past the visor's narrowing span.
+      expect(ey).toBeLessThan(0.03);
       const [centre = 0, , outer = 0] = HEAD.rig.visor;
       for (const [x = 0] of HEAD.rig.eyes) expect(Math.abs(x + ex - centre)).toBeLessThan(outer);
     }
-    // Left for the USER and GUARDRAILS, right for the LLM, RAG and TOOLS: eyes and helmet alike.
+    // Left for the USER and GUARDRAILS, right for the LLM, RAG and TOOLS: head and eyes alike.
     for (const id of ['user', 'guardrails'] as const) {
-      expect(eyeShift(GAZE[id], GAZE_FRONT)[0]).toBeLessThan(-0.03);
+      expect(eyeShift(GAZE[id], GAZE_FRONT)[0]).toBeLessThan(-0.02);
+      expect(headPose(GAZE[id], GAZE_FRONT).yaw).toBeLessThan(0);
       expect(headPose(GAZE[id], GAZE_FRONT).angle).toBeLessThan(0);
     }
     for (const id of ['llm', 'rag', 'tools'] as const) {
-      expect(eyeShift(GAZE[id], GAZE_FRONT)[0]).toBeGreaterThan(0.03);
+      expect(eyeShift(GAZE[id], GAZE_FRONT)[0]).toBeGreaterThan(0.02);
+      expect(headPose(GAZE[id], GAZE_FRONT).yaw).toBeGreaterThan(0);
       expect(headPose(GAZE[id], GAZE_FRONT).angle).toBeGreaterThan(0);
     }
-    expect(deg(Math.abs(headPose(GAZE.llm, GAZE_FRONT).angle))).toBeGreaterThan(2.3);
-    // To the tools (low down), the eyes drop further.
+    expect(deg(Math.abs(headPose(GAZE.user, GAZE_FRONT).angle))).toBeGreaterThan(3.9);
     expect(eyeShift(GAZE.tools, GAZE_FRONT)[1]).toBeGreaterThan(eyeShift(GAZE.llm, GAZE_FRONT)[1]);
+  });
+
+  it('lets the head carry most of the gaze: at the eyes it moves more than twice as far as the eyes glide', () => {
+    const { pose, eyes } = { pose: headPose(GAZE.llm, GAZE_FRONT), eyes: eyeShift(GAZE.llm, GAZE_FRONT)[0] };
+    const [[eyeX = 0, eyeY = 0] = []] = HEAD.rig.eyes;
+    const [, pivotY = 0] = HEAD.rig.pivot;
+    // Head-box widths at the eyes: the turn (at the eyes' place across a ~0.77-wide helmet row), the
+    // tilt (the eyes sit ~0.55 box widths above the pivot) and the shift.
+    const half = 0.385;
+    const u = (eyeX - HEAD.rig.visor[0]!) / half;
+    const turn = Math.sin(pose.yaw) * half * (1 - u * u);
+    const tilt = Math.sin(pose.angle) * (pivotY - eyeY) * (309 / 255);
+    expect(turn + tilt + pose.dx).toBeGreaterThan(2 * eyes);
+    expect(POSE.eyeX).toBeCloseTo((0.08 * 2) / 3, 2);
+  });
+
+  it('turns the face around the outline: the silhouette stays, the middle moves, the far side narrows', () => {
+    const k = Math.sin((10 * Math.PI) / 180);
+    expect(turnPoint(-1, k)[0]).toBeCloseTo(-1, 10);
+    expect(turnPoint(1, k)[0]).toBeCloseTo(1, 10);
+    expect(turnPoint(0, k)[0]).toBeCloseTo(k, 10);
+    // The side turning away (right, for a right turn) narrows; the other widens; nothing folds over.
+    expect(turnPoint(0.6, k)[1]).toBeLessThan(1);
+    expect(turnPoint(-0.6, k)[1]).toBeGreaterThan(1);
+    for (let u = -1; u <= 1; u += 0.05) {
+      expect(turnPoint(u, k)[1]).toBeGreaterThan(0);
+      expect(turnSource(turnPoint(u, k)[0], k)).toBeCloseTo(u, 9);
+      expect(turnSource(u, 0)).toBe(u);
+    }
+    // The chin's rows don't turn, the face's do.
+    const fade = [0.73, 0.9] as const;
+    expect(turnWeight(0.5, fade)).toBe(1);
+    expect(turnWeight(0.95, fade)).toBe(0);
+    expect(turnWeight(0.815, fade)).toBeCloseTo(0.5);
+  });
+
+  it('tilts about the chin corner on the side turning away, so that side never lifts', () => {
+    const tenth = (0.1 * Math.PI) / 180;
+    expect(tiltPivot(0, 0.5, 0.2)).toBe(0.5);
+    // Looking right (clockwise): the left corner; left: the right corner; continuous through zero.
+    expect(tiltPivot((4 * Math.PI) / 180, 0.5, 0.2)).toBeCloseTo(0.3, 3);
+    expect(tiltPivot((-4 * Math.PI) / 180, 0.5, 0.2)).toBeCloseTo(0.7, 3);
+    expect(Math.abs(tiltPivot(tenth, 0.5, 0.2) - tiltPivot(-tenth, 0.5, 0.2))).toBeLessThan(0.1);
+  });
+
+  it('turns a row of pixels: the outline stays, opaque pixels blend smoothly, nothing outside the row changes', () => {
+    const w = 40;
+    // An opaque ramp (red rises left to right) across x 5-34, transparent outside.
+    const src = new Uint32Array(w).map((_, x) => (x >= 5 && x < 35 ? (0xff000000 | ((x - 5) * 8)) >>> 0 : 0));
+    const out = src.slice();
+    const [middle, half, k] = [20, 15, Math.sin((10 * Math.PI) / 180)];
+    turnRow(src, out, 0, w, middle, half, k);
+    const red = (v: number | undefined) => (v ?? 0) & 255;
+    for (let x = 0; x < w; x += 1) {
+      // A float reference: the same point of the photo, linearly interpolated.
+      const u = Math.min(1, Math.max(-1, (x + 0.5 - middle) / half));
+      const sx = Math.min(w - 1, Math.max(0, middle + half * turnSource(u, k) - 0.5));
+      if (x < 5 || x >= 35) expect(out[x]).toBe(src[x]);
+      else if (x > 5 && x < 34) expect(Math.abs(red(out[x]) - (sx - 5) * 8)).toBeLessThanOrEqual(1.5);
+    }
+    // The middle of the row now shows a point of the photo from further left (the face moved right).
+    expect(red(out[20])).toBeLessThan(red(src[20]));
+  });
+
+  it("draws the photo's shadow inside the head's hole with the CSS shadow's own numbers", () => {
+    const css = readFileSync('src/components/hero/AgentFlow.astro', 'utf8');
+    const [offset, blur, opacity] = HEAD.rig.shadow;
+    expect(css).toContain(`drop-shadow(0 ${offset}px ${blur}px rgb(0 0 0 / ${Math.round((opacity ?? 0) * 100)}%))`);
+  });
+
+  it("finds each row's outline in the helmet layer, smoothed across rows", () => {
+    const [w, h] = [20, 12];
+    // A disc-ish shape: rows 2-9, wider in the middle.
+    const alpha = (i: number) => {
+      const [x, y] = [i % w, Math.floor(i / w)];
+      const half = y < 2 || y > 9 ? 0 : 3 + Math.min(y - 2, 9 - y);
+      return Math.abs(x + 0.5 - 10) < half ? 255 : 0;
+    };
+    const rows = helmetRows(alpha, w, h);
+    expect(Number.isNaN(rows[0])).toBe(true);
+    expect(rows[5 * 2]).toBeCloseTo(10, 5);
+    expect(rows[5 * 2 + 1]).toBeGreaterThan(4);
+    expect(rows[5 * 2 + 1]).toBeLessThan(7);
   });
 
   it('blinks smoothly: one dip, open at both ends, never a jump', () => {
@@ -249,7 +340,8 @@ describe('controller helpers', () => {
     expect(max).toBeLessThanOrEqual(47);
   });
 
-  it('glides the eyes on the same spring, quicker than the head, so they lead the turn', () => {
+  it('glides the eyes on the same spring, quicker than the head (1.2 s), so they lead the turn', () => {
+    expect(HEAD_TURN_MS).toBe(1200);
     const omega = 4.74 / (EYE_GLIDE_MS / 1000);
     let pos = 0;
     let vel = 0;
