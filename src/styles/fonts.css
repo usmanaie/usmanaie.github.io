@@ -51,7 +51,7 @@
 /* Metric-adjusted local fallbacks (prevent layout shift while the web fonts load). */
 @font-face {
   font-family: 'manrope-fallback';
-  src: local('Arial'), local('ArialMT');
+  src: local('Arial'), local('ArialMT'), local('Liberation Sans'), local('LiberationSans'), local('Arimo');
   ascent-override: 107.153%;
   descent-override: 30.1556%;
   line-gap-override: 0%;
@@ -59,7 +59,7 @@
 }
 @font-face {
   font-family: 'hanken-grotesk-fallback';
-  src: local('Arial'), local('ArialMT');
+  src: local('Arial'), local('ArialMT'), local('Liberation Sans'), local('LiberationSans'), local('Arimo');
   ascent-override: 99.0668%;
   descent-override: 30.0173%;
   line-gap-override: 0%;
@@ -67,7 +67,7 @@
 }
 @font-face {
   font-family: 'league-gothic-fallback';
-  src: local('Arial'), local('ArialMT');
+  src: local('Arial'), local('ArialMT'), local('Liberation Sans'), local('LiberationSans'), local('Arimo');
   ascent-override: 163.3759%;
   descent-override: 39.2609%;
   line-gap-override: 0%;
@@ -75,7 +75,7 @@
 }
 @font-face {
   font-family: 'instrument-serif-fallback';
-  src: local('Times New Roman'), local('TimesNewRomanPSMT');
+  src: local('Times New Roman'), local('TimesNewRomanPSMT'), local('Liberation Serif'), local('LiberationSerif'), local('Tinos');
   ascent-override: 117.9435%;
   descent-override: 36.9318%;
   line-gap-override: 0%;
@@ -83,7 +83,7 @@
 }
 @font-face {
   font-family: 'jetbrains-mono-fallback';
-  src: local('Courier New'), local('CourierNewPSMT');
+  src: local('Courier New'), local('CourierNewPSMT'), local('Liberation Mono'), local('LiberationMono'), local('Cousine');
   ascent-override: 102.0166%;
   descent-override: 30.0049%;
   size-adjust: 99.9837%;

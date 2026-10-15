@@ -102,6 +102,17 @@ await mkdir(path.dirname(cssFile), { recursive: true });
 
 const faces = [];
 const fallbacks = new Map();
+
+/**
+ * Metric-compatible twins of the fallback fonts (identical advance widths and vertical metrics), for systems
+ * without the Microsoft core fonts, such as Linux. Without them the fallback face never loads there and the
+ * swap to the web font shifts the layout.
+ */
+const METRIC_TWINS = {
+  Arial: "local('Liberation Sans'), local('LiberationSans'), local('Arimo')",
+  'Times New Roman': "local('Liberation Serif'), local('LiberationSerif'), local('Tinos')",
+  'Courier New': "local('Liberation Mono'), local('LiberationMono'), local('Cousine')",
+};
 let total = 0;
 
 for (const font of FONTS) {
@@ -127,7 +138,12 @@ for (const font of FONTS) {
     });
     fallbacks.set(
       font.family,
-      fontFaces.replace(/font-family: "([^"]+)"/, `font-family: '${slug(font.family)}-fallback'`).replace(/"/g, "'"),
+      fontFaces
+        .replace(/font-family: "([^"]+)"/, `font-family: '${slug(font.family)}-fallback'`)
+        .replace(/"/g, "'")
+        .replace(/(src: [^;]+);/, (_, src) =>
+          `${src}, ${METRIC_TWINS[font.fallback.familyName] ?? ''};`.replace(', ;', ';'),
+        ),
     );
   }
 }
