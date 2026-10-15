@@ -16,7 +16,7 @@ interface Props {
   onHome?: boolean;
   noindex?: boolean;
   /** Responsive LCP image to preload (must match the rendered <picture>). */
-  preloadImage?: { srcset: string; sizes: string; type: string };
+  preloadImage?: { srcset: string; sizes: string; type: string; media?: string };
   /** JSON-LD objects rendered as application/ld+json data blocks (not executed). */
   structuredData?: object[];
 }
@@ -72,6 +72,7 @@ const metaCsp = cspHeader
         imagesrcset={preloadImage.srcset}
         imagesizes={preloadImage.sizes}
         type={preloadImage.type}
+        media={preloadImage.media}
         fetchpriority="high"
       />
     )}

@@ -265,8 +265,11 @@ All token changes are minimal and documented in `tokens.css`:
 - **Fonts**: six subset WOFF2 files, **70 KB total**, self-hosted, `font-display: swap`. Only League Gothic and
   Manrope (above the fold) are preloaded. Capsize-generated metric-adjusted fallbacks prevent layout shift.
   Weights are restricted to those used: Hanken 200–600 + 300 italic, Manrope 300–700.
-- **Hero image (LCP).** The robot cut-out ships as AVIF/WebP/PNG at widths 360/540/720, preloaded via
-  `imagesrcset`, `fetchpriority="high"`, never lazy. Lighthouse judges resolution against the robot's
+- **Hero image (LCP).** The robot cut-out ships as AVIF/WebP/PNG at widths 360/540/720, never lazy. On desktop,
+  where the robot is the LCP element, it is preloaded via `imagesrcset` with `fetchpriority="high"`
+  (`media="(width >= 64rem)"`). On phones the LCP is the headline, so the `<img>` itself has default priority:
+  at high priority the 46 KB image raced the render-blocking stylesheet in the first round trips and pushed
+  simulated mobile LCP from ~1.85s to ~2.11s, depending on how Chrome happened to queue the requests. Lighthouse judges resolution against the robot's
   untransformed 343px CSS width inside the scaled stage, so `sizes` steers phones to the 540 file, encoded at
   quality 56 (~43 KB) so the headline's LCP stays under 2 s. The head-turn sprite
   loads only after the load event.
@@ -331,18 +334,13 @@ All token changes are minimal and documented in `tokens.css`:
   high-resolution hero (smaller than the upscale at equal quality) or inlined critical CSS (would need per-build
   CSP hashes) are the next levers.
 
-- **Render-blocking bytes stay inside the first round trip (Oct 2026).** The contact icon styles pushed the
-  site-wide stylesheet's response (Brotli body plus the security headers) past the ~14.6 KB a server sends before
-  its first acknowledgement (initial congestion window of 10 packets). That costs a whole round trip: simulated
-  home LCP went from 1.96s to 2.12s.
-  - The hidden Reviews section's styles moved to their own stylesheet (`reviews.css`), linked by `Reviews.astro`
-    only when the section renders. A static or dynamic import alone would still bundle them site-wide. This
-    takes the stylesheet from 12.9 KB to 12.5 KB.
-  - The Experience and Contact robot portraits are built as SVG files (`/art/agent-*.svg`, from
-    `src/lib/agent-portrait.ts`) and shown as lazy `<img>`s instead of inline markup. The home HTML drops from
-    13.5 KB to 12.6 KB, with fewer DOM nodes.
-  - Check both responses' transfer sizes in the Lighthouse network table when adding home page content or
-    site-wide CSS.
+- **Home HTML and CSS trimmed (Oct 2026).** The hidden Reviews section's styles moved to their own stylesheet
+  (`reviews.css`), linked by `Reviews.astro` only when the section renders; a static or dynamic import alone
+  would still bundle them site-wide (stylesheet 12.9 KB → 12.5 KB Brotli). The Experience and Contact robot
+  portraits are built as SVG files (`/art/agent-*.svg`, from `src/lib/agent-portrait.ts`) and shown as lazy
+  `<img>`s instead of inline markup (home HTML 13.5 KB → 12.6 KB, fewer DOM nodes). Neither fixed the LCP
+  regression on its own; the image priority above did. Lighthouse's `LANTERN_DEBUG=1` with `--save-assets`
+  writes the simulated request timeline, which is how the cause was found.
 
 - **Not yet done on real hardware:** DevTools throttled-CPU profiling on a mid-range phone and real-device
   WebPageTest runs. These are launch-checklist items.

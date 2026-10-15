@@ -30,7 +30,12 @@ const lcp = await getImage({
   onHome
   noindex={import.meta.env['PUBLIC_REVIEWS_FIXTURE'] === 'true'}
   structuredData={homeStructuredData(Astro.site)}
-  preloadImage={{ srcset: lcp.srcSet.attribute, sizes: robotImage.sizes, type: 'image/avif' }}
+  preloadImage={{
+    srcset: lcp.srcSet.attribute,
+    sizes: robotImage.sizes,
+    type: 'image/avif',
+    media: '(width >= 64rem)',
+  }}
 >
   <Hero />
   <About />

@@ -122,8 +122,9 @@ designed end-state frame, not a frozen first frame.
 - Heavy images go inside `<noscript data-defer>`, and `scripts/defer.ts` inserts them as the section nears the
   viewport.
 - The build emits one stylesheet per page (`cssCodeSplit: false`).
-- The Lighthouse budgets in `lighthouserc.json` are tight: mobile LCP ≤ 2.0 s with home only about 40 ms under
-  it, CLS ≤ 0.02, and 512 KB of page weight on `/`.
+- The Lighthouse budgets in `lighthouserc.json` are tight: mobile LCP ≤ 2.0 s (home ~1.8 s), CLS ≤ 0.02, and
+  512 KB of page weight on `/`. On phones nothing may compete with the render-blocking stylesheet: the hero robot
+  is preloaded at high priority only on desktop (DECISIONS.md, Hero image).
 
 **Styling.** Every design value is a custom property in `src/styles/tokens.css`. Components use those tokens,
 not raw values; colours inside illustration artwork are exempt. Styles are scoped Astro styles, and the site

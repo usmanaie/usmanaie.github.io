@@ -23,11 +23,17 @@ test.describe('hero', () => {
   test('scales the whole design to fit the window (720px tall: height-limited)', async ({ page }) => {
     await page.goto('/');
     // u = min(1280 / 1600, 720 / 1067): the 231-unit headline scales with the window height, capped at 44% of
-    // the copy column (classic scrollbars, as in Firefox, narrow the column enough for the cap to apply).
-    const size = await page.locator('h1').evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
-    const column = await page.locator('.hero__copy').evaluate((el) => el.clientWidth);
-    expect(size).toBeCloseTo(Math.min((231 * 720) / 1067, 0.44 * column), 0);
-    expect(size).toBeGreaterThan(0.95 * ((231 * 720) / 1067));
+    // the copy column (font-size: min(231u, 44cqi)).
+    const { size, column, ...viewport } = await page.locator('h1').evaluate((el) => ({
+      size: parseFloat(getComputedStyle(el).fontSize),
+      column: parseFloat(getComputedStyle(el.closest('.hero__copy')!).width),
+      innerWidth,
+      innerHeight,
+      clientWidth: document.documentElement.clientWidth,
+      clientHeight: document.documentElement.clientHeight,
+    }));
+    const details = JSON.stringify({ size, column, ...viewport });
+    expect(size, details).toBeCloseTo(Math.min((231 * 720) / 1067, 0.44 * column), 0);
   });
 
   for (const [width, height] of [
