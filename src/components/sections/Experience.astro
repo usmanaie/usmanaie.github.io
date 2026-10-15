@@ -89,7 +89,7 @@ import SectionHeading from '../ui/SectionHeading.astro';
     position: relative;
     z-index: -1;
     height: clamp(260px, 72vw, 420px);
-    margin-block-start: 45px;
+    margin-block-start: var(--section-start);
     overflow: hidden;
   }
 
@@ -107,7 +107,6 @@ import SectionHeading from '../ui/SectionHeading.astro';
     height: 150%;
     max-width: none;
     transform: translateX(-46%);
-    animation: experience-blink 5s ease-in-out infinite;
   }
 
   .experience__numeral {
@@ -271,7 +270,7 @@ import SectionHeading from '../ui/SectionHeading.astro';
 
   @media (width >= 64rem) {
     .experience {
-      padding-block: 110px 87px;
+      padding-block: var(--section-start) 87px;
     }
 
     /* Centred against the (taller) timeline, so the right side carries its weight. */
@@ -324,24 +323,6 @@ import SectionHeading from '../ui/SectionHeading.astro';
 
   .experience[data-paused] :global(*) {
     animation-play-state: paused;
-  }
-
-  @keyframes experience-blink {
-    0%,
-    90%,
-    100% {
-      opacity: 1;
-    }
-
-    94% {
-      opacity: 0.25;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .experience__portrait :global(.experience__portrait-svg) {
-      animation: none;
-    }
   }
 
   @media (forced-colors: active) {

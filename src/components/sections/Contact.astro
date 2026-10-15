@@ -1,7 +1,8 @@
 ---
-import { contact } from '../../content/site';
+import { contact, site } from '../../content/site';
 import { mailtoHref } from '../../lib/email';
 import AgentPortrait from '../ui/AgentPortrait.astro';
+import Icon from '../ui/Icon.astro';
 import RotatingRingLink from '../ui/RotatingRingLink.astro';
 import SectionHeading from '../ui/SectionHeading.astro';
 ---
@@ -28,6 +29,32 @@ import SectionHeading from '../ui/SectionHeading.astro';
         class="contact__title"
       />
       <p class="contact__body">{contact.body}</p>
+      <ul role="list" class="contact__links" aria-label="Contact options">
+        <li>
+          <a
+            class="contact__link"
+            href={site.linkedin}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={contact.links.linkedin}
+          >
+            <Icon name="linkedin" size={20} strokeWidth={1.7} />
+            <span class="visually-hidden">{contact.links.linkedin} (opens in a new tab)</span>
+          </a>
+        </li>
+        <li>
+          <a class="contact__link" href={`tel:${site.phone.tel}`} title={`Call ${site.phone.display}`}>
+            <Icon name="phone" size={20} strokeWidth={1.7} />
+            <span class="visually-hidden">Call {site.phone.display}</span>
+          </a>
+        </li>
+        <li>
+          <a class="contact__link" href={mailtoHref()} title={contact.links.email}>
+            <Icon name="mail" size={20} strokeWidth={1.7} />
+            <span class="visually-hidden">{contact.links.email}</span>
+          </a>
+        </li>
+      </ul>
     </div>
     <RotatingRingLink
       href={mailtoHref()}
@@ -45,6 +72,7 @@ import SectionHeading from '../ui/SectionHeading.astro';
   .contact {
     position: relative;
     isolation: isolate;
+    overflow-x: clip;
     padding-block: 32px 48px;
   }
 
@@ -116,17 +144,62 @@ import SectionHeading from '../ui/SectionHeading.astro';
   }
 
   .contact__body {
-    max-width: 372px;
+    max-width: 380px;
     margin-block-start: 18px;
     font-size: var(--fs-body-xs);
     line-height: 1.4815;
     color: var(--color-text-muted);
   }
 
+  /* LinkedIn, call and email: round glass icon buttons in the site's gradient-border style (named for screen readers). */
+  .contact__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-block-start: 28px;
+  }
+
+  .contact__link {
+    display: inline-grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-pill);
+    background:
+      linear-gradient(rgb(12 15 26 / 80%), rgb(12 15 26 / 80%)) padding-box,
+      linear-gradient(135deg, rgb(47 107 255 / 70%), rgb(138 107 224 / 60%), rgb(255 59 78 / 70%)) border-box;
+    backdrop-filter: blur(10px);
+    color: var(--color-white);
+    text-decoration: none;
+    transition:
+      transform var(--dur-pill) ease,
+      box-shadow var(--dur-pill) ease;
+  }
+
+  .contact__link:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 22px rgb(66 133 244 / 25%);
+  }
+
+  .contact__link :global(.icon) {
+    color: rgb(190 210 255);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .contact__link {
+      transition: none;
+    }
+
+    .contact__link:hover {
+      transform: none;
+    }
+  }
+
   @media (width >= 64rem) {
     .contact {
       min-height: 880px;
-      padding-block: 392px 197px;
+      padding-block: 310px 197px;
     }
 
     .contact__art {
@@ -150,15 +223,16 @@ import SectionHeading from '../ui/SectionHeading.astro';
     }
 
     .contact__word:first-child {
-      top: 174px;
+      top: var(--section-start);
     }
 
     .contact__word:last-child {
-      top: 351px;
+      top: calc(var(--section-start) + 177px);
     }
 
     .contact__portrait {
-      inset: 120px auto auto calc(50% - 420px);
+      /* From the centre, but never over the copy column on narrower desktops (1024-1279px). */
+      inset: 38px auto auto max(calc(50% - 420px), calc(var(--gutter) + 200px));
       width: 840px;
       height: 760px;
       overflow: hidden;
@@ -183,8 +257,11 @@ import SectionHeading from '../ui/SectionHeading.astro';
       margin-inline-start: 6px;
     }
 
+    /* Beside the portrait's chin, moving with the portrait (same left as .contact__portrait, +578px). */
     .contact__inner :global(.contact__ring) {
-      margin-block-start: 151px;
+      position: absolute;
+      top: 461px;
+      left: calc(max(calc(50% - 420px), calc(var(--gutter) + 200px)) + 578px);
     }
   }
 </style>

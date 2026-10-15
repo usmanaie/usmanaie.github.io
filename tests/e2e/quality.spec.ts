@@ -86,9 +86,27 @@ test.describe('layout', () => {
   test('the contact email never appears in plain text', async ({ page }) => {
     await page.goto('/');
     const html = await page.content();
-    expect(html).not.toContain('usmanaslam1002@gmail.com');
+    expect(html).not.toContain('usmanaslam.aie@gmail.com');
     const href = await page.getByRole('link', { name: 'Contact Usman by email' }).getAttribute('href');
-    expect(decodeURIComponent(href ?? '')).toBe('mailto:usmanaslam1002@gmail.com');
+    expect(decodeURIComponent(href ?? '')).toBe('mailto:usmanaslam.aie@gmail.com');
+  });
+});
+
+test.describe('contact options', () => {
+  test('LinkedIn (new tab), call and email, each with an icon and a touch-sized target', async ({ page }) => {
+    await page.goto('/');
+    const links = page.locator('#contact .contact__link');
+    await expect(links).toHaveCount(3);
+    const linkedin = links.nth(0);
+    await expect(linkedin).toHaveAttribute('href', 'https://www.linkedin.com/in/sardar-usman-aslam');
+    await expect(linkedin).toHaveAttribute('target', '_blank');
+    await expect(linkedin).toHaveAttribute('rel', /noopener/);
+    await expect(links.nth(1)).toHaveAttribute('href', 'tel:+923152331002');
+    expect(decodeURIComponent((await links.nth(2).getAttribute('href')) ?? '')).toBe('mailto:usmanaslam.aie@gmail.com');
+    for (const link of await links.all()) {
+      await expect(link.locator('svg')).toHaveCount(1);
+      expect((await link.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    }
   });
 });
 

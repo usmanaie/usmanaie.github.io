@@ -102,9 +102,22 @@ All copy lives in `src/content/*.ts`; components contain no hard-coded copy.
 - **Privacy / Terms:** `legal.ts`; update `lastUpdated` when the text changes.
 - Lines marked `OWNER-CONFIRM` are claims awaiting verification (see the launch checklist).
 
-## Deploy (Firebase Hosting)
+## Deploy (GitHub Pages, live now)
 
-One-time setup, done by the owner in their GCP project:
+The site is live at **https://usmanaie.github.io**, served by GitHub Pages from this repository.
+
+- Every push to `main` runs the pipeline below; when e2e and Lighthouse pass, the `deploy-pages` job publishes
+  `dist/`. Pages settings: Source = GitHub Actions. Repository variable `SITE_URL` = `https://usmanaie.github.io`.
+- GitHub Pages cannot send custom response headers. The CSP ships as a `<meta>` tag instead (generated from
+  `firebase.json`), but `frame-ancestors`, `X-Frame-Options`, HSTS preload and Permissions-Policy only apply on
+  Firebase Hosting (below).
+- **Rollback:** revert the offending commit on `main` and push; or re-run an earlier successful CI run's
+  `deploy-pages` job.
+
+## Deploy (Firebase Hosting, optional)
+
+Once `FIREBASE_PROJECT_ID` is set, Firebase replaces GitHub Pages: the Pages job is skipped and the Firebase jobs
+below run instead. One-time setup, done by the owner in their GCP project:
 
 1. Create a Firebase project and enable Hosting.
 2. Create a service account with the **Firebase Hosting Admin** role.
@@ -124,7 +137,7 @@ The pipeline (`.github/workflows/ci.yml`):
 3. a **preview channel per PR**, with its URL posted as a comment
 4. **production deploy on `main`** once every gate passes
 
-Deploy jobs are skipped until `FIREBASE_PROJECT_ID` is set.
+Firebase deploy jobs are skipped until `FIREBASE_PROJECT_ID` is set.
 
 **Rollback:** in the Firebase console, open Hosting → Release history and choose "Roll back" on the last good
 release, or run:
@@ -163,7 +176,7 @@ artifact, review the screenshots, and commit them to `tests/visual/__screenshots
   generated images). `scripts/render-project-art.mjs` renders them to `src/assets/projects/`, and the PNGs are
   committed.
 - **The agent portraits** (Experience, Contact) and the **Expertise ring** are original vector artwork from the
-  design export. The portraits ship as inline SVG. `pnpm design:render` pre-renders the ring's glow layers to PNG,
+  design export. The portraits are drawn in `src/lib/agent-portrait.ts` and built to `/art/agent-*.svg`. `pnpm design:render` pre-renders the ring's glow layers to PNG,
   and those files are committed.
 - Fonts are all under the SIL Open Font License: Manrope, Hanken Grotesk, League Gothic, Instrument Serif,
   JetBrains Mono. They're subset from the `@fontsource` packages.

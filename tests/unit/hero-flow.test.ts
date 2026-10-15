@@ -11,6 +11,7 @@ import {
   headTintColor,
   levelFor,
   parseHops,
+  spreadSpoke,
   springStep,
 } from '../../src/scripts/hero';
 
@@ -118,5 +119,16 @@ describe('controller helpers', () => {
     expect(parseHops(undefined)).toEqual([]);
     expect(parseHops('not json')).toEqual([]);
     expect(parseHops('[{"spoke":"user","direction":"back","to":"agent","label":"request"}]')).toHaveLength(1);
+  });
+});
+
+describe('stage spread (wide, short desktop windows)', () => {
+  it('moves only right-hand spokes, by the extra width, keeping the curve', () => {
+    const right = spreadSpoke('M 389 339 Q 500 200 666 200', 'M 666 200 Q 500 200 389 339', 40);
+    expect(right).toEqual({ out: 'M 389 339 Q 520 200 706 200', back: 'M 706 200 Q 520 200 389 339', shift: 40 });
+    const left = spreadSpoke('M 389 339 Q 250 220 84 200', 'M 84 200 Q 250 220 389 339', 40);
+    expect(left.shift).toBe(0);
+    expect(left.out).toBe('M 389 339 Q 250 220 84 200');
+    expect(spreadSpoke('M 389 339 Q 500 200 666 200', 'x', 0).shift).toBe(0);
   });
 });

@@ -123,7 +123,7 @@ const hopData = JSON.stringify(
 
       <g class="flow__track">
         {spokes.map((s) => (
-          <path d={s.out} />
+          <path d={s.out} data-spoke={s.id} />
         ))}
       </g>
       <g class="flow__segments">
@@ -226,7 +226,8 @@ const hopData = JSON.stringify(
   }
 
   .flow__canvas {
-    --flow-scale: tan(atan2(100cqw, 720px));
+    /* The stage's scale: the hero passes the design width (--stage-px), so extra width extends the stage. */
+    --flow-scale: tan(atan2(var(--stage-px, 100cqw), 720px));
 
     position: absolute;
     inset: 0 auto auto 0;

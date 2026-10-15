@@ -94,8 +94,9 @@ jobs:
         with:
           name: builds
       - run: pnpm exec playwright install --with-deps chromium
+      # Compares once Linux baselines are committed (generate them with the update_baselines input).
       - name: Compare against approved baselines
-        if: ${{ !inputs.update_baselines }}
+        if: ${{ !inputs.update_baselines && hashFiles('tests/visual/__screenshots__/linux/**') != '' }}
         run: pnpm exec playwright test --project=visual
       - name: Regenerate baselines
         if: ${{ inputs.update_baselines }}
@@ -187,3 +188,30 @@ jobs:
           service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
           create_credentials_file: true
       - run: npx --yes firebase-tools@14 deploy --only hosting --project "${{ vars.FIREBASE_PROJECT_ID }}" --non-interactive
+
+  deploy-pages:
+    name: Deploy GitHub Pages
+    # GitHub Pages hosts the site until a Firebase project is configured (FIREBASE_PROJECT_ID).
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.FIREBASE_PROJECT_ID == ''
+    needs: [e2e, lighthouse]
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - name: Require the production origin
+        run: test -n "${{ vars.SITE_URL }}" || (echo "Set the SITE_URL repository variable" && exit 1)
+      - uses: actions/download-artifact@v4
+        with:
+          name: builds
+      - name: Never deploy the reviews fixture
+        run: '! grep -rq "\[Name\]" dist'
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - id: deploy
+        uses: actions/deploy-pages@v4

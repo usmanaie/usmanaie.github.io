@@ -290,7 +290,9 @@ import Icon from '../ui/Icon.astro';
     .hero__inner {
       display: flex;
       flex-direction: column;
-      width: min(100% - 2 * var(--gutter-min), calc(1333 * var(--u)));
+
+      /* The site's content width, so the hero's edges line up with every other section. */
+      width: min(100% - 2 * var(--gutter-min), var(--container));
       max-width: none;
       padding: 0;
     }
@@ -353,7 +355,13 @@ import Icon from '../ui/Icon.astro';
      */
     .hero__body {
       flex: 1;
-      grid-template-columns: minmax(0, 540fr) minmax(0, 761fr);
+
+      /*
+       * The design composition is 1333u wide. On windows short enough to scale it below the content width,
+       * the spare width goes to both edges: the copy starts at the content's left edge and the agent stage
+       * reaches its right edge, while the robot keeps its size and place (see AgentFlow and scripts/hero.ts).
+       */
+      grid-template-columns: minmax(0, 1fr) calc(761 * var(--u) + max(0px, (100% - 1333 * var(--u)) / 2));
       align-items: center;
       gap: calc(32 * var(--u));
       padding-block: calc(8 * var(--u)) 0;
@@ -418,8 +426,12 @@ import Icon from '../ui/Icon.astro';
     }
 
     .hero__body :global(.flow) {
+      --stage-px: calc(761 * var(--u));
+
       align-self: end;
       width: 100%;
+      height: calc(var(--stage-px) * 880 / 720);
+      aspect-ratio: auto;
     }
   }
 

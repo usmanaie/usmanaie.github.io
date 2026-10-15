@@ -31,7 +31,7 @@ const featured = projects
     isolation: isolate;
     container-type: inline-size;
     overflow: clip;
-    padding-block: 56px 64px;
+    padding-block: var(--section-start) 64px;
     background: var(--color-bg);
   }
 
@@ -53,7 +53,7 @@ const featured = projects
 
   @media (width >= 64rem) {
     .projects {
-      padding-block: 56px 27px;
+      padding-block: var(--section-start) 27px;
     }
 
     .projects__header {

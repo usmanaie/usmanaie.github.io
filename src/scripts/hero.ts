@@ -52,6 +52,23 @@ export interface HopData {
   look?: number;
 }
 
+/**
+ * Moves a spoke's far end right by `extra` stage units if it is a right-hand spoke (its node right of the agent);
+ * the control point moves half as far so the curve keeps its shape. Paths are 'M x0 y0 Q cx cy x1 y1'.
+ */
+export function spreadSpoke(out: string, back: string, extra: number): { out: string; back: string; shift: number } {
+  const n = out.match(/-?\d+(?:\.\d+)?/g)?.map(Number) ?? [];
+  const [sx, sy, cx, cy, ex, ey] = n;
+  if (n.length !== 6 || sx === undefined || ex === undefined || ex <= sx || extra <= 0) return { out, back, shift: 0 };
+  const nx = (ex ?? 0) + extra;
+  const ncx = (cx ?? 0) + extra / 2;
+  return {
+    out: `M ${sx} ${sy} Q ${ncx} ${cy} ${nx} ${ey}`,
+    back: `M ${nx} ${ey} Q ${ncx} ${cy} ${sx} ${sy}`,
+    shift: extra,
+  };
+}
+
 export function parseHops(json: string | undefined): HopData[] {
   if (!json) return [];
   try {
@@ -97,6 +114,38 @@ export function initHero(root: Document = document): void {
   );
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let run = 0;
+
+  /*
+   * When the hero gives the stage more width than the design's 720 units (desktop windows short enough to scale
+   * the composition below the content width), the stage extends to the right of the robot: the right-hand
+   * participants move out to the content's edge and their spokes (and the token's paths) are redrawn to match.
+   */
+  const canvas = flow.querySelector<HTMLElement>('.flow__canvas');
+  const trackPaths = [...flow.querySelectorAll<SVGPathElement>('.flow__track path')];
+  const base = new Map(
+    [...spokes].map(([id, s]) => [id, { out: s.dataset['out'] ?? '', back: s.dataset['back'] ?? '' }]),
+  );
+  function spread() {
+    const scale = canvas ? canvas.getBoundingClientRect().width / 720 : 0;
+    const extra = scale > 0 ? Math.max(0, Math.round(flow.getBoundingClientRect().width / scale - 720)) : 0;
+    for (const [id, spoke] of spokes) {
+      const original = base.get(id);
+      if (!id || !original) continue;
+      const shifted = spreadSpoke(original.out, original.back, extra);
+      spoke.dataset['out'] = shifted.out;
+      spoke.dataset['back'] = shifted.back;
+      for (const path of spoke.querySelectorAll('path')) path.setAttribute('d', shifted.out);
+      for (const path of trackPaths) if (path.dataset['spoke'] === id) path.setAttribute('d', shifted.out);
+      nodes.get(id)?.setAttribute('transform', shifted.shift ? `translate(${shifted.shift} 0)` : '');
+    }
+  }
+  // After the first frame: measuring the layout any earlier forces it before the first paint (and delays LCP).
+  requestAnimationFrame(() =>
+    requestAnimationFrame(() => {
+      spread();
+      if ('ResizeObserver' in window) new ResizeObserver(spread).observe(flow);
+    }),
+  );
 
   const headCanvas = flow.querySelector<HTMLCanvasElement>('[data-flow-head]');
   const headUrl = flow.dataset['headSprite'];

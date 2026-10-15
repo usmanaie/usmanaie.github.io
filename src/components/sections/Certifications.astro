@@ -172,7 +172,7 @@ const totalBadges = credentials.skillBadges.length + credentials.completionBadge
   .creds {
     position: relative;
     isolation: isolate;
-    padding-block: 72px;
+    padding-block: var(--section-start) 72px;
     background: var(--color-bg);
   }
 
@@ -600,7 +600,7 @@ const totalBadges = credentials.skillBadges.length + credentials.completionBadge
 
   @media (width >= 64rem) {
     .creds {
-      padding-block: 110px 100px;
+      padding-block: var(--section-start) 100px;
     }
 
     /* The copy takes the room; the certification card keeps to its content (max 400px). */

@@ -33,7 +33,10 @@ export const site = {
   name: 'Usman Aslam',
   jobTitle: JOB_TITLE,
   /** Email is stored in parts and only assembled (percent-encoded) at build time. */
-  email: { user: 'usmanaslam1002', domain: 'gmail.com' },
+  email: { user: 'usmanaslam.aie', domain: 'gmail.com' },
+  /** Mobile (Pakistan), in international format. */
+  phone: { display: '+92 315 2331002', tel: '+923152331002' },
+  linkedin: 'https://www.linkedin.com/in/sardar-usman-aslam',
   tagline: `${JOB_TITLE} building agentic AI, RAG pipelines and governed, production-grade systems on Google Cloud.`,
   description: `Usman Aslam is a ${JOB_TITLE} and Google Cloud certified Professional Cloud Developer building agentic AI, RAG pipelines and governed, production-grade systems on Google Cloud.`,
   locale: 'en',
@@ -41,6 +44,7 @@ export const site = {
   /** OWNER-CONFIRM: add LinkedIn and any other profiles. */
   sameAs: [
     'https://github.com/usmanaie',
+    'https://www.linkedin.com/in/sardar-usman-aslam',
     'https://www.skills.google/public_profiles/4a128489-ec43-4c60-af5a-13ac83f6b549',
   ],
   knowsAbout: [
@@ -174,7 +178,8 @@ export const about = {
 
 export const contact = {
   heading: { lead: 'Let’s Build Something', accent: 'Meaningful Together' },
-  body: 'Whether you’re exploring agentic AI, need a RAG pipeline grounded in your own data, or want AI adopted safely under HIPAA, SOC 2 or GDPR, I’d love to hear about it.',
+  body: 'Whether you’re building an agentic AI product, modernising a platform on Google Cloud or adopting AI under HIPAA, SOC 2 or GDPR, I help teams turn complex requirements into secure, production-grade systems. Let’s talk.',
+  links: { linkedin: 'LinkedIn', email: 'Email' },
   ringLabel: 'Contact Usman by email',
   backdrop: ['WHENEVER YOU ARE', 'READY'],
 } as const;

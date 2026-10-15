@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 
+import firebase from '../../firebase.json';
 import leagueGothic from '../assets/fonts/league-gothic-var.woff2?url';
 import manrope from '../assets/fonts/manrope-var.woff2?url';
 import SiteFooter from '../components/layout/SiteFooter.astro';
@@ -32,6 +33,20 @@ const {
 
 const canonical = new URL(path, Astro.site).href;
 const ogImage = new URL('/og.jpg', Astro.site).href;
+
+/**
+ * GitHub Pages cannot send response headers, so the CSP from firebase.json also ships as a meta tag.
+ * frame-ancestors is ignored in a meta tag and upgrade-insecure-requests is redundant (Pages enforces HTTPS),
+ * so both stay header-only.
+ */
+const cspHeader = firebase.hosting.headers
+  .flatMap((rule) => rule.headers)
+  .find((header) => header.key === 'Content-Security-Policy')?.value;
+const metaCsp = cspHeader
+  ?.split(';')
+  .map((directive) => directive.trim())
+  .filter((directive) => directive && !/^(frame-ancestors|upgrade-insecure-requests)\b/.test(directive))
+  .join('; ');
 ---
 
 <!doctype html>
@@ -39,6 +54,7 @@ const ogImage = new URL('/og.jpg', Astro.site).href;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    {metaCsp && <meta http-equiv="Content-Security-Policy" content={metaCsp} />}
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />

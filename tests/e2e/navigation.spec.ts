@@ -36,40 +36,41 @@ test.describe('desktop navigation', () => {
     }
   });
 
-  test('every menu link lands its section right under the sticky header', async ({ page }) => {
-    await page.goto('/');
-    const headerHeight = await page.evaluate(() =>
-      parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height')),
-    );
-    // The smooth scroll starts a beat after the click, so wait for the section to arrive (and stay).
-    const landsUnderHeader = (id: string, from: string) =>
-      expect
-        .poll(() => page.locator(`#${id}`).evaluate((el) => Math.round(el.getBoundingClientRect().top)), {
-          message: `${id} from the ${from}`,
-          timeout: LANDING_TIMEOUT,
-        })
-        .toBeGreaterThanOrEqual(headerHeight - 2)
-        .then(() =>
-          expect
-            .poll(() => page.locator(`#${id}`).evaluate((el) => Math.round(el.getBoundingClientRect().top)), {
-              message: `${id} from the ${from}`,
-              timeout: LANDING_TIMEOUT,
-            })
-            .toBeLessThanOrEqual(headerHeight + 2),
-        );
-    for (const id of ['about', 'expertise', 'projects', 'experience', 'certifications']) {
+  // One test per section: each runs two smooth scrolls, and all of them together outran one test's time budget
+  // in WebKit under a full parallel run.
+  for (const id of ['about', 'expertise', 'projects', 'experience', 'certifications']) {
+    test(`the ${id} menu links land the section right under the sticky header`, async ({ page }) => {
+      await page.goto('/');
+      const headerHeight = await page.evaluate(() =>
+        parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height')),
+      );
+      // The smooth scroll starts a beat after the click, so wait for the section to arrive (and stay).
+      const landsUnderHeader = (from: string) =>
+        expect
+          .poll(() => page.locator(`#${id}`).evaluate((el) => Math.round(el.getBoundingClientRect().top)), {
+            message: `${id} from the ${from}`,
+            timeout: LANDING_TIMEOUT,
+          })
+          .toBeGreaterThanOrEqual(headerHeight - 2)
+          .then(() =>
+            expect
+              .poll(() => page.locator(`#${id}`).evaluate((el) => Math.round(el.getBoundingClientRect().top)), {
+                message: `${id} from the ${from}`,
+                timeout: LANDING_TIMEOUT,
+              })
+              .toBeLessThanOrEqual(headerHeight + 2),
+          );
       // From the hero's own menu (top of the page)...
-      await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
       await page.locator(`.hero__nav-link[href="#${id}"]`).click();
-      await landsUnderHeader(id, 'hero menu');
+      await landsUnderHeader('hero menu');
       // ...and from the sticky header further down, which also marks the section as current.
       await page.evaluate(() => window.scrollTo({ top: 1600, behavior: 'instant' }));
       const link = page.getByRole('navigation', { name: 'Site' }).locator(`a[href="#${id}"]`);
       await link.click();
-      await landsUnderHeader(id, 'sticky header');
+      await landsUnderHeader('sticky header');
       await expect(link).toHaveAttribute('aria-current', 'location');
-    }
-  });
+    });
+  }
 
   test('menu links land exactly even before the page is idle, and when arriving with a #hash', async ({ page }) => {
     const lands = (id: string) =>

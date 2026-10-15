@@ -1,5 +1,5 @@
 /**
- * Draft Privacy Policy and Terms for a static, cookie-free, mailto-only portfolio.
+ * Draft Privacy Policy and Terms for a static, cookie-free portfolio (contact by email, phone or LinkedIn).
  * OWNER-CONFIRM: Usman must review and sign off this copy before launch. It is a
  * sensible starting point, not legal advice (see LAUNCH_CHECKLIST.md).
  */
@@ -18,13 +18,13 @@ export interface LegalPage {
 export const privacy: LegalPage = {
   title: 'Privacy Policy',
   description:
-    'How this portfolio handles personal data: no cookies, no analytics, and email only when you choose to write.',
-  lastUpdated: '2026-10-12',
+    'How this portfolio handles personal data: no cookies, no analytics, and your details only when you choose to get in touch.',
+  lastUpdated: '2026-10-15',
   sections: [
     {
       heading: 'Who is responsible',
       paragraphs: [
-        'This website is the personal portfolio of Usman Aslam, who is responsible for the processing described here. You can reach Usman at the email address linked on this site.',
+        'This website is the personal portfolio of Usman Aslam, who is responsible for the processing described here. You can reach Usman by the email, phone or LinkedIn links on this site.',
       ],
     },
     {
@@ -40,9 +40,9 @@ export const privacy: LegalPage = {
       ],
     },
     {
-      heading: 'When you send an email',
+      heading: 'When you get in touch',
       paragraphs: [
-        'If you choose to contact Usman by email, your message, your email address and anything you include are used only to reply to you and to continue the conversation you started. They are not shared with third parties or used for marketing, and are deleted when they are no longer needed for that purpose.',
+        'If you choose to contact Usman by email, phone or LinkedIn, your message, your contact details and anything you include are used only to reply to you and to continue the conversation you started. They are not shared with third parties or used for marketing, and are deleted when they are no longer needed for that purpose. Messages sent through LinkedIn are also subject to LinkedIn’s own privacy policy.',
       ],
     },
     {

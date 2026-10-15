@@ -139,6 +139,25 @@ Owner-facing items are also tracked in [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md
     brand-palette stage: blue on the outer top corner, crimson on the inner bottom corner, a faint violet centre,
     mirrored for image-right rows. Each product's own colour stays inside its UI; before, each stage carried its own
     accent glow (orange, teal, amber, green), so `/projects` read as seven colour schemes.
+- **Contact section (owner request, Oct 2026).** A professional rewrite of the copy, and three round icon-only buttons (owner: no labels; each
+  keeps an accessible name and a hover tooltip):
+  LinkedIn (new tab), call (`tel:+923152331002`, shown as +92 315 2331002) and email (the new address,
+  usmanaslam.aie@gmail.com, still percent-encoded so it never appears as plain text; `check-dist` rejects it in plain
+  text). The portrait and the "Contact us" ring now keep clear of the copy column at 1024-1279px (the portrait's
+  left is `max(50% - 420px, gutter + 200px)` and the ring moves with it). LinkedIn joins JSON-LD `sameAs`. The
+  Privacy Policy mentions phone and LinkedIn contact (updated 15 October 2026).
+- **One section rhythm (owner request, Oct 2026).** Every section's first content starts the same distance below its
+  top edge, the About section's: `--section-start` (92px on desktop, 64px on phones). Headings sit on that line; the
+  artwork-led sections align their first visible element instead (the Expertise ring, the Contact backdrop words,
+  the Experience illustration on phones). Sub-pages start the same distance below the header. The Experience
+  illustration's periodic "blink" (a fade to 25% every 5 s) is removed, so no illustration animates on its own.
+- **Hero edges match the site (owner request, Oct 2026).** The hero scales its design composition (1333u) to fit the
+  window, so on windows short enough to shrink it, its menu, copy and bubbles sat inside the content width that every
+  other section uses. The hero is now the content width: the copy and menu start at the content's left edge, the
+  "Let's talk" pill and the right-hand participants (LLM, RAG, Tools) reach its right edge, and the robot keeps its
+  size and place. The stage keeps its design scale (`--stage-px`) and extends to the right; `scripts/hero.ts` moves
+  the right-hand nodes out by the extra width and redraws their spokes and the token's paths (`spreadSpoke`).
+  Full-height windows (1920x1080) are unchanged; no-JS keeps the design positions.
 - **Hero robot (owner request).** The owner asked for AI-generated, high-resolution, full-body art and approved
   candidate "A, presenting" (`design-candidates/`, git-ignored).
   - The final art was produced with **Gemini 3 Pro Image on Vertex AI**, at
@@ -312,6 +331,19 @@ All token changes are minimal and documented in `tokens.css`:
   high-resolution hero (smaller than the upscale at equal quality) or inlined critical CSS (would need per-build
   CSP hashes) are the next levers.
 
+- **Render-blocking bytes stay inside the first round trip (Oct 2026).** The contact icon styles pushed the
+  site-wide stylesheet's response (Brotli body plus the security headers) past the ~14.6 KB a server sends before
+  its first acknowledgement (initial congestion window of 10 packets). That costs a whole round trip: simulated
+  home LCP went from 1.96s to 2.12s.
+  - The hidden Reviews section's styles moved to their own stylesheet (`reviews.css`), linked by `Reviews.astro`
+    only when the section renders. A static or dynamic import alone would still bundle them site-wide. This
+    takes the stylesheet from 12.9 KB to 12.5 KB.
+  - The Experience and Contact robot portraits are built as SVG files (`/art/agent-*.svg`, from
+    `src/lib/agent-portrait.ts`) and shown as lazy `<img>`s instead of inline markup. The home HTML drops from
+    13.5 KB to 12.6 KB, with fewer DOM nodes.
+  - Check both responses' transfer sizes in the Lighthouse network table when adding home page content or
+    site-wide CSS.
+
 - **Not yet done on real hardware:** DevTools throttled-CPU profiling on a mid-range phone and real-device
   WebPageTest runs. These are launch-checklist items.
 
@@ -324,6 +356,10 @@ All token changes are minimal and documented in `tokens.css`:
   - Astro's built-in CSP was not used because it only emits a `<meta>` tag, which cannot carry `frame-ancestors`.
 - HSTS (preload-ready), nosniff, strict referrer policy, deny-all Permissions-Policy, COOP/CORP same-origin and
   `X-Frame-Options: DENY`.
+- **GitHub Pages hosting (Oct 2026).** Pages cannot send response headers, so `BaseLayout` also ships the
+  `firebase.json` CSP as a `<meta http-equiv>` tag, minus `frame-ancestors` (ignored in meta) and
+  `upgrade-insecure-requests` (Pages enforces HTTPS). Clickjacking protection, HSTS preload and Permissions-Policy
+  remain Firebase-only; moving to Firebase Hosting restores them with no code change.
 - The local preview server (`scripts/serve.mjs`) applies the same headers, so e2e tests catch CSP violations.
 - No cookies, analytics, trackers or third-party requests. An e2e test asserts the site makes requests to one
   origin only.

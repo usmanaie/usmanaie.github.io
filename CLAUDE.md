@@ -3,7 +3,8 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 Static portfolio site for Usman Aslam: Astro 7 (static output), strict TypeScript, plain CSS, no UI framework,
-deployed to Firebase Hosting. Three documents carry the project's context:
+hosted on GitHub Pages at https://usmanaie.github.io (the Firebase Hosting config is kept for the full security
+headers). Three documents carry the project's context:
 
 - `README.md`: setup, scripts, deploy, rollback, operations, asset provenance.
 - `DECISIONS.md`: every deviation from the design export and the reasoning behind it (hero, fidelity,
@@ -70,7 +71,9 @@ Adding a project takes three steps:
 
 **Reviews are gated off.** `reviews.enabled` is false and there are no items. The section and its nav links
 render only when real items exist. Consumers import from `content/reviews-source.ts`, which swaps in
-`tests/fixtures/reviews.ts` when `PUBLIC_REVIEWS_FIXTURE=true`. That is how the carousel gets tested.
+`tests/fixtures/reviews.ts` when `PUBLIC_REVIEWS_FIXTURE=true`. That is how the carousel gets tested. Its styles
+live in `reviews.css`, linked only when the section renders, so the hidden section adds nothing to the
+render-blocking stylesheet.
 
 **Client JavaScript has no islands or framework runtime.** An interactive component has a plain `<script>` that
 imports an `init*` function from `src/scripts/*.ts`, and Astro bundles it as a module. Pure logic is exported

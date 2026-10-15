@@ -26,6 +26,7 @@ const FORBIDDEN_TEXT = [
   'placeholders for real quotes',
   'Lets Build',
   'usmanaslam1002@gmail.com',
+  'usmanaslam.aie@gmail.com',
 ];
 
 const errors = [];

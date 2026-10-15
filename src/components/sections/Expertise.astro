@@ -82,7 +82,7 @@ import SectionHeading from '../ui/SectionHeading.astro';
   .expertise {
     position: relative;
     overflow: clip;
-    padding-block: 56px 64px;
+    padding-block: var(--section-start) 64px;
     padding-inline: max(var(--gutter-min), env(safe-area-inset-left)) max(var(--gutter-min), env(safe-area-inset-right));
     background: var(--color-bg);
   }
@@ -232,7 +232,8 @@ import SectionHeading from '../ui/SectionHeading.astro';
 
   @media (width >= 64rem) {
     .expertise {
-      padding-block: 146px 44px;
+      /* The ring's visible top sits on the shared section line. */
+      padding-block: calc(var(--section-start) + 76px) 44px;
     }
 
     .expertise__layout {

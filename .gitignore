@@ -61,3 +61,6 @@ design-candidates/
 
 # Python bytecode
 __pycache__/
+
+# Private documents never belong in the repository
+*.pdf

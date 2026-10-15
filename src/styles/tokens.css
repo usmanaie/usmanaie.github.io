@@ -141,6 +141,9 @@
   --gutter-min: clamp(16px, 4vw, 48px);
   --gutter: max(var(--gutter-min), calc((100% - var(--container)) / 2));
   --header-height: 64px;
+
+  /* Space from a section's top edge to its first content (owner: the About section's rhythm, on every page). */
+  --section-start: 64px;
   --radius-pill: 999px;
   --radius-panel: 30px;
   --touch-target: 44px;
@@ -153,4 +156,10 @@
   --dur-carousel: 0.6s;
   --lift-card: translateY(-4px);
   --lift-pill: translateY(-1px);
+}
+
+@media (width >= 64rem) {
+  :root {
+    --section-start: 92px;
+  }
 }
