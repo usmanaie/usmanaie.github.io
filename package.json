@@ -40,7 +40,7 @@
     "@capsizecss/metrics": "^4.3.0",
     "@capsizecss/unpack": "^4.0.1",
     "@commitlint/cli": "^21.2.3",
-    "@commitlint/config-conventional": "^21.2.3",
+    "@commitlint/config-conventional": "^21.2.4",
     "@eslint/js": "^10.0.1",
     "@fontsource-variable/hanken-grotesk": "^5.3.0",
     "@fontsource-variable/league-gothic": "^5.3.0",
