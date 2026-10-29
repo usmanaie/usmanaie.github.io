@@ -30,11 +30,11 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "astro": "7.3.8",
+    "astro": "7.4.2",
     "sharp": "^0.35.5"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.10",
+    "@astrojs/check": "^0.9.12",
     "@axe-core/playwright": "^4.13.0",
     "@capsizecss/core": "^4.1.3",
     "@capsizecss/metrics": "^4.3.0",
