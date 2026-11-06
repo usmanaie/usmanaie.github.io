@@ -142,9 +142,8 @@ lists keep `role="list"` on purpose, for Safari and VoiceOver.
 
 - `pnpm fonts` and `pnpm images`
 - `node scripts/render-project-art.mjs` for project illustrations
-- `pnpm design:render <dir>` for references from the design export. It also overwrites three project PNGs
-  (`agentic-ai`, `telehealth`, `ai-governance`) with the design's originals, so re-run
-  `render-project-art.mjs` afterwards.
+- `pnpm design:render <dir>` for the Expertise ring layers and fidelity references from the design export (it
+  never touches the project illustrations)
 - `scripts/build-robot-head.mjs` for the hero robot, then `python scripts/build-head-layers.py` for the head
   layers cut from it (`robot-head-layers.webp/.json`)
 

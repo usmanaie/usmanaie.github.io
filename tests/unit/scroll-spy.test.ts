@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { pickActive, setCurrent } from '../../src/scripts/scroll-spy';
 
-const order = ['top', 'about', 'education', 'expertise'];
+const order = ['top', 'about', 'expertise', 'projects'];
 
 describe('pickActive', () => {
   it('returns null when nothing is in the reading band', () => {
@@ -15,7 +15,7 @@ describe('pickActive', () => {
 
   it('prefers the section whose top is highest when several overlap the band', () => {
     const visible = new Map([
-      ['education', 300],
+      ['expertise', 300],
       ['about', -50],
     ]);
     expect(pickActive(visible, order)).toBe('about');

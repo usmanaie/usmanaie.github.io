@@ -46,10 +46,6 @@ uipro init --ai claude
 | `node scripts/render-project-art.mjs [name...]` | Render project illustrations from `scripts/art/<name>.html` (all of them when no name is given)                            |
 | `pnpm design:render <dir>`                      | Re-render the Expertise ring layers and fidelity references from the unzipped design export (see below)                    |
 
-`pnpm design:render` also overwrites `agentic-ai.png`, `telehealth.png` and `ai-governance.png` in
-`src/assets/projects/` with the design export's original illustrations. Those images now come from
-`scripts/art/`, so run `node scripts/render-project-art.mjs` afterwards to restore them.
-
 ## Architecture
 
 ```
