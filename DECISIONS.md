@@ -384,6 +384,10 @@ All token changes are minimal and documented in `tokens.css`:
   Chromium and WebKit render 155.9px (`min(231u, 44cqi)`). 154 is exactly 44cqi of a 350px column although the
   column lays out 507px wide, so Firefox appears to resolve the container-unit cap against the column's
   provisional grid width. The difference is 1.2% with no visible effect, so the e2e check allows 2%.
+- **Playwright runs two workers locally too (Nov 2026).** With the default (half the CPU cores), a busy
+  development machine intermittently timed out closing browsers after a test's checks had passed
+  (`browserContext.close: Test ended`), a different hero test each run. Two workers, as in CI, passed 60/60 hero
+  runs; the full suite takes a few minutes longer.
 - **Local test environment.** On the development machine, Windows application control blocks the downloaded
   Firefox and full Chrome binaries ("Permission denied"), so locally:
   - Firefox runs only in CI (Linux).

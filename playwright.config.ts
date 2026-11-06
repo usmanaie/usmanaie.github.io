@@ -25,7 +25,9 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: Boolean(process.env['CI']),
   retries: process.env['CI'] ? 2 : 0,
-  ...(process.env['CI'] ? { workers: 2 } : {}),
+  // Two workers everywhere, as in CI: with more, a busy development machine timed out closing browsers after a
+  // test's checks had passed (DECISIONS.md, Tooling notes).
+  workers: 2,
   reporter: process.env['CI'] ? [['github'], ['html', { open: 'never' }]] : [['list']],
   snapshotPathTemplate: '{testDir}/visual/__screenshots__/{platform}/{arg}{ext}',
   expect: {
